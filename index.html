@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS SAA-C03 Study Hub | ADHD-Optimized</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2332;
+            --accent-orange: #ff6b35;
+            --accent-blue: #4facfe;
+            --accent-green: #00f5a0;
+            --accent-purple: #a855f7;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3748;
+            --domain-security: #ef4444;
+            --domain-resilient: #3b82f6;
+            --domain-performance: #8b5cf6;
+            --domain-cost: #10b981;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        /* Animated Background */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,107,53,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,107,53,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+        
+        .exam-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8f5a);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 15px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,107,53,0.4); }
+            50% { transform: scale(1.02); box-shadow: 0 0 20px 5px rgba(255,107,53,0.2); }
+        }
+        
+        /* Motivation Banner */
+        .motivation {
+            background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(79,172,254,0.1));
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .motivation-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--accent-green);
+        }
+        
+        .motivation-sub {
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+        
+        /* Domain Weights Section */
+        .domains-section {
+            margin-bottom: 50px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-orange);
+            border-radius: 2px;
+        }
+        
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .domain-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .domain-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+        
+        .domain-card.security::before { background: var(--domain-security); }
+        .domain-card.resilient::before { background: var(--domain-resilient); }
+        .domain-card.performance::before { background: var(--domain-performance); }
+        .domain-card.cost::before { background: var(--domain-cost); }
+        
+        .domain-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.1);
+        }
+        
+        .domain-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .domain-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .domain-percent {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .domain-card.security .domain-percent { color: var(--domain-security); }
+        .domain-card.resilient .domain-percent { color: var(--domain-resilient); }
+        .domain-card.performance .domain-percent { color: var(--domain-performance); }
+        .domain-card.cost .domain-percent { color: var(--domain-cost); }
+        
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        
+        .domain-card.security .progress-fill { background: var(--domain-security); width: 30%; }
+        .domain-card.resilient .progress-fill { background: var(--domain-resilient); width: 26%; }
+        .domain-card.performance .progress-fill { background: var(--domain-performance); width: 24%; }
+        .domain-card.cost .progress-fill { background: var(--domain-cost); width: 20%; }
+        
+        .domain-topics {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Navigation Cards */
+        .nav-section {
+            margin-bottom: 50px;
+        }
+        
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .nav-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            display: block;
+        }
+        
+        .nav-card:hover {
+            transform: translateY(-5px);
+            background: var(--bg-secondary);
+            border-color: var(--accent-orange);
+        }
+        
+        .nav-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .nav-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .nav-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        
+        .nav-tag {
+            display: inline-block;
+            background: rgba(255,107,53,0.2);
+            color: var(--accent-orange);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 15px;
+        }
+        
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        
+        /* ADHD Timer */
+        .adhd-tools {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .adhd-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .timer-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--accent-green);
+        }
+        
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .timer-btn {
+            background: var(--bg-primary);
+            border: 2px solid var(--accent-orange);
+            color: var(--accent-orange);
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .timer-btn:hover {
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+        }
+        
+        .timer-btn.active {
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+        }
+        
+        .pomodoro-tip {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* Exam Tips */
+        .tips-section {
+            margin-bottom: 50px;
+        }
+        
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .tip-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .tip-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-orange);
+            opacity: 0.5;
+        }
+        
+        .tip-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        
+        .tip-content {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 50px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            header {
+                padding: 30px 15px;
+            }
+            
+            .timer-display {
+                font-size: 2.5rem;
+            }
+            
+            .domains-grid,
+            .nav-grid,
+            .tips-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* iPad specific */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .domains-grid,
+            .nav-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">AWS SAA-C03</div>
+            <div class="subtitle">Solutions Architect Associate Study Hub</div>
+            <div class="exam-badge">🎯 ADHD-Optimized • Visual Learning</div>
+        </header>
+        
+        <div class="motivation">
+            <div class="motivation-text">💪 You've got this! One step at a time.</div>
+            <div class="motivation-sub">65 questions • 130 minutes • 720/1000 to pass • You're going to crush it!</div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-value">65</div>
+                <div class="stat-label">Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">130</div>
+                <div class="stat-label">Minutes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">720</div>
+                <div class="stat-label">Pass Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$150</div>
+                <div class="stat-label">Exam Fee</div>
+            </div>
+        </div>
+        
+        <!-- Exam Domains -->
+        <section class="domains-section">
+            <h2 class="section-title">Exam Domain Weights</h2>
+            <div class="domains-grid">
+                <div class="domain-card security">
+                    <div class="domain-header">
+                        <div class="domain-name">🔒 Design Secure Architectures</div>
+                        <div class="domain-percent">30%</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="domain-topics">IAM, KMS, Secrets Manager, WAF, Shield, Security Groups, NACLs, VPC endpoints</div>
+                </div>
+                
+                <div class="domain-card resilient">
+                    <div class="domain-header">
+                        <div class="domain-name">🔄 Design Resilient Architectures</div>
+                        <div class="domain-percent">26%</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="domain-topics">Multi-AZ, Auto Scaling, ELB, Route 53, SQS decoupling, DR strategies</div>
+                </div>
+                
+                <div class="domain-card performance">
+                    <div class="domain-header">
+                        <div class="domain-name">⚡ Design High-Performing Architectures</div>
+                        <div class="domain-percent">24%</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="domain-topics">ElastiCache, CloudFront, S3 Transfer Acceleration, EBS types, Database selection</div>
+                </div>
+                
+                <div class="domain-card cost">
+                    <div class="domain-header">
+                        <div class="domain-name">💰 Design Cost-Optimized Architectures</div>
+                        <div class="domain-percent">20%</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="domain-topics">Reserved Instances, Spot, Savings Plans, S3 tiers, Right-sizing</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ADHD Pomodoro Timer -->
+        <section class="adhd-tools">
+            <h2 class="adhd-title">🧠 ADHD Study Timer</h2>
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="timer-controls">
+                <button class="timer-btn" onclick="setTimer(15)">15 min Sprint</button>
+                <button class="timer-btn active" onclick="setTimer(25)">25 min Focus</button>
+                <button class="timer-btn" onclick="setTimer(5)">5 min Break</button>
+                <button class="timer-btn" onclick="toggleTimer()" id="startBtn">▶ Start</button>
+                <button class="timer-btn" onclick="resetTimer()">↺ Reset</button>
+            </div>
+            <p class="pomodoro-tip">💡 Tip: Short bursts work better for ADHD brains. Try 15-min sprints if 25 feels too long!</p>
+        </section>
+        
+        <!-- Navigation -->
+        <section class="nav-section">
+            <h2 class="section-title">Study Materials</h2>
+            <div class="nav-grid">
+                <a href="maps/global-mindmap.html" class="nav-card">
+                    <div class="nav-icon">🗺️</div>
+                    <div class="nav-title">Global Mind Map</div>
+                    <div class="nav-desc">Zoomable, interactive map of ALL AWS services and their connections</div>
+                    <span class="nav-tag">Zoom • Pan • Click</span>
+                </a>
+                
+                <a href="exercises/fill-blanks.html" class="nav-card">
+                    <div class="nav-icon">✏️</div>
+                    <div class="nav-title">Fill-in-the-Blank</div>
+                    <div class="nav-desc">Complete the missing service names, limits, and connections</div>
+                    <span class="nav-tag">Active Recall</span>
+                </a>
+                
+                <a href="exercises/connection-game.html" class="nav-card">
+                    <div class="nav-icon">🔗</div>
+                    <div class="nav-title">Connection Game</div>
+                    <div class="nav-desc">Match services, find the linking word, semantic connections</div>
+                    <span class="nav-tag">Visual Learning</span>
+                </a>
+                
+                <a href="exercises/deduction.html" class="nav-card">
+                    <div class="nav-icon">🎯</div>
+                    <div class="nav-title">Deduction Trainer</div>
+                    <div class="nav-desc">Learn to eliminate wrong answers using keywords and patterns</div>
+                    <span class="nav-tag">Exam Strategy</span>
+                </a>
+                
+                <a href="chapters/index.html" class="nav-card">
+                    <div class="nav-icon">📚</div>
+                    <div class="nav-title">Chapter Study</div>
+                    <div class="nav-desc">Domain-by-domain breakdown with focused mind maps</div>
+                    <span class="nav-tag">Deep Dive</span>
+                </a>
+                
+                <a href="docs/cheatsheet.html" class="nav-card">
+                    <div class="nav-icon">📋</div>
+                    <div class="nav-title">Quick Cheatsheet</div>
+                    <div class="nav-desc">Key limits, ports, and must-know facts for exam day</div>
+                    <span class="nav-tag">Quick Reference</span>
+                </a>
+            </div>
+        </section>
+        
+        <!-- Exam Tips -->
+        <section class="tips-section">
+            <h2 class="section-title">Deduction & Exam Tips</h2>
+            <div class="tips-grid">
+                <div class="tip-card">
+                    <div class="tip-number">01</div>
+                    <div class="tip-title">Eliminate the Obvious</div>
+                    <div class="tip-content">If an option mentions a service that doesn't exist or has wrong specs (e.g., "Lambda 30-minute timeout"), eliminate it immediately.</div>
+                </div>
+                
+                <div class="tip-card">
+                    <div class="tip-number">02</div>
+                    <div class="tip-title">Watch for "Least Effort"</div>
+                    <div class="tip-content">AWS loves managed services. If the question asks for "least operational overhead," prefer serverless/managed options.</div>
+                </div>
+                
+                <div class="tip-card">
+                    <div class="tip-number">03</div>
+                    <div class="tip-title">Cost Keywords</div>
+                    <div class="tip-content">"Cost-effective" often means Spot Instances, S3 Intelligent-Tiering, or Reserved capacity. Don't over-engineer.</div>
+                </div>
+                
+                <div class="tip-card">
+                    <div class="tip-number">04</div>
+                    <div class="tip-title">Security First</div>
+                    <div class="tip-content">30% of the exam! Remember: IAM policies attach to principals, resource policies attach to resources. Encryption = KMS.</div>
+                </div>
+                
+                <div class="tip-card">
+                    <div class="tip-number">05</div>
+                    <div class="tip-title">Read ALL Options</div>
+                    <div class="tip-content">Don't jump to the first "correct" answer. There may be a MORE correct one. Look for the "most" appropriate.</div>
+                </div>
+                
+                <div class="tip-card">
+                    <div class="tip-number">06</div>
+                    <div class="tip-content">Flag & Move On</div>
+                    <div class="tip-content">Stuck for 60+ seconds? Flag it and move on. Your brain will work on it subconsciously. Come back later.</div>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>Built for visual learners with ADHD optimization 🧠</p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">AWS SAA-C03 Study Hub • Good luck on your exam! 🚀</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Pomodoro Timer
+        let timeLeft = 25 * 60;
+        let timerInterval = null;
+        let isRunning = false;
+        
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function setTimer(minutes) {
+            timeLeft = minutes * 60;
+            updateDisplay();
+            document.querySelectorAll('.timer-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(minutes)) btn.classList.add('active');
+            });
+        }
+        
+        function toggleTimer() {
+            const btn = document.getElementById('startBtn');
+            if (isRunning) {
+                clearInterval(timerInterval);
+                btn.textContent = '▶ Start';
+                isRunning = false;
+            } else {
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        isRunning = false;
+                        btn.textContent = '▶ Start';
+                        alert('⏰ Time\'s up! Take a break or start your next session!');
+                    }
+                }, 1000);
+                btn.textContent = '⏸ Pause';
+                isRunning = true;
+            }
+        }
+        
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            document.getElementById('startBtn').textContent = '▶ Start';
+            const activeBtn = document.querySelector('.timer-btn.active');
+            const minutes = parseInt(activeBtn?.textContent) || 25;
+            timeLeft = minutes * 60;
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fill-in-the-Blank | AWS SAA-C03</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #1a2332;
+            --accent-orange: #ff6b35;
+            --accent-blue: #4facfe;
+            --accent-green: #00f5a0;
+            --accent-red: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3748;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .back-btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--accent-blue);
+            background: transparent;
+            color: var(--accent-blue);
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-card);
+            border-radius: 30px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            min-width: 200px;
+            height: 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-green));
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            color: var(--accent-green);
+        }
+        
+        .score {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+        }
+        
+        .score-correct { color: var(--accent-green); }
+        .score-wrong { color: var(--accent-red); }
+        
+        /* Category Filter */
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .category-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .category-btn:hover,
+        .category-btn.active {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+        
+        /* Question Card */
+        .question-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .question-number {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-orange);
+            font-size: 0.9rem;
+        }
+        
+        .question-category {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            background: var(--bg-primary);
+            border-radius: 15px;
+        }
+        
+        .question-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+        
+        .blank {
+            display: inline-block;
+            min-width: 150px;
+            border-bottom: 3px dashed var(--accent-orange);
+            margin: 0 5px;
+            padding: 5px 10px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-blue);
+        }
+        
+        .blank.correct {
+            border-bottom-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        
+        .blank.wrong {
+            border-bottom-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+        
+        /* Input Section */
+        .input-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .answer-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .answer-input:focus {
+            border-color: var(--accent-orange);
+        }
+        
+        .submit-btn {
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255,107,53,0.3);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Feedback */
+        .feedback {
+            margin-top: 20px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .feedback.show { display: block; }
+        .feedback.correct {
+            background: rgba(0,245,160,0.1);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+        .feedback.wrong {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid var(--accent-red);
+        }
+        
+        .feedback-answer {
+            color: var(--accent-green);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .feedback-tip {
+            margin-top: 10px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Hint Button */
+        .hint-btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid var(--accent-blue);
+            background: transparent;
+            color: var(--accent-blue);
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .hint-btn:hover {
+            background: rgba(79,172,254,0.1);
+        }
+        
+        /* Next Button */
+        .next-btn {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 12px;
+            border: 2px solid var(--accent-green);
+            background: transparent;
+            color: var(--accent-green);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none;
+        }
+        
+        .next-btn.show { display: block; }
+        
+        .next-btn:hover {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        /* ADHD Tip */
+        .adhd-tip {
+            background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(79,172,254,0.1));
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .adhd-tip-title {
+            color: var(--accent-orange);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .adhd-tip-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        
+        @media (max-width: 600px) {
+            .question-text {
+                font-size: 1rem;
+            }
+            
+            .blank {
+                min-width: 100px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✏️ Fill-in-the-Blank</h1>
+            <a href="../index.html" class="back-btn">← Back to Hub</a>
+        </header>
+        
+        <div class="adhd-tip">
+            <div class="adhd-tip-title">🧠 ADHD Study Tip</div>
+            <div class="adhd-tip-text">Active recall is proven to boost memory by 50%! Just 5 questions = real progress. You got this! 💪</div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text" id="progressText">0/0</div>
+            <div class="score">
+                <span class="score-correct" id="correctCount">0</span> ✓ |
+                <span class="score-wrong" id="wrongCount">0</span> ✗
+            </div>
+        </div>
+        
+        <div class="categories">
+            <button class="category-btn active" onclick="filterCategory('all')">All</button>
+            <button class="category-btn" onclick="filterCategory('compute')">Compute</button>
+            <button class="category-btn" onclick="filterCategory('storage')">Storage</button>
+            <button class="category-btn" onclick="filterCategory('database')">Database</button>
+            <button class="category-btn" onclick="filterCategory('network')">Network</button>
+            <button class="category-btn" onclick="filterCategory('security')">Security</button>
+            <button class="category-btn" onclick="filterCategory('limits')">Limits</button>
+        </div>
+        
+        <div class="question-card" id="questionCard">
+            <div class="question-header">
+                <span class="question-number" id="questionNumber">Q1</span>
+                <span class="question-category" id="questionCategory">Loading...</span>
+            </div>
+            <div class="question-text" id="questionText">Loading question...</div>
+            <div class="input-section">
+                <input type="text" class="answer-input" id="answerInput" placeholder="Type your answer..." autocomplete="off">
+                <button class="hint-btn" onclick="showHint()">💡 Hint</button>
+                <button class="submit-btn" id="submitBtn" onclick="submitAnswer()">Check Answer</button>
+            </div>
+            <div class="feedback" id="feedback"></div>
+            <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next Question →</button>
+        </div>
+    </div>
+    
+    <script>
+        const questions = [
+            // Compute
+            {
+                category: 'compute',
+                text: 'Lambda functions have a maximum timeout of <span class="blank" id="blank"></span> minutes.',
+                answer: '15',
+                hint: 'Think quarter of an hour',
+                tip: 'Lambda timeout: 15 minutes max. For longer tasks, use Step Functions or ECS.',
+                aliases: ['15', 'fifteen', '15 min', '15 minutes']
+            },
+            {
+                category: 'compute',
+                text: 'Lambda can have up to <span class="blank" id="blank"></span> GB of memory.',
+                answer: '10',
+                hint: 'Double digits, starts with 1',
+                tip: 'Lambda memory: 128MB to 10GB. More memory = more CPU.',
+                aliases: ['10', 'ten', '10gb', '10 gb']
+            },
+            {
+                category: 'compute',
+                text: 'EC2 <span class="blank" id="blank"></span> instances can save up to 90% compared to On-Demand.',
+                answer: 'Spot',
+                hint: 'Used for interruptible workloads',
+                tip: 'Spot Instances: 2-min interruption notice. Great for batch jobs, CI/CD.',
+                aliases: ['spot', 'spot instances', 'spot instance']
+            },
+            {
+                category: 'compute',
+                text: '<span class="blank" id="blank"></span> is the serverless container service that removes need for EC2 management.',
+                answer: 'Fargate',
+                hint: 'Starts with F, works with ECS and EKS',
+                tip: 'Fargate: No servers to manage. Pay per task resources. Works with ECS & EKS.',
+                aliases: ['fargate', 'aws fargate']
+            },
+            {
+                category: 'compute',
+                text: 'EC2 placement groups of type <span class="blank" id="blank"></span> are used for low-latency, high-throughput workloads.',
+                answer: 'cluster',
+                hint: 'Same rack, maximum network performance',
+                tip: 'Cluster: Same AZ, same rack. Spread: Different hardware. Partition: Large distributed workloads.',
+                aliases: ['cluster', 'clustered']
+            },
+            
+            // Storage
+            {
+                category: 'storage',
+                text: 'The maximum size of a single S3 object is <span class="blank" id="blank"></span> TB.',
+                answer: '5',
+                hint: 'Half of 10',
+                tip: 'S3: 5TB max per object. Use multipart upload for objects >100MB.',
+                aliases: ['5', 'five', '5tb', '5 tb']
+            },
+            {
+                category: 'storage',
+                text: 'S3 multipart upload is recommended for objects larger than <span class="blank" id="blank"></span> MB.',
+                answer: '100',
+                hint: 'Three digits, starts with 1',
+                tip: 'Multipart: Required for >5GB, recommended for >100MB. Parallel uploads.',
+                aliases: ['100', '100mb', '100 mb', 'hundred']
+            },
+            {
+                category: 'storage',
+                text: 'EBS volume type <span class="blank" id="blank"></span> is optimized for high IOPS workloads up to 64,000 IOPS.',
+                answer: 'io2',
+                hint: 'Input/Output, version 2',
+                tip: 'io2 Block Express: 64,000 IOPS (Nitro). gp3: 16,000 IOPS baseline.',
+                aliases: ['io2', 'io2 block express']
+            },
+            {
+                category: 'storage',
+                text: '<span class="blank" id="blank"></span> is the file storage service for Linux workloads that can be mounted to multiple EC2 instances.',
+                answer: 'EFS',
+                hint: 'Elastic File S____',
+                tip: 'EFS: NFS v4, Linux only, Multi-AZ. FSx for Windows workloads.',
+                aliases: ['efs', 'elastic file system']
+            },
+            {
+                category: 'storage',
+                text: 'S3 Glacier Deep Archive has retrieval times of <span class="blank" id="blank"></span> hours.',
+                answer: '12',
+                hint: 'Half a day minimum',
+                tip: 'Deep Archive: 12-48 hours retrieval. Cheapest storage. Use for compliance archives.',
+                aliases: ['12', 'twelve', '12-48', '12 to 48']
+            },
+            {
+                category: 'limits',
+                text: 'EBS volumes can be up to <span class="blank" id="blank"></span> TB in size.',
+                answer: '64',
+                hint: '2^6',
+                tip: 'EBS: 64TB max. For larger, use multiple volumes or S3.',
+                aliases: ['64', '64tb', '64 tb']
+            },
+            
+            // Database
+            {
+                category: 'database',
+                text: 'DynamoDB items can be a maximum of <span class="blank" id="blank"></span> KB.',
+                answer: '400',
+                hint: 'Four hundred',
+                tip: 'DynamoDB: 400KB per item. For larger items, store in S3 and keep reference.',
+                aliases: ['400', '400kb', '400 kb']
+            },
+            {
+                category: 'database',
+                text: 'Aurora can have up to <span class="blank" id="blank"></span> read replicas.',
+                answer: '15',
+                hint: 'Same as Lambda timeout in minutes',
+                tip: 'Aurora: 15 replicas (vs RDS 5). Auto-scaling replicas available.',
+                aliases: ['15', 'fifteen']
+            },
+            {
+                category: 'database',
+                text: 'Aurora stores <span class="blank" id="blank"></span> copies of data across 3 AZs.',
+                answer: '6',
+                hint: 'Two copies per AZ',
+                tip: 'Aurora: 6 copies across 3 AZs. Self-healing, continuous backup to S3.',
+                aliases: ['6', 'six']
+            },
+            {
+                category: 'database',
+                text: '<span class="blank" id="blank"></span> provides microsecond latency caching for DynamoDB.',
+                answer: 'DAX',
+                hint: 'DynamoDB Accelerator',
+                tip: 'DAX: In-memory cache for DynamoDB. Microsecond read latency.',
+                aliases: ['dax', 'dynamodb accelerator']
+            },
+            {
+                category: 'database',
+                text: 'RDS supports up to <span class="blank" id="blank"></span> read replicas.',
+                answer: '5',
+                hint: 'Half of 10',
+                tip: 'RDS: 5 read replicas. Aurora: 15. Read replicas are async.',
+                aliases: ['5', 'five']
+            },
+            
+            // Network
+            {
+                category: 'network',
+                text: 'API Gateway has a maximum timeout of <span class="blank" id="blank"></span> seconds.',
+                answer: '29',
+                hint: 'One less than 30',
+                tip: 'API Gateway: 29s timeout. For longer, use async patterns with SQS/Step Functions.',
+                aliases: ['29', '29s', '29 seconds', 'twenty nine', '29 sec']
+            },
+            {
+                category: 'network',
+                text: 'VPC CIDR blocks can range from /<span class="blank" id="blank"></span> to /28.',
+                answer: '16',
+                hint: 'Largest VPC size',
+                tip: 'VPC: /16 (65,536 IPs) to /28 (16 IPs). Cannot change CIDR after creation.',
+                aliases: ['16', '/16']
+            },
+            {
+                category: 'network',
+                text: '<span class="blank" id="blank"></span> Load Balancer operates at Layer 4 and provides ultra-low latency.',
+                answer: 'NLB',
+                hint: 'Network Load Balancer',
+                tip: 'NLB: L4 TCP/UDP, static IP, ultra-low latency. ALB: L7 HTTP/HTTPS.',
+                aliases: ['nlb', 'network load balancer', 'network']
+            },
+            {
+                category: 'network',
+                text: 'Route 53 <span class="blank" id="blank"></span> routing sends traffic to the region with lowest latency.',
+                answer: 'Latency',
+                hint: 'Based on network delay',
+                tip: 'Latency routing: Best for multi-region. Geolocation: Compliance/localization.',
+                aliases: ['latency', 'latency-based', 'latency based']
+            },
+            {
+                category: 'network',
+                text: '<span class="blank" id="blank"></span> provides static anycast IPs for global application acceleration.',
+                answer: 'Global Accelerator',
+                hint: 'Two words, opposite of local',
+                tip: 'Global Accelerator: Static IPs, TCP/UDP optimization. CloudFront: HTTP caching.',
+                aliases: ['global accelerator', 'aws global accelerator', 'ga']
+            },
+            
+            // Security
+            {
+                category: 'security',
+                text: 'Security Groups are <span class="blank" id="blank"></span>, meaning they evaluate all rules before deciding.',
+                answer: 'stateful',
+                hint: 'Opposite of stateless',
+                tip: 'Security Groups: Stateful (return traffic auto-allowed). NACLs: Stateless.',
+                aliases: ['stateful']
+            },
+            {
+                category: 'security',
+                text: 'NACLs are <span class="blank" id="blank"></span> and process rules in order.',
+                answer: 'stateless',
+                hint: 'Opposite of stateful',
+                tip: 'NACLs: Stateless, rules numbered, processed in order. First match wins.',
+                aliases: ['stateless']
+            },
+            {
+                category: 'security',
+                text: 'AWS <span class="blank" id="blank"></span> provides DDoS protection at no extra cost.',
+                answer: 'Shield Standard',
+                hint: 'Free tier of protection service',
+                tip: 'Shield Standard: Free, automatic. Shield Advanced: $3000/mo, 24/7 DRT.',
+                aliases: ['shield standard', 'shield', 'aws shield standard']
+            },
+            {
+                category: 'security',
+                text: '<span class="blank" id="blank"></span> manages database credentials with automatic rotation.',
+                answer: 'Secrets Manager',
+                hint: 'Manages secrets, not parameters',
+                tip: 'Secrets Manager: Auto-rotation, RDS integration. Parameter Store: No rotation.',
+                aliases: ['secrets manager', 'aws secrets manager', 'secretsmanager']
+            },
+            {
+                category: 'security',
+                text: 'KMS can encrypt data up to <span class="blank" id="blank"></span> KB directly.',
+                answer: '4',
+                hint: 'Very small amount',
+                tip: 'KMS: 4KB direct encryption. For larger: envelope encryption (data key).',
+                aliases: ['4', '4kb', '4 kb', 'four']
+            },
+            
+            // Limits
+            {
+                category: 'limits',
+                text: 'SQS messages can be up to <span class="blank" id="blank"></span> KB.',
+                answer: '256',
+                hint: '2^8',
+                tip: 'SQS: 256KB per message. For larger: store in S3, send reference.',
+                aliases: ['256', '256kb', '256 kb']
+            },
+            {
+                category: 'limits',
+                text: 'SQS messages can be retained for up to <span class="blank" id="blank"></span> days.',
+                answer: '14',
+                hint: 'Two weeks',
+                tip: 'SQS retention: 1 minute to 14 days. Default: 4 days.',
+                aliases: ['14', 'fourteen', '14 days']
+            },
+            {
+                category: 'limits',
+                text: 'SQS FIFO queues support <span class="blank" id="blank"></span> messages per second.',
+                answer: '300',
+                hint: 'Three hundred (without batching)',
+                tip: 'FIFO: 300 msg/s (3000 with batching). Standard: unlimited throughput.',
+                aliases: ['300', '3000', 'three hundred']
+            },
+            {
+                category: 'limits',
+                text: 'CloudFront Functions have a maximum execution time of <span class="blank" id="blank"></span> ms.',
+                answer: '1',
+                hint: 'The smallest unit',
+                tip: 'CloudFront Functions: <1ms, viewer request/response. Lambda@Edge: 5-30s.',
+                aliases: ['1', '1ms', 'one', '1 ms']
+            },
+            {
+                category: 'limits',
+                text: 'Lambda /tmp storage can be up to <span class="blank" id="blank"></span> GB.',
+                answer: '10',
+                hint: 'Same as Lambda memory max',
+                tip: 'Lambda /tmp: 512MB to 10GB (configurable). For persistent: use EFS.',
+                aliases: ['10', '10gb', '10 gb', 'ten']
+            }
+        ];
+        
+        let currentQuestions = [...questions];
+        let currentIndex = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let answered = false;
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        function filterCategory(category) {
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase() === category || 
+                    (category === 'all' && btn.textContent === 'All'));
+            });
+            
+            if (category === 'all') {
+                currentQuestions = shuffleArray([...questions]);
+            } else {
+                currentQuestions = shuffleArray(questions.filter(q => q.category === category));
+            }
+            
+            currentIndex = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            updateScore();
+            loadQuestion();
+        }
+        
+        function loadQuestion() {
+            if (currentIndex >= currentQuestions.length) {
+                showComplete();
+                return;
+            }
+            
+            const q = currentQuestions[currentIndex];
+            document.getElementById('questionNumber').textContent = `Q${currentIndex + 1}`;
+            document.getElementById('questionCategory').textContent = q.category.toUpperCase();
+            document.getElementById('questionText').innerHTML = q.text;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').disabled = false;
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('feedback').classList.remove('show', 'correct', 'wrong');
+            document.getElementById('nextBtn').classList.remove('show');
+            answered = false;
+            
+            updateProgress();
+            document.getElementById('answerInput').focus();
+        }
+        
+        function updateProgress() {
+            const percent = (currentIndex / currentQuestions.length) * 100;
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = `${currentIndex}/${currentQuestions.length}`;
+        }
+        
+        function updateScore() {
+            document.getElementById('correctCount').textContent = correctCount;
+            document.getElementById('wrongCount').textContent = wrongCount;
+        }
+        
+        function submitAnswer() {
+            if (answered) return;
+            
+            const input = document.getElementById('answerInput').value.trim().toLowerCase();
+            const q = currentQuestions[currentIndex];
+            const isCorrect = q.aliases.some(a => a.toLowerCase() === input);
+            
+            const blank = document.getElementById('blank');
+            const feedback = document.getElementById('feedback');
+            
+            answered = true;
+            document.getElementById('answerInput').disabled = true;
+            document.getElementById('submitBtn').disabled = true;
+            
+            if (isCorrect) {
+                correctCount++;
+                blank.textContent = q.answer;
+                blank.classList.add('correct');
+                feedback.innerHTML = `<strong>✓ Correct!</strong><div class="feedback-tip">💡 ${q.tip}</div>`;
+                feedback.classList.add('correct');
+            } else {
+                wrongCount++;
+                blank.textContent = q.answer;
+                blank.classList.add('wrong');
+                feedback.innerHTML = `<strong>✗ The answer is: <span class="feedback-answer">${q.answer}</span></strong><div class="feedback-tip">💡 ${q.tip}</div>`;
+                feedback.classList.add('wrong');
+            }
+            
+            feedback.classList.add('show');
+            document.getElementById('nextBtn').classList.add('show');
+            updateScore();
+        }
+        
+        function showHint() {
+            const q = currentQuestions[currentIndex];
+            alert(`💡 Hint: ${q.hint}`);
+        }
+        
+        function nextQuestion() {
+            currentIndex++;
+            loadQuestion();
+        }
+        
+        function showComplete() {
+            const card = document.getElementById('questionCard');
+            const percentage = Math.round((correctCount / currentQuestions.length) * 100);
+            let message = '';
+            
+            if (percentage >= 80) {
+                message = '🎉 Amazing! You\'re ready for the exam!';
+            } else if (percentage >= 60) {
+                message = '💪 Good progress! Review the ones you missed.';
+            } else {
+                message = '📚 Keep studying! Practice makes perfect.';
+            }
+            
+            card.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🏆</div>
+                    <h2 style="font-size: 2rem; margin-bottom: 15px;">Session Complete!</h2>
+                    <p style="font-size: 1.5rem; color: var(--accent-green); margin-bottom: 10px;">
+                        Score: ${correctCount}/${currentQuestions.length} (${percentage}%)
+                    </p>
+                    <p style="color: var(--text-secondary); margin-bottom: 30px;">${message}</p>
+                    <button onclick="location.reload()" class="submit-btn">Try Again</button>
+                </div>
+            `;
+        }
+        
+        // Keyboard shortcuts
+        document.getElementById('answerInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (!answered) {
+                    submitAnswer();
+                } else {
+                    nextQuestion();
+                }
+            }
+        });
+        
+        // Initialize
+        currentQuestions = shuffleArray([...questions]);
+        loadQuestion();
+    </script>
+</body>
+</html>

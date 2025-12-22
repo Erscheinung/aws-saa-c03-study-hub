@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deduction Trainer | AWS SAA-C03</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #1a2332;
+            --accent-orange: #ff6b35;
+            --accent-blue: #4facfe;
+            --accent-green: #00f5a0;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3748;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .back-btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--accent-blue);
+            background: transparent;
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        /* Strategy Cards */
+        .strategy-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .strategy-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .strategy-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .strategy-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+        
+        .strategy-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Progress */
+        .progress-bar {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .progress-fill-container {
+            flex: 1;
+            height: 10px;
+            background: var(--bg-primary);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-green));
+            transition: width 0.5s;
+        }
+        
+        .progress-text {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-blue);
+        }
+        
+        /* Question Area */
+        .question-area {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .question-number {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-orange);
+        }
+        
+        .difficulty {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .difficulty.easy { background: rgba(0,245,160,0.2); color: var(--accent-green); }
+        .difficulty.medium { background: rgba(251,191,36,0.2); color: var(--accent-yellow); }
+        .difficulty.hard { background: rgba(239,68,68,0.2); color: var(--accent-red); }
+        
+        .scenario {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+        
+        .keyword {
+            background: rgba(255,107,53,0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: var(--accent-orange);
+            font-weight: 500;
+        }
+        
+        /* Options */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 18px 20px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .option:hover:not(.disabled) {
+            border-color: var(--accent-blue);
+        }
+        
+        .option.eliminated {
+            opacity: 0.4;
+            text-decoration: line-through;
+            border-style: dashed;
+        }
+        
+        .option.selected {
+            border-color: var(--accent-orange);
+            background: rgba(255,107,53,0.1);
+        }
+        
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(0,245,160,0.1);
+        }
+        
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239,68,68,0.1);
+        }
+        
+        .option.disabled {
+            cursor: default;
+        }
+        
+        .option-letter {
+            width: 30px;
+            height: 30px;
+            background: var(--bg-card);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .option-text {
+            flex: 1;
+        }
+        
+        .eliminate-btn {
+            padding: 5px 12px;
+            border-radius: 15px;
+            border: 1px solid var(--accent-red);
+            background: transparent;
+            color: var(--accent-red);
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .option:hover .eliminate-btn {
+            opacity: 1;
+        }
+        
+        .option.eliminated .eliminate-btn,
+        .option.disabled .eliminate-btn {
+            display: none;
+        }
+        
+        /* Action Buttons */
+        .actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+        
+        .action-btn {
+            padding: 12px 25px;
+            border-radius: 30px;
+            border: 2px solid;
+            background: transparent;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn.submit {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        
+        .action-btn.submit:hover {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        .action-btn.hint {
+            border-color: var(--accent-yellow);
+            color: var(--accent-yellow);
+        }
+        
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Explanation */
+        .explanation {
+            margin-top: 25px;
+            padding: 25px;
+            background: rgba(79,172,254,0.1);
+            border-radius: 16px;
+            border: 1px solid var(--accent-blue);
+            display: none;
+        }
+        
+        .explanation.show { display: block; }
+        
+        .explanation-title {
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        
+        .deduction-step {
+            display: flex;
+            gap: 12px;
+            margin: 12px 0;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+        }
+        
+        .step-number {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        
+        .step-text {
+            flex: 1;
+        }
+        
+        .step-text .eliminate {
+            color: var(--accent-red);
+            font-weight: 500;
+        }
+        
+        .step-text .keep {
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+        
+        .next-btn {
+            display: block;
+            margin-top: 20px;
+            padding: 15px 40px;
+            border-radius: 30px;
+            border: 2px solid var(--accent-orange);
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255,107,53,0.3);
+        }
+        
+        @media (max-width: 600px) {
+            .strategy-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .option {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Deduction Trainer</h1>
+            <a href="../index.html" class="back-btn">← Back to Hub</a>
+        </header>
+        
+        <div class="strategy-cards">
+            <div class="strategy-card">
+                <div class="strategy-icon">🚫</div>
+                <div class="strategy-title">Impossible Specs</div>
+                <div class="strategy-desc">Eliminate options with wrong limits or features</div>
+            </div>
+            <div class="strategy-card">
+                <div class="strategy-icon">🎯</div>
+                <div class="strategy-title">Keyword Match</div>
+                <div class="strategy-desc">Look for "cost-effective", "least effort", etc.</div>
+            </div>
+            <div class="strategy-card">
+                <div class="strategy-icon">⚡</div>
+                <div class="strategy-title">Service Fit</div>
+                <div class="strategy-desc">Match service capabilities to requirements</div>
+            </div>
+            <div class="strategy-card">
+                <div class="strategy-icon">🔄</div>
+                <div class="strategy-title">Complexity Check</div>
+                <div class="strategy-desc">Overly complex solutions are usually wrong</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill-container">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text" id="progressText">0/0</div>
+        </div>
+        
+        <div class="question-area" id="questionArea">
+            <!-- Question loaded dynamically -->
+        </div>
+    </div>
+    
+    <script>
+        const questions = [
+            {
+                difficulty: 'easy',
+                scenario: 'A company needs to run <span class="keyword">batch processing</span> jobs that can be <span class="keyword">interrupted</span>. They want the <span class="keyword">most cost-effective</span> EC2 solution.',
+                options: [
+                    { letter: 'A', text: 'On-Demand Instances', eliminate: true, reason: 'On-Demand is full price - not cost-effective for interruptible workloads' },
+                    { letter: 'B', text: 'Reserved Instances (1-year)', eliminate: true, reason: 'Reserved requires commitment and is for steady-state, not batch' },
+                    { letter: 'C', text: 'Spot Instances', correct: true, reason: 'Spot is up to 90% cheaper and perfect for interruptible batch jobs' },
+                    { letter: 'D', text: 'Dedicated Hosts', eliminate: true, reason: 'Dedicated Hosts are the most expensive option - compliance use case' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "batch processing", "interrupted", "cost-effective"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Dedicated Hosts = expensive, no cost benefit' },
+                    { step: '<span class="eliminate">Eliminate A</span>: On-Demand = full price, not "cost-effective"' },
+                    { step: '<span class="eliminate">Eliminate B</span>: Reserved = commitment, not flexible for batch' },
+                    { step: '<span class="keep">Keep C</span>: Spot Instances = up to 90% off, designed for interruptible workloads' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A web application needs to store session data with <span class="keyword">sub-millisecond latency</span>. The data should be <span class="keyword">highly available</span> and support <span class="keyword">automatic failover</span>.',
+                options: [
+                    { letter: 'A', text: 'DynamoDB with DAX', eliminate: false, reason: 'DAX provides microsecond latency but is DynamoDB-specific' },
+                    { letter: 'B', text: 'ElastiCache for Redis with Multi-AZ', correct: true, reason: 'Redis provides sub-ms latency, Multi-AZ gives HA with auto-failover' },
+                    { letter: 'C', text: 'RDS MySQL with Read Replicas', eliminate: true, reason: 'RDS has millisecond latency, not sub-millisecond' },
+                    { letter: 'D', text: 'S3 with Transfer Acceleration', eliminate: true, reason: 'S3 is object storage, not designed for session data or sub-ms latency' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "sub-millisecond", "highly available", "automatic failover"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: S3 is object storage, wrong use case for sessions' },
+                    { step: '<span class="eliminate">Eliminate C</span>: RDS has ms latency, not sub-ms; no auto-failover for reads' },
+                    { step: 'Compare A vs B: Both have sub-ms latency' },
+                    { step: '<span class="keep">Choose B</span>: Redis Multi-AZ has built-in auto-failover; sessions are key-value perfect fit' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A company needs to securely connect their on-premises data center to AWS VPC. They require <span class="keyword">consistent network performance</span> and <span class="keyword">bypass the public internet</span>.',
+                options: [
+                    { letter: 'A', text: 'AWS Site-to-Site VPN', eliminate: true, reason: 'VPN uses public internet, performance varies' },
+                    { letter: 'B', text: 'AWS Direct Connect', correct: true, reason: 'Dedicated connection bypasses internet with consistent performance' },
+                    { letter: 'C', text: 'VPC Peering', eliminate: true, reason: 'VPC Peering is between VPCs, not on-premises' },
+                    { letter: 'D', text: 'AWS Transit Gateway', eliminate: true, reason: 'Transit Gateway is for VPC connectivity, still needs underlying connection' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "consistent performance", "bypass public internet"' },
+                    { step: '<span class="eliminate">Eliminate C</span>: VPC Peering is VPC-to-VPC, not on-prem' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Transit Gateway needs Direct Connect or VPN underneath' },
+                    { step: '<span class="eliminate">Eliminate A</span>: VPN uses public internet = inconsistent performance' },
+                    { step: '<span class="keep">Keep B</span>: Direct Connect is dedicated, bypasses internet, consistent' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A serverless application uses Lambda functions triggered by API Gateway. The function needs to process requests that may take up to <span class="keyword">5 minutes</span>. Users should receive a response <span class="keyword">immediately</span>.',
+                options: [
+                    { letter: 'A', text: 'Increase Lambda timeout to 5 minutes and wait for completion', eliminate: true, reason: 'API Gateway has 29-second timeout - cannot wait 5 minutes' },
+                    { letter: 'B', text: 'Use Lambda with SQS - return immediately, process async', correct: true, reason: 'Async pattern: return acknowledgment immediately, process in background' },
+                    { letter: 'C', text: 'Use Step Functions with synchronous execution', eliminate: true, reason: 'Synchronous still blocked by API Gateway 29-second limit' },
+                    { letter: 'D', text: 'Use API Gateway with 5-minute timeout', eliminate: true, reason: 'API Gateway max timeout is 29 seconds - impossible configuration' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "5 minutes processing", "respond immediately" - contradiction needs async' },
+                    { step: '<span class="eliminate">Eliminate D</span>: API Gateway max is 29 seconds - this is IMPOSSIBLE' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Lambda 15-min limit OK, but API Gateway still blocks at 29s' },
+                    { step: '<span class="eliminate">Eliminate C</span>: Synchronous Step Functions still bound by API Gateway timeout' },
+                    { step: '<span class="keep">Keep B</span>: Async pattern - immediately return, SQS queues work for Lambda' }
+                ]
+            },
+            {
+                difficulty: 'easy',
+                scenario: 'An application stores files up to <span class="keyword">10 GB</span> in size. The storage solution must be <span class="keyword">cost-effective</span> and support <span class="keyword">infrequent access</span>.',
+                options: [
+                    { letter: 'A', text: 'S3 Standard', eliminate: true, reason: 'Standard is for frequent access - more expensive' },
+                    { letter: 'B', text: 'S3 Standard-IA', correct: true, reason: 'Infrequent Access tier is designed for this exact use case' },
+                    { letter: 'C', text: 'EBS gp3 volumes', eliminate: true, reason: 'EBS is block storage attached to EC2, not for file storage' },
+                    { letter: 'D', text: 'DynamoDB', eliminate: true, reason: 'DynamoDB has 400KB item limit - cannot store 10GB files' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "10 GB files", "infrequent access", "cost-effective"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: DynamoDB 400KB limit - IMPOSSIBLE for 10GB files' },
+                    { step: '<span class="eliminate">Eliminate C</span>: EBS is block storage, wrong service category' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Standard is for frequent access - not cost-effective here' },
+                    { step: '<span class="keep">Keep B</span>: S3-IA is literally named for this use case' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A global application requires <span class="keyword">single-digit millisecond</span> read latency across multiple regions. Data must be <span class="keyword">strongly consistent</span> for writes. Which database solution is most appropriate?',
+                options: [
+                    { letter: 'A', text: 'DynamoDB Global Tables', eliminate: true, reason: 'Global Tables use eventual consistency for cross-region replication' },
+                    { letter: 'B', text: 'Aurora Global Database', correct: true, reason: 'Aurora Global provides <1s replication and local reads with write forwarding' },
+                    { letter: 'C', text: 'ElastiCache Global Datastore', eliminate: true, reason: 'ElastiCache is caching, not primary database with strong consistency' },
+                    { letter: 'D', text: 'RDS with Cross-Region Read Replicas', eliminate: true, reason: 'Read replicas are async/eventually consistent, not strongly consistent' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "single-digit ms", "multiple regions", "strongly consistent writes"' },
+                    { step: '<span class="eliminate">Eliminate C</span>: ElastiCache is caching layer, not source of truth DB' },
+                    { step: '<span class="eliminate">Eliminate D</span>: RDS read replicas are async = eventual consistency' },
+                    { step: '<span class="eliminate">Eliminate A</span>: DynamoDB Global Tables cross-region = eventual consistency' },
+                    { step: '<span class="keep">Keep B</span>: Aurora Global has write forwarding for consistency, low-latency reads' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A company needs to protect their web application from <span class="keyword">SQL injection</span> and <span class="keyword">cross-site scripting (XSS)</span> attacks. The solution should be <span class="keyword">managed</span> with <span class="keyword">minimal operational overhead</span>.',
+                options: [
+                    { letter: 'A', text: 'AWS Shield Standard', eliminate: true, reason: 'Shield is for DDoS, not application-layer attacks like SQLi' },
+                    { letter: 'B', text: 'AWS WAF with managed rules', correct: true, reason: 'WAF provides SQLi and XSS protection with AWS-managed rule sets' },
+                    { letter: 'C', text: 'Security Groups with strict rules', eliminate: true, reason: 'Security Groups are L3/L4 (IP/port), cannot inspect HTTP content' },
+                    { letter: 'D', text: 'Custom Lambda@Edge validation', eliminate: true, reason: 'Custom code = high operational overhead, opposite of requirement' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "SQL injection", "XSS", "managed", "minimal overhead"' },
+                    { step: '<span class="eliminate">Eliminate C</span>: Security Groups are IP/port level, cannot detect SQLi' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Shield is DDoS protection, not app-layer attacks' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Custom Lambda = high operational overhead' },
+                    { step: '<span class="keep">Keep B</span>: WAF with managed rules = built-in SQLi/XSS, AWS maintains it' }
+                ]
+            },
+            {
+                difficulty: 'easy',
+                scenario: 'A company wants to encrypt data at rest in S3. They need to <span class="keyword">manage their own encryption keys</span> but don\'t want to handle the <span class="keyword">encryption process</span>.',
+                options: [
+                    { letter: 'A', text: 'SSE-S3', eliminate: true, reason: 'SSE-S3 uses Amazon-managed keys, not customer-managed' },
+                    { letter: 'B', text: 'SSE-KMS with customer managed key (CMK)', correct: true, reason: 'Customer manages key in KMS, S3 handles encryption' },
+                    { letter: 'C', text: 'SSE-C (Customer Provided Keys)', eliminate: true, reason: 'SSE-C requires customer to provide key with each request = more work' },
+                    { letter: 'D', text: 'Client-side encryption', eliminate: true, reason: 'Client-side = customer handles entire encryption process' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "manage own keys" BUT "don\'t handle encryption process"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: SSE-S3 = Amazon manages keys, not customer' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Client-side = customer does encryption (contradicts requirement)' },
+                    { step: '<span class="eliminate">Eliminate C</span>: SSE-C requires providing key each time = more operational work' },
+                    { step: '<span class="keep">Keep B</span>: SSE-KMS CMK = you manage key in KMS, S3 does encryption automatically' }
+                ]
+            }
+        ];
+        
+        let currentIndex = 0;
+        let eliminated = new Set();
+        let selected = null;
+        let answered = false;
+        
+        function loadQuestion() {
+            const q = questions[currentIndex];
+            eliminated = new Set();
+            selected = null;
+            answered = false;
+            
+            const area = document.getElementById('questionArea');
+            
+            area.innerHTML = `
+                <div class="question-header">
+                    <span class="question-number">Question ${currentIndex + 1} of ${questions.length}</span>
+                    <span class="difficulty ${q.difficulty}">${q.difficulty.toUpperCase()}</span>
+                </div>
+                <div class="scenario">${q.scenario}</div>
+                <div class="options" id="optionsContainer">
+                    ${q.options.map((opt, i) => `
+                        <div class="option" data-index="${i}" onclick="selectOption(${i})">
+                            <div class="option-letter">${opt.letter}</div>
+                            <div class="option-text">${opt.text}</div>
+                            <button class="eliminate-btn" onclick="eliminateOption(event, ${i})">✕ Eliminate</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="actions">
+                    <button class="action-btn submit" id="submitBtn" onclick="submitAnswer()" disabled>Submit Answer</button>
+                    <button class="action-btn hint" onclick="showHint()">💡 Show Hint</button>
+                </div>
+                <div class="explanation" id="explanation"></div>
+            `;
+            
+            updateProgress();
+        }
+        
+        function updateProgress() {
+            const percent = (currentIndex / questions.length) * 100;
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = `${currentIndex}/${questions.length}`;
+        }
+        
+        function selectOption(index) {
+            if (answered || eliminated.has(index)) return;
+            
+            const options = document.querySelectorAll('.option');
+            options.forEach((opt, i) => {
+                opt.classList.remove('selected');
+            });
+            
+            options[index].classList.add('selected');
+            selected = index;
+            document.getElementById('submitBtn').disabled = false;
+        }
+        
+        function eliminateOption(event, index) {
+            event.stopPropagation();
+            if (answered) return;
+            
+            const option = document.querySelectorAll('.option')[index];
+            option.classList.add('eliminated');
+            eliminated.add(index);
+            
+            if (selected === index) {
+                selected = null;
+                option.classList.remove('selected');
+                document.getElementById('submitBtn').disabled = true;
+            }
+        }
+        
+        function showHint() {
+            const q = questions[currentIndex];
+            const wrongOptions = q.options.filter((opt, i) => opt.eliminate && !eliminated.has(i));
+            
+            if (wrongOptions.length > 0) {
+                const randomWrong = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+                const index = q.options.indexOf(randomWrong);
+                eliminateOption({ stopPropagation: () => {} }, index);
+            } else {
+                alert('No more hints available!');
+            }
+        }
+        
+        function submitAnswer() {
+            if (selected === null || answered) return;
+            answered = true;
+            
+            const q = questions[currentIndex];
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach((opt, i) => {
+                opt.classList.add('disabled');
+                if (q.options[i].correct) {
+                    opt.classList.add('correct');
+                } else if (i === selected && !q.options[i].correct) {
+                    opt.classList.add('wrong');
+                }
+            });
+            
+            const explanation = document.getElementById('explanation');
+            const isCorrect = q.options[selected].correct;
+            
+            explanation.innerHTML = `
+                <div class="explanation-title">${isCorrect ? '✓ Correct!' : '✗ Incorrect'} — Deduction Process:</div>
+                ${q.deduction.map((d, i) => `
+                    <div class="deduction-step">
+                        <div class="step-number">${i + 1}</div>
+                        <div class="step-text">${d.step}</div>
+                    </div>
+                `).join('')}
+                <button class="next-btn" onclick="nextQuestion()">
+                    ${currentIndex < questions.length - 1 ? 'Next Question →' : 'Finish 🎉'}
+                </button>
+            `;
+            explanation.classList.add('show');
+            
+            document.getElementById('submitBtn').disabled = true;
+        }
+        
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex >= questions.length) {
+                showComplete();
+            } else {
+                loadQuestion();
+            }
+        }
+        
+        function showComplete() {
+            const area = document.getElementById('questionArea');
+            area.innerHTML = `
+                <div style="text-align: center; padding: 50px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🎯</div>
+                    <h2 style="font-size: 2rem; margin-bottom: 15px;">Training Complete!</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                        You've practiced the deduction strategies. Remember:<br><br>
+                        1️⃣ Look for impossible specs (wrong limits, wrong service)<br>
+                        2️⃣ Match keywords to service capabilities<br>
+                        3️⃣ Overly complex = usually wrong<br>
+                        4️⃣ Trust your elimination process
+                    </p>
+                    <button class="next-btn" onclick="location.reload()">Practice Again</button>
+                </div>
+            `;
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = `${questions.length}/${questions.length}`;
+        }
+        
+        // Initialize
+        loadQuestion();
+    </script>
+</body>
+</html>

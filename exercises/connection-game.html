@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Game | AWS SAA-C03</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #1a2332;
+            --accent-orange: #ff6b35;
+            --accent-blue: #4facfe;
+            --accent-green: #00f5a0;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3748;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .back-btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--accent-blue);
+            background: transparent;
+            color: var(--accent-blue);
+            font-family: inherit;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        /* Game Mode Tabs */
+        .game-modes {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .mode-btn {
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .mode-btn:hover,
+        .mode-btn.active {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+        
+        /* Score Display */
+        .score-bar {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .score-item {
+            text-align: center;
+        }
+        
+        .score-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .score-value.correct { color: var(--accent-green); }
+        .score-value.streak { color: var(--accent-orange); }
+        .score-value.timer { color: var(--accent-blue); }
+        
+        .score-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Game Area */
+        .game-area {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            min-height: 400px;
+        }
+        
+        /* Mode 1: Match Pairs */
+        .match-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        
+        .match-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .match-item {
+            background: var(--bg-primary);
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid var(--border-color);
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .match-item:hover {
+            border-color: var(--accent-blue);
+        }
+        
+        .match-item.selected {
+            border-color: var(--accent-orange);
+            background: rgba(255,107,53,0.1);
+        }
+        
+        .match-item.correct {
+            border-color: var(--accent-green);
+            background: rgba(0,245,160,0.1);
+            cursor: default;
+        }
+        
+        .match-item.wrong {
+            animation: shake 0.3s;
+            border-color: var(--accent-red);
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .match-item-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .match-item-hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .match-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--accent-orange);
+            opacity: 0.5;
+        }
+        
+        /* Mode 2: Find the Link */
+        .link-game {
+            text-align: center;
+        }
+        
+        .link-services {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        
+        .link-service {
+            background: var(--bg-primary);
+            padding: 25px 35px;
+            border-radius: 16px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .link-service-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .link-service-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .link-question {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        
+        .link-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .link-option {
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .link-option:hover {
+            border-color: var(--accent-blue);
+            background: rgba(79,172,254,0.1);
+        }
+        
+        .link-option.correct {
+            border-color: var(--accent-green);
+            background: rgba(0,245,160,0.2);
+            color: var(--accent-green);
+        }
+        
+        .link-option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239,68,68,0.2);
+            color: var(--accent-red);
+        }
+        
+        /* Mode 3: Category Sort */
+        .sort-game {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .sort-item {
+            background: var(--bg-primary);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .sort-item-name {
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+        
+        .sort-item-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .sort-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .sort-category {
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .sort-category:hover {
+            border-color: var(--accent-blue);
+        }
+        
+        .sort-category.correct {
+            border-color: var(--accent-green);
+            background: rgba(0,245,160,0.2);
+        }
+        
+        .sort-category.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239,68,68,0.2);
+        }
+        
+        /* Feedback Toast */
+        .feedback-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-weight: 600;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .feedback-toast.show { display: block; animation: slideUp 0.3s ease; }
+        .feedback-toast.correct {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        .feedback-toast.wrong {
+            background: var(--accent-red);
+            color: white;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        /* Next Button */
+        .next-btn {
+            display: block;
+            margin: 30px auto 0;
+            padding: 15px 40px;
+            border-radius: 30px;
+            border: 2px solid var(--accent-green);
+            background: transparent;
+            color: var(--accent-green);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .next-btn:hover {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* Explanation */
+        .explanation {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(79,172,254,0.1);
+            border-radius: 12px;
+            border: 1px solid var(--accent-blue);
+        }
+        
+        .explanation-title {
+            color: var(--accent-blue);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .match-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .match-divider {
+                transform: rotate(90deg);
+            }
+            
+            .link-services {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 Connection Game</h1>
+            <a href="../index.html" class="back-btn">← Back to Hub</a>
+        </header>
+        
+        <div class="game-modes">
+            <button class="mode-btn active" onclick="setMode('match')">🎯 Match Pairs</button>
+            <button class="mode-btn" onclick="setMode('link')">🔍 Find the Link</button>
+            <button class="mode-btn" onclick="setMode('sort')">📦 Category Sort</button>
+        </div>
+        
+        <div class="score-bar">
+            <div class="score-item">
+                <div class="score-value correct" id="correctScore">0</div>
+                <div class="score-label">Correct</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value streak" id="streakScore">0</div>
+                <div class="score-label">Streak 🔥</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value timer" id="timerDisplay">0:00</div>
+                <div class="score-label">Time</div>
+            </div>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <!-- Game content loaded dynamically -->
+        </div>
+        
+        <div class="feedback-toast" id="feedbackToast"></div>
+    </div>
+    
+    <script>
+        let currentMode = 'match';
+        let correctCount = 0;
+        let streak = 0;
+        let timer = 0;
+        let timerInterval = null;
+        let selectedItem = null;
+        
+        // Match Pairs Data
+        const matchPairs = [
+            { service: 'Lambda', match: '15 min timeout', hint: 'Serverless compute' },
+            { service: 'API Gateway', match: '29 sec timeout', hint: 'REST APIs' },
+            { service: 'S3 Object', match: '5 TB max', hint: 'Object storage' },
+            { service: 'EBS Volume', match: '64 TB max', hint: 'Block storage' },
+            { service: 'SQS Message', match: '256 KB max', hint: 'Message queue' },
+            { service: 'DynamoDB Item', match: '400 KB max', hint: 'NoSQL' },
+            { service: 'Aurora', match: '15 replicas', hint: 'Cloud DB' },
+            { service: 'RDS', match: '5 replicas', hint: 'Relational DB' },
+            { service: 'Lambda Memory', match: '10 GB max', hint: 'Resource limit' },
+            { service: 'VPC CIDR', match: '/16 to /28', hint: 'Network range' },
+            { service: 'Shield Standard', match: 'Free DDoS', hint: 'Security' },
+            { service: 'Shield Advanced', match: '$3000/month', hint: '24/7 DRT' },
+            { service: 'FIFO Queue', match: '300 msg/sec', hint: 'Ordered delivery' },
+            { service: 'Standard Queue', match: 'Unlimited throughput', hint: 'Best effort order' },
+            { service: 'Glacier Instant', match: 'Milliseconds retrieval', hint: 'Archive access' },
+            { service: 'Glacier Deep', match: '12-48 hour retrieval', hint: 'Cold storage' }
+        ];
+        
+        // Find the Link Data
+        const linkQuestions = [
+            {
+                services: [
+                    { icon: '🪣', name: 'S3' },
+                    { icon: '🌍', name: 'CloudFront' }
+                ],
+                question: 'What connects these services for secure content delivery?',
+                answer: 'OAC',
+                options: ['OAC', 'VPC Endpoint', 'Direct Connect', 'NAT Gateway'],
+                explanation: 'Origin Access Control (OAC) allows CloudFront to securely access S3 while keeping the bucket private.'
+            },
+            {
+                services: [
+                    { icon: '🖥️', name: 'EC2' },
+                    { icon: '📈', name: 'Auto Scaling' }
+                ],
+                question: 'What triggers Auto Scaling based on EC2 metrics?',
+                answer: 'CloudWatch Alarms',
+                options: ['CloudWatch Alarms', 'EventBridge', 'SNS', 'SQS'],
+                explanation: 'CloudWatch Alarms monitor metrics and trigger Auto Scaling policies based on thresholds.'
+            },
+            {
+                services: [
+                    { icon: 'λ', name: 'Lambda' },
+                    { icon: '📬', name: 'SQS' }
+                ],
+                question: 'What pattern describes Lambda processing SQS messages?',
+                answer: 'Event-driven decoupling',
+                options: ['Event-driven decoupling', 'Synchronous invocation', 'Direct integration', 'Batch processing'],
+                explanation: 'Lambda polls SQS for messages, enabling asynchronous, decoupled architectures.'
+            },
+            {
+                services: [
+                    { icon: '🗄️', name: 'RDS' },
+                    { icon: '🗝️', name: 'Secrets Manager' }
+                ],
+                question: 'What feature connects these for credential management?',
+                answer: 'Automatic rotation',
+                options: ['Automatic rotation', 'IAM authentication', 'KMS encryption', 'VPC endpoints'],
+                explanation: 'Secrets Manager can automatically rotate RDS credentials without application changes.'
+            },
+            {
+                services: [
+                    { icon: '🛡️', name: 'WAF' },
+                    { icon: '⚖️', name: 'ALB' }
+                ],
+                question: 'What protection do they provide together at Layer 7?',
+                answer: 'SQL injection & XSS',
+                options: ['SQL injection & XSS', 'DDoS only', 'IP filtering', 'SSL termination'],
+                explanation: 'WAF attached to ALB filters malicious requests including SQL injection and cross-site scripting.'
+            },
+            {
+                services: [
+                    { icon: '📡', name: 'Kinesis' },
+                    { icon: '📊', name: 'Redshift' }
+                ],
+                question: 'Which Kinesis component delivers data to Redshift?',
+                answer: 'Firehose',
+                options: ['Firehose', 'Data Streams', 'Analytics', 'Video Streams'],
+                explanation: 'Kinesis Firehose automatically delivers streaming data to destinations like Redshift and S3.'
+            },
+            {
+                services: [
+                    { icon: '🌐', name: 'VPC' },
+                    { icon: '🪣', name: 'S3' }
+                ],
+                question: 'What allows private access from VPC to S3?',
+                answer: 'Gateway Endpoint',
+                options: ['Gateway Endpoint', 'NAT Gateway', 'Internet Gateway', 'Transit Gateway'],
+                explanation: 'S3 Gateway Endpoint provides free, private access to S3 without internet traffic.'
+            },
+            {
+                services: [
+                    { icon: '✨', name: 'Aurora' },
+                    { icon: '🌍', name: 'Global' }
+                ],
+                question: 'What Aurora feature provides cross-region disaster recovery?',
+                answer: 'Aurora Global Database',
+                options: ['Aurora Global Database', 'Multi-AZ', 'Read Replicas', 'Database cloning'],
+                explanation: 'Aurora Global Database replicates across regions with <1 second lag for DR.'
+            }
+        ];
+        
+        // Category Sort Data
+        const sortQuestions = [
+            { name: 'Lambda', category: 'Compute', desc: 'Serverless functions, 15 min timeout' },
+            { name: 'EFS', category: 'Storage', desc: 'NFS file system for Linux' },
+            { name: 'Aurora', category: 'Database', desc: 'Cloud-native MySQL/PostgreSQL' },
+            { name: 'WAF', category: 'Security', desc: 'Web Application Firewall' },
+            { name: 'SQS', category: 'Integration', desc: 'Message queue service' },
+            { name: 'Fargate', category: 'Compute', desc: 'Serverless containers' },
+            { name: 'Glacier', category: 'Storage', desc: 'Archive storage' },
+            { name: 'ElastiCache', category: 'Database', desc: 'In-memory caching' },
+            { name: 'KMS', category: 'Security', desc: 'Key management service' },
+            { name: 'EventBridge', category: 'Integration', desc: 'Event bus service' },
+            { name: 'ECS', category: 'Compute', desc: 'Container orchestration' },
+            { name: 'S3', category: 'Storage', desc: 'Object storage' },
+            { name: 'DynamoDB', category: 'Database', desc: 'NoSQL key-value store' },
+            { name: 'Cognito', category: 'Security', desc: 'User authentication' },
+            { name: 'SNS', category: 'Integration', desc: 'Pub/sub messaging' },
+            { name: 'Batch', category: 'Compute', desc: 'Batch computing workloads' },
+            { name: 'FSx', category: 'Storage', desc: 'Managed file systems' },
+            { name: 'Redshift', category: 'Database', desc: 'Data warehouse' },
+            { name: 'GuardDuty', category: 'Security', desc: 'Threat detection' },
+            { name: 'Step Functions', category: 'Integration', desc: 'Workflow orchestration' }
+        ];
+        
+        const categories = ['Compute', 'Storage', 'Database', 'Security', 'Integration'];
+        
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(mode));
+            });
+            resetGame();
+            loadGame();
+        }
+        
+        function resetGame() {
+            correctCount = 0;
+            streak = 0;
+            timer = 0;
+            updateScores();
+            startTimer();
+        }
+        
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer++;
+                const mins = Math.floor(timer / 60);
+                const secs = timer % 60;
+                document.getElementById('timerDisplay').textContent = 
+                    `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function updateScores() {
+            document.getElementById('correctScore').textContent = correctCount;
+            document.getElementById('streakScore').textContent = streak;
+        }
+        
+        function showFeedback(isCorrect, message) {
+            const toast = document.getElementById('feedbackToast');
+            toast.textContent = message;
+            toast.className = 'feedback-toast show ' + (isCorrect ? 'correct' : 'wrong');
+            setTimeout(() => toast.classList.remove('show'), 1500);
+        }
+        
+        function loadGame() {
+            const area = document.getElementById('gameArea');
+            
+            if (currentMode === 'match') {
+                loadMatchGame(area);
+            } else if (currentMode === 'link') {
+                loadLinkGame(area);
+            } else if (currentMode === 'sort') {
+                loadSortGame(area);
+            }
+        }
+        
+        // MATCH GAME
+        let matchState = { pairs: [], matched: 0 };
+        
+        function loadMatchGame(area) {
+            const shuffledPairs = [...matchPairs].sort(() => Math.random() - 0.5).slice(0, 6);
+            const services = shuffledPairs.map(p => ({ text: p.service, hint: p.hint, id: p.service }));
+            const matches = shuffledPairs.map(p => ({ text: p.match, id: p.service })).sort(() => Math.random() - 0.5);
+            
+            matchState = { pairs: shuffledPairs, matched: 0, total: 6 };
+            
+            area.innerHTML = `
+                <div class="match-grid">
+                    <div class="match-column" id="servicesColumn">
+                        ${services.map(s => `
+                            <div class="match-item" data-id="${s.id}" data-side="service" onclick="selectMatch(this)">
+                                <div class="match-item-title">${s.text}</div>
+                                <div class="match-item-hint">${s.hint}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="match-divider">⟷</div>
+                    <div class="match-column" id="matchesColumn">
+                        ${matches.map(m => `
+                            <div class="match-item" data-id="${m.id}" data-side="match" onclick="selectMatch(this)">
+                                <div class="match-item-title">${m.text}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function selectMatch(element) {
+            if (element.classList.contains('correct')) return;
+            
+            if (!selectedItem) {
+                selectedItem = element;
+                element.classList.add('selected');
+            } else {
+                if (selectedItem.dataset.side === element.dataset.side) {
+                    selectedItem.classList.remove('selected');
+                    selectedItem = element;
+                    element.classList.add('selected');
+                    return;
+                }
+                
+                const id1 = selectedItem.dataset.id;
+                const id2 = element.dataset.id;
+                
+                if (id1 === id2) {
+                    selectedItem.classList.remove('selected');
+                    selectedItem.classList.add('correct');
+                    element.classList.add('correct');
+                    correctCount++;
+                    streak++;
+                    matchState.matched++;
+                    showFeedback(true, '✓ Match!');
+                    
+                    if (matchState.matched === matchState.total) {
+                        setTimeout(() => {
+                            showFeedback(true, '🎉 All matched!');
+                            loadMatchGame(document.getElementById('gameArea'));
+                        }, 1000);
+                    }
+                } else {
+                    selectedItem.classList.remove('selected');
+                    selectedItem.classList.add('wrong');
+                    element.classList.add('wrong');
+                    streak = 0;
+                    showFeedback(false, '✗ Try again');
+                    
+                    setTimeout(() => {
+                        selectedItem.classList.remove('wrong');
+                        element.classList.remove('wrong');
+                    }, 500);
+                }
+                
+                selectedItem = null;
+                updateScores();
+            }
+        }
+        
+        // LINK GAME
+        let linkState = { index: 0, answered: false };
+        
+        function loadLinkGame(area) {
+            const shuffled = [...linkQuestions].sort(() => Math.random() - 0.5);
+            linkState = { questions: shuffled, index: 0, answered: false };
+            showLinkQuestion(area);
+        }
+        
+        function showLinkQuestion(area) {
+            if (linkState.index >= linkState.questions.length) {
+                linkState.index = 0;
+                linkState.questions.sort(() => Math.random() - 0.5);
+            }
+            
+            const q = linkState.questions[linkState.index];
+            linkState.answered = false;
+            
+            area.innerHTML = `
+                <div class="link-game">
+                    <div class="link-services">
+                        ${q.services.map(s => `
+                            <div class="link-service">
+                                <div class="link-service-icon">${s.icon}</div>
+                                <div class="link-service-name">${s.name}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="link-question">${q.question}</div>
+                    <div class="link-options" id="linkOptions">
+                        ${q.options.map(opt => `
+                            <button class="link-option" onclick="selectLinkAnswer(this, '${opt}', '${q.answer}')">${opt}</button>
+                        `).join('')}
+                    </div>
+                    <div class="explanation hidden" id="explanation">
+                        <div class="explanation-title">💡 Why?</div>
+                        <div>${q.explanation}</div>
+                    </div>
+                    <button class="next-btn hidden" id="nextLinkBtn" onclick="nextLinkQuestion()">Next Question →</button>
+                </div>
+            `;
+        }
+        
+        function selectLinkAnswer(element, selected, correct) {
+            if (linkState.answered) return;
+            linkState.answered = true;
+            
+            const options = document.querySelectorAll('.link-option');
+            options.forEach(opt => {
+                if (opt.textContent === correct) {
+                    opt.classList.add('correct');
+                } else if (opt === element && selected !== correct) {
+                    opt.classList.add('wrong');
+                }
+            });
+            
+            if (selected === correct) {
+                correctCount++;
+                streak++;
+                showFeedback(true, '✓ Correct!');
+            } else {
+                streak = 0;
+                showFeedback(false, '✗ Incorrect');
+            }
+            
+            updateScores();
+            document.getElementById('explanation').classList.remove('hidden');
+            document.getElementById('nextLinkBtn').classList.remove('hidden');
+        }
+        
+        function nextLinkQuestion() {
+            linkState.index++;
+            showLinkQuestion(document.getElementById('gameArea'));
+        }
+        
+        // SORT GAME
+        let sortState = { index: 0 };
+        
+        function loadSortGame(area) {
+            const shuffled = [...sortQuestions].sort(() => Math.random() - 0.5);
+            sortState = { questions: shuffled, index: 0 };
+            showSortQuestion(area);
+        }
+        
+        function showSortQuestion(area) {
+            if (sortState.index >= sortState.questions.length) {
+                sortState.index = 0;
+                sortState.questions.sort(() => Math.random() - 0.5);
+            }
+            
+            const q = sortState.questions[sortState.index];
+            
+            area.innerHTML = `
+                <div class="sort-game">
+                    <div class="sort-item">
+                        <div class="sort-item-name">${q.name}</div>
+                        <div class="sort-item-desc">${q.desc}</div>
+                    </div>
+                    <div class="sort-categories" id="sortCategories">
+                        ${categories.map(cat => `
+                            <button class="sort-category" onclick="selectCategory(this, '${cat}', '${q.category}')">${cat}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function selectCategory(element, selected, correct) {
+            const buttons = document.querySelectorAll('.sort-category');
+            buttons.forEach(btn => {
+                if (btn.textContent === correct) {
+                    btn.classList.add('correct');
+                } else if (btn === element && selected !== correct) {
+                    btn.classList.add('wrong');
+                }
+                btn.style.pointerEvents = 'none';
+            });
+            
+            if (selected === correct) {
+                correctCount++;
+                streak++;
+                showFeedback(true, '✓ Correct!');
+            } else {
+                streak = 0;
+                showFeedback(false, `✗ It's ${correct}`);
+            }
+            
+            updateScores();
+            
+            setTimeout(() => {
+                sortState.index++;
+                showSortQuestion(document.getElementById('gameArea'));
+            }, 1200);
+        }
+        
+        // Initialize
+        resetGame();
+        loadGame();
+    </script>
+</body>
+</html>
