@@ -562,6 +562,159 @@
                     { step: '<span class="eliminate">Eliminate C</span>: SSE-C requires providing key each time = more operational work' },
                     { step: '<span class="keep">Keep B</span>: SSE-KMS CMK = you manage key in KMS, S3 does encryption automatically' }
                 ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'An application needs to store files that will be accessed <span class="keyword">once or twice per month</span>. The company wants to <span class="keyword">minimize storage costs</span> but needs <span class="keyword">quick retrieval</span> when accessed.',
+                options: [
+                    { letter: 'A', text: 'S3 Standard', eliminate: true, reason: 'Standard is for frequently accessed data - higher cost for this use case' },
+                    { letter: 'B', text: 'S3 Standard-IA', correct: true, reason: 'Designed for infrequent access, lower storage cost, millisecond retrieval' },
+                    { letter: 'C', text: 'S3 Glacier Instant Retrieval', eliminate: true, reason: 'Good option but more expensive than Standard-IA for monthly access' },
+                    { letter: 'D', text: 'S3 Glacier Deep Archive', eliminate: true, reason: '12-48 hour retrieval time - not quick' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "once or twice per month", "minimize costs", "quick retrieval"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Deep Archive = 12-48 hours, NOT quick' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Standard = frequent access pricing, not cost-optimized here' },
+                    { step: 'Compare B vs C: Both have quick retrieval' },
+                    { step: '<span class="keep">Keep B</span>: Standard-IA is cheaper than Glacier Instant for this access pattern' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A company is migrating their on-premises message queue to AWS. The application uses <span class="keyword">JMS and AMQP protocols</span> and must <span class="keyword">minimize code changes</span>.',
+                options: [
+                    { letter: 'A', text: 'Amazon SQS', eliminate: true, reason: 'SQS uses AWS SDK, not JMS/AMQP - would require code changes' },
+                    { letter: 'B', text: 'Amazon SNS', eliminate: true, reason: 'SNS is pub/sub for notifications, not a message queue' },
+                    { letter: 'C', text: 'Amazon MQ', correct: true, reason: 'Managed ActiveMQ/RabbitMQ supporting JMS and AMQP protocols' },
+                    { letter: 'D', text: 'Amazon Kinesis', eliminate: true, reason: 'Kinesis is for streaming data, not traditional message queuing' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "JMS and AMQP protocols", "minimize code changes"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Kinesis = streaming service, different protocol entirely' },
+                    { step: '<span class="eliminate">Eliminate B</span>: SNS = pub/sub notifications, not message queue' },
+                    { step: '<span class="eliminate">Eliminate A</span>: SQS = proprietary AWS SDK, requires code changes' },
+                    { step: '<span class="keep">Keep C</span>: Amazon MQ = ActiveMQ/RabbitMQ, native JMS/AMQP support' }
+                ]
+            },
+            {
+                difficulty: 'easy',
+                scenario: 'A startup needs a <span class="keyword">simple, serverless</span> way to host a static website with <span class="keyword">global low latency</span>.',
+                options: [
+                    { letter: 'A', text: 'EC2 instances behind ALB', eliminate: true, reason: 'EC2 requires server management - not serverless' },
+                    { letter: 'B', text: 'S3 static hosting with CloudFront', correct: true, reason: 'Serverless, S3 for hosting, CloudFront for global edge caching' },
+                    { letter: 'C', text: 'Elastic Beanstalk', eliminate: true, reason: 'Beanstalk provisions EC2 - overhead for simple static site' },
+                    { letter: 'D', text: 'AWS Fargate', eliminate: true, reason: 'Fargate is for containers - overkill for static website' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "simple, serverless", "static website", "global low latency"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: EC2 = servers to manage, not serverless' },
+                    { step: '<span class="eliminate">Eliminate C</span>: Beanstalk = provisions infrastructure, overkill' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Fargate = containers, not needed for static files' },
+                    { step: '<span class="keep">Keep B</span>: S3 + CloudFront = serverless, global CDN, simple' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A company needs to analyze <span class="keyword">petabytes of data</span> stored in S3 using <span class="keyword">standard SQL queries</span>. They want to <span class="keyword">pay only when queries run</span>.',
+                options: [
+                    { letter: 'A', text: 'Amazon Redshift', eliminate: true, reason: 'Redshift requires provisioned clusters - ongoing costs even when not querying' },
+                    { letter: 'B', text: 'Amazon EMR', eliminate: true, reason: 'EMR requires cluster management and runs Spark/Hadoop, not pure SQL' },
+                    { letter: 'C', text: 'Amazon Athena', correct: true, reason: 'Serverless SQL queries on S3, pay per TB scanned, no infrastructure' },
+                    { letter: 'D', text: 'Amazon RDS', eliminate: true, reason: 'RDS is for transactional databases, not S3 analytics' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "petabytes in S3", "SQL queries", "pay when queries run"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: RDS = transactional DB, cannot query S3 directly' },
+                    { step: '<span class="eliminate">Eliminate B</span>: EMR = Spark/Hadoop, cluster management required' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Redshift = provisioned, costs even when idle' },
+                    { step: '<span class="keep">Keep C</span>: Athena = serverless SQL on S3, pay $5/TB scanned' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A healthcare application stores patient records in DynamoDB. The company needs to <span class="keyword">encrypt data with keys they fully control</span> for <span class="keyword">HIPAA compliance</span>. They need <span class="keyword">dedicated hardware</span> for key storage.',
+                options: [
+                    { letter: 'A', text: 'DynamoDB encryption with AWS managed key', eliminate: true, reason: 'AWS-managed keys dont provide customer control' },
+                    { letter: 'B', text: 'DynamoDB encryption with KMS CMK', eliminate: true, reason: 'KMS CMK is controlled by customer but runs on shared AWS hardware' },
+                    { letter: 'C', text: 'Client-side encryption with CloudHSM', correct: true, reason: 'CloudHSM provides dedicated FIPS 140-2 Level 3 hardware, full key control' },
+                    { letter: 'D', text: 'Client-side encryption with Secrets Manager', eliminate: true, reason: 'Secrets Manager stores secrets, not designed for encryption key management' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "fully control keys", "HIPAA", "dedicated hardware"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: AWS-managed = no customer control' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Secrets Manager = stores secrets, not encryption HSM' },
+                    { step: '<span class="eliminate">Eliminate B</span>: KMS = shared infrastructure, not dedicated hardware' },
+                    { step: '<span class="keep">Keep C</span>: CloudHSM = dedicated hardware, FIPS 140-2 Level 3, full control' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A company wants to <span class="keyword">automatically rotate</span> their RDS database credentials. The credentials should be <span class="keyword">automatically updated</span> in applications without downtime.',
+                options: [
+                    { letter: 'A', text: 'AWS Systems Manager Parameter Store', eliminate: true, reason: 'Parameter Store does not support automatic rotation' },
+                    { letter: 'B', text: 'AWS Secrets Manager', correct: true, reason: 'Built-in automatic rotation with Lambda, native RDS integration' },
+                    { letter: 'C', text: 'AWS IAM database authentication', eliminate: true, reason: 'IAM auth uses tokens, not credential rotation' },
+                    { letter: 'D', text: 'Store credentials in S3', eliminate: true, reason: 'S3 is storage, no rotation or secret management features' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "automatically rotate", "RDS credentials", "no downtime"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: S3 = just storage, no secret management' },
+                    { step: '<span class="eliminate">Eliminate C</span>: IAM auth = different auth method, not rotation' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Parameter Store = no automatic rotation' },
+                    { step: '<span class="keep">Keep B</span>: Secrets Manager = auto-rotation, RDS integration' }
+                ]
+            },
+            {
+                difficulty: 'easy',
+                scenario: 'An e-commerce application needs to cache <span class="keyword">user session data</span> with <span class="keyword">sub-millisecond latency</span>. The cache must support <span class="keyword">data persistence</span> and <span class="keyword">replication</span>.',
+                options: [
+                    { letter: 'A', text: 'ElastiCache for Memcached', eliminate: true, reason: 'Memcached does not support persistence or replication' },
+                    { letter: 'B', text: 'ElastiCache for Redis', correct: true, reason: 'Redis supports persistence, replication, and sub-ms latency' },
+                    { letter: 'C', text: 'DynamoDB with DAX', eliminate: true, reason: 'DAX is for DynamoDB caching, not general session caching' },
+                    { letter: 'D', text: 'RDS with read replicas', eliminate: true, reason: 'RDS has millisecond latency, not sub-millisecond' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "session data", "sub-millisecond", "persistence", "replication"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: RDS = milliseconds, not sub-millisecond' },
+                    { step: '<span class="eliminate">Eliminate C</span>: DAX = DynamoDB specific, not general caching' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Memcached = no persistence, no replication' },
+                    { step: '<span class="keep">Keep B</span>: Redis = sub-ms latency + persistence + replication' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A financial services company needs <span class="keyword">single-digit millisecond read latency</span> for a database across <span class="keyword">multiple AWS regions</span>. All writes must be <span class="keyword">strongly consistent</span> and go through the primary region.',
+                options: [
+                    { letter: 'A', text: 'DynamoDB Global Tables', eliminate: true, reason: 'Global Tables have eventual consistency across regions' },
+                    { letter: 'B', text: 'Aurora Global Database with write forwarding', correct: true, reason: 'Local reads with write forwarding to primary ensures consistency' },
+                    { letter: 'C', text: 'RDS Multi-AZ with cross-region read replicas', eliminate: true, reason: 'Cross-region replicas are async, eventual consistency' },
+                    { letter: 'D', text: 'ElastiCache Global Datastore', eliminate: true, reason: 'ElastiCache is for caching, not primary database' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "single-digit ms", "multiple regions", "strongly consistent writes"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: ElastiCache = caching layer, not source of truth' },
+                    { step: '<span class="eliminate">Eliminate C</span>: RDS cross-region = async replication, eventual' },
+                    { step: '<span class="eliminate">Eliminate A</span>: DynamoDB Global = eventual consistency cross-region' },
+                    { step: '<span class="keep">Keep B</span>: Aurora Global + write forwarding = consistent writes, fast local reads' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A company wants to block <span class="keyword">specific IP addresses</span> from accessing their VPC resources. The solution must be at the <span class="keyword">subnet level</span>.',
+                options: [
+                    { letter: 'A', text: 'Security Groups with deny rules', eliminate: true, reason: 'Security Groups cannot have deny rules - only allow rules' },
+                    { letter: 'B', text: 'Network ACLs with deny rules', correct: true, reason: 'NACLs support both allow and deny rules at subnet level' },
+                    { letter: 'C', text: 'AWS WAF', eliminate: true, reason: 'WAF works at application layer (Layer 7), not subnet level' },
+                    { letter: 'D', text: 'Route table modifications', eliminate: true, reason: 'Route tables control traffic destination, not IP blocking' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "block specific IPs", "subnet level"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Route tables = routing, not blocking' },
+                    { step: '<span class="eliminate">Eliminate C</span>: WAF = Layer 7, not subnet level' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Security Groups = ONLY allow rules, no deny' },
+                    { step: '<span class="keep">Keep B</span>: NACLs = subnet level, support deny rules' }
+                ]
             }
         ];
         
