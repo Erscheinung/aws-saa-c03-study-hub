@@ -475,7 +475,22 @@
             { service: 'FIFO Queue', match: '300 msg/sec', hint: 'Ordered delivery' },
             { service: 'Standard Queue', match: 'Unlimited throughput', hint: 'Best effort order' },
             { service: 'Glacier Instant', match: 'Milliseconds retrieval', hint: 'Archive access' },
-            { service: 'Glacier Deep', match: '12-48 hour retrieval', hint: 'Cold storage' }
+            { service: 'Glacier Deep', match: '12-48 hour retrieval', hint: 'Cold storage' },
+            { service: 'KMS Direct', match: '4 KB max', hint: 'Key encryption' },
+            { service: 'CloudTrail', match: '90 days default', hint: 'API audit' },
+            { service: 'Kinesis', match: '1-365 days retention', hint: 'Streaming' },
+            { service: 'Step Functions Standard', match: '1 year max', hint: 'Workflows' },
+            { service: 'Step Functions Express', match: '5 min max', hint: 'Fast workflows' },
+            { service: 'Aurora Storage', match: '128 TB max', hint: 'Cloud DB' },
+            { service: 'EBS gp3', match: '16,000 IOPS', hint: 'General purpose' },
+            { service: 'EBS io2', match: '64,000 IOPS', hint: 'High performance' },
+            { service: 'Direct Connect', match: '1 or 10 Gbps', hint: 'Dedicated link' },
+            { service: 'NAT Gateway', match: '45 Gbps', hint: 'Internet access' },
+            { service: 'Spot Instances', match: 'Up to 90% savings', hint: 'Interruptible' },
+            { service: 'Reserved Instances', match: 'Up to 72% savings', hint: '1-3 year commit' },
+            { service: 'Lambda Package', match: '250 MB unzipped', hint: 'Deployment limit' },
+            { service: 'ALB', match: 'Layer 7 (HTTP)', hint: 'Load balancer' },
+            { service: 'NLB', match: 'Layer 4 (TCP)', hint: 'Load balancer' }
         ];
         
         // Find the Link Data
@@ -559,6 +574,96 @@
                 answer: 'Aurora Global Database',
                 options: ['Aurora Global Database', 'Multi-AZ', 'Read Replicas', 'Database cloning'],
                 explanation: 'Aurora Global Database replicates across regions with <1 second lag for DR.'
+            },
+            {
+                services: [
+                    { icon: '🔐', name: 'IAM' },
+                    { icon: '🌐', name: 'Cross-Account' }
+                ],
+                question: 'How do you grant access to resources in another AWS account?',
+                answer: 'IAM Role with AssumeRole',
+                options: ['IAM Role with AssumeRole', 'IAM User sharing', 'VPC Peering', 'Resource-based policy only'],
+                explanation: 'IAM Roles with STS AssumeRole is the secure way to grant cross-account access.'
+            },
+            {
+                services: [
+                    { icon: '📊', name: 'CloudWatch' },
+                    { icon: '📈', name: 'Auto Scaling' }
+                ],
+                question: 'What triggers Auto Scaling based on CloudWatch metrics?',
+                answer: 'CloudWatch Alarms',
+                options: ['CloudWatch Alarms', 'CloudWatch Events', 'CloudTrail', 'EventBridge Rules'],
+                explanation: 'CloudWatch Alarms monitor metrics and trigger Auto Scaling policies when thresholds are breached.'
+            },
+            {
+                services: [
+                    { icon: '🛡️', name: 'Shield' },
+                    { icon: '⚖️', name: 'CloudFront' }
+                ],
+                question: 'What combined protection do these services provide?',
+                answer: 'DDoS Protection',
+                options: ['DDoS Protection', 'SQL Injection', 'Data encryption', 'IAM authentication'],
+                explanation: 'Shield (Standard/Advanced) integrated with CloudFront provides comprehensive DDoS protection.'
+            },
+            {
+                services: [
+                    { icon: '🗄️', name: 'DynamoDB' },
+                    { icon: '⚡', name: 'DAX' }
+                ],
+                question: 'What does DAX provide for DynamoDB?',
+                answer: 'Microsecond read caching',
+                options: ['Microsecond read caching', 'Write optimization', 'Data encryption', 'Auto-scaling'],
+                explanation: 'DAX (DynamoDB Accelerator) is an in-memory cache that provides microsecond latency for reads.'
+            },
+            {
+                services: [
+                    { icon: '📧', name: 'SNS' },
+                    { icon: '📬', name: 'SQS' }
+                ],
+                question: 'What architectural pattern do these services implement together?',
+                answer: 'Fan-out',
+                options: ['Fan-out', 'Request-response', 'Saga pattern', 'CQRS'],
+                explanation: 'SNS + SQS enables the fan-out pattern where one message is delivered to multiple subscribers.'
+            },
+            {
+                services: [
+                    { icon: '🔒', name: 'KMS' },
+                    { icon: '🪣', name: 'S3' }
+                ],
+                question: 'Which S3 encryption option uses KMS-managed keys?',
+                answer: 'SSE-KMS',
+                options: ['SSE-KMS', 'SSE-S3', 'SSE-C', 'Client-side'],
+                explanation: 'SSE-KMS uses AWS KMS keys for encryption, providing audit trail via CloudTrail.'
+            },
+            {
+                services: [
+                    { icon: '🌐', name: 'Route 53' },
+                    { icon: '🏥', name: 'Health Check' }
+                ],
+                question: 'What Route 53 routing policy uses health checks for failover?',
+                answer: 'Failover routing',
+                options: ['Failover routing', 'Simple routing', 'Weighted routing', 'Geolocation'],
+                explanation: 'Failover routing uses health checks to route traffic to a secondary resource when primary fails.'
+            },
+            {
+                services: [
+                    { icon: '📝', name: 'CloudTrail' },
+                    { icon: '🪣', name: 'S3' }
+                ],
+                question: 'Why would you send CloudTrail logs to S3?',
+                answer: 'Long-term retention',
+                options: ['Long-term retention', 'Faster queries', 'Real-time alerts', 'Cost reduction'],
+                explanation: 'CloudTrail console keeps 90 days. S3 provides indefinite storage for compliance and auditing.'
+            },
+            {
+                services: [
+                    { icon: '🐳', name: 'ECS' },
+                    { icon: '🚀', name: 'Fargate' }
+                ],
+                question: 'What does Fargate provide for ECS?',
+                answer: 'Serverless containers',
+                options: ['Serverless containers', 'Container images', 'Service mesh', 'Load balancing'],
+                explanation: 'Fargate provides serverless compute for containers - no EC2 instances to manage.'
             }
         ];
         
@@ -583,7 +688,27 @@
             { name: 'FSx', category: 'Storage', desc: 'Managed file systems' },
             { name: 'Redshift', category: 'Database', desc: 'Data warehouse' },
             { name: 'GuardDuty', category: 'Security', desc: 'Threat detection' },
-            { name: 'Step Functions', category: 'Integration', desc: 'Workflow orchestration' }
+            { name: 'Step Functions', category: 'Integration', desc: 'Workflow orchestration' },
+            { name: 'EC2', category: 'Compute', desc: 'Virtual servers in the cloud' },
+            { name: 'EBS', category: 'Storage', desc: 'Block storage for EC2' },
+            { name: 'RDS', category: 'Database', desc: 'Managed relational database' },
+            { name: 'Shield', category: 'Security', desc: 'DDoS protection service' },
+            { name: 'Kinesis', category: 'Integration', desc: 'Real-time data streaming' },
+            { name: 'EKS', category: 'Compute', desc: 'Managed Kubernetes' },
+            { name: 'Storage Gateway', category: 'Storage', desc: 'Hybrid cloud storage' },
+            { name: 'DocumentDB', category: 'Database', desc: 'MongoDB-compatible DB' },
+            { name: 'Secrets Manager', category: 'Security', desc: 'Credential management' },
+            { name: 'MQ', category: 'Integration', desc: 'Message broker service' },
+            { name: 'Lightsail', category: 'Compute', desc: 'Simple VPS solution' },
+            { name: 'S3 Glacier', category: 'Storage', desc: 'Long-term archive storage' },
+            { name: 'Neptune', category: 'Database', desc: 'Graph database service' },
+            { name: 'IAM', category: 'Security', desc: 'Identity and access management' },
+            { name: 'API Gateway', category: 'Integration', desc: 'REST and WebSocket APIs' },
+            { name: 'Auto Scaling', category: 'Compute', desc: 'Automatic capacity scaling' },
+            { name: 'Instance Store', category: 'Storage', desc: 'Ephemeral block storage' },
+            { name: 'MemoryDB', category: 'Database', desc: 'Redis-compatible in-memory' },
+            { name: 'CloudHSM', category: 'Security', desc: 'Hardware security module' },
+            { name: 'AppSync', category: 'Integration', desc: 'GraphQL API service' }
         ];
         
         const categories = ['Compute', 'Storage', 'Database', 'Security', 'Integration'];
