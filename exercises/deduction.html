@@ -199,6 +199,29 @@
             opacity: 0.4;
             text-decoration: line-through;
             border-style: dashed;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .option.eliminated:hover {
+            opacity: 0.6;
+            border-color: var(--accent-yellow);
+        }
+
+        .option.eliminated::after {
+            content: '↻ Click to undo';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: var(--accent-yellow);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .option.eliminated:hover::after {
+            opacity: 1;
         }
         
         .option.selected {
@@ -959,26 +982,38 @@
         }
         
         function selectOption(index) {
-            if (answered || eliminated.has(index)) return;
-            
+            if (answered) return;
+
+            // If option is eliminated, uneliminate it instead of selecting
+            if (eliminated.has(index)) {
+                uneliminateOption(index);
+                return;
+            }
+
             const options = document.querySelectorAll('.option');
             options.forEach((opt, i) => {
                 opt.classList.remove('selected');
             });
-            
+
             options[index].classList.add('selected');
             selected = index;
             document.getElementById('submitBtn').disabled = false;
         }
         
+        function uneliminateOption(index) {
+            const option = document.querySelectorAll('.option')[index];
+            option.classList.remove('eliminated');
+            eliminated.delete(index);
+        }
+
         function eliminateOption(event, index) {
             event.stopPropagation();
             if (answered) return;
-            
+
             const option = document.querySelectorAll('.option')[index];
             option.classList.add('eliminated');
             eliminated.add(index);
-            
+
             if (selected === index) {
                 selected = null;
                 option.classList.remove('selected');

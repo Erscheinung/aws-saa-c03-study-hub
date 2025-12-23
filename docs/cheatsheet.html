@@ -898,6 +898,488 @@
                     </div>
                 </div>
             </div>
+
+            <!-- EFS LIMITS -->
+            <div class="cheat-card" data-category="limits">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F4C1;</span>
+                    <span class="cheat-title">EFS Limits</span>
+                    <span class="cheat-category">STORAGE</span>
+                </div>
+                <div class="limit-list">
+                    <div class="limit-item">
+                        <span class="limit-label">Max Throughput</span>
+                        <span class="limit-value">10 GB/s</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Max IOPS</span>
+                        <span class="limit-value">500,000</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">File Size</span>
+                        <span class="limit-value">52TB per file</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Concurrent Connections</span>
+                        <span class="limit-value">10,000+ per AZ</span>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <div class="highlight-text">
+                        <strong>EFS</strong> = Linux NFS, multi-AZ, automatic scaling. <strong>EFS-IA</strong> for infrequent access (lifecycle policy).
+                    </div>
+                </div>
+            </div>
+
+            <!-- CloudFront Limits -->
+            <div class="cheat-card" data-category="limits">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F30D;</span>
+                    <span class="cheat-title">CloudFront Limits</span>
+                    <span class="cheat-category">NETWORK</span>
+                </div>
+                <div class="limit-list">
+                    <div class="limit-item">
+                        <span class="limit-label">File Size (General)</span>
+                        <span class="limit-value">20GB max</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">File Size (PUT/POST)</span>
+                        <span class="limit-value">30GB max</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">TTL Default</span>
+                        <span class="limit-value">24 hours</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Distributions per Account</span>
+                        <span class="limit-value">200 default</span>
+                    </div>
+                </div>
+                <div class="memory-trick">
+                    <div class="memory-title">Remember</div>
+                    <div class="memory-text">CloudFront = CDN for caching. Global Accelerator = Network optimization (TCP/UDP).</div>
+                </div>
+            </div>
+
+            <!-- Kinesis Limits -->
+            <div class="cheat-card" data-category="limits">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F4CA;</span>
+                    <span class="cheat-title">Kinesis Limits</span>
+                    <span class="cheat-category">ANALYTICS</span>
+                </div>
+                <div class="limit-list">
+                    <div class="limit-item">
+                        <span class="limit-label">Data Streams Record</span>
+                        <span class="limit-value">1MB per record</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Shard Write Capacity</span>
+                        <span class="limit-value">1MB/s or 1000 rec/s</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Shard Read Capacity</span>
+                        <span class="limit-value">2MB/s per shard</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Data Retention</span>
+                        <span class="limit-value">24hr default, 365d max</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Firehose Batch Size</span>
+                        <span class="limit-value">Up to 128MB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Route 53 Limits -->
+            <div class="cheat-card" data-category="limits">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F30E;</span>
+                    <span class="cheat-title">Route 53 Limits</span>
+                    <span class="cheat-category">NETWORK</span>
+                </div>
+                <div class="limit-list">
+                    <div class="limit-item">
+                        <span class="limit-label">Hosted Zones</span>
+                        <span class="limit-value">500 default</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Records per Hosted Zone</span>
+                        <span class="limit-value">10,000 default</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Health Check Interval</span>
+                        <span class="limit-value">30s or 10s (fast)</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">TTL Min</span>
+                        <span class="limit-value">60 seconds</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VPN & Direct Connect -->
+            <div class="cheat-card" data-category="limits">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F517;</span>
+                    <span class="cheat-title">VPN & Direct Connect</span>
+                    <span class="cheat-category">NETWORK</span>
+                </div>
+                <div class="limit-list">
+                    <div class="limit-item">
+                        <span class="limit-label">VPN Throughput</span>
+                        <span class="limit-value">1.25 Gbps per tunnel</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">VPN Tunnels per Connection</span>
+                        <span class="limit-value">2 (high availability)</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">Direct Connect Speed</span>
+                        <span class="limit-value">1, 10, 100 Gbps</span>
+                    </div>
+                    <div class="limit-item">
+                        <span class="limit-label">DX LAG Max Connections</span>
+                        <span class="limit-value">4 connections</span>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <div class="highlight-text">
+                        <strong>VPN</strong> = Quick setup, over internet, inconsistent. <strong>Direct Connect</strong> = Dedicated, consistent, private.
+                    </div>
+                </div>
+            </div>
+
+            <!-- RDS vs Aurora Comparison -->
+            <div class="cheat-card" data-category="comparisons">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F5C4;</span>
+                    <span class="cheat-title">RDS vs Aurora</span>
+                    <span class="cheat-category">DATABASE</span>
+                </div>
+                <div class="comparison">
+                    <div class="compare-col">
+                        <div class="compare-title">RDS</div>
+                        <ul class="compare-list">
+                            <li>MySQL, PostgreSQL, MariaDB</li>
+                            <li>Oracle, SQL Server</li>
+                            <li>5 read replicas max</li>
+                            <li>64TB storage max</li>
+                            <li>Standard replication</li>
+                        </ul>
+                    </div>
+                    <div class="compare-col">
+                        <div class="compare-title">Aurora</div>
+                        <ul class="compare-list">
+                            <li>MySQL/PostgreSQL compatible</li>
+                            <li>5x MySQL, 3x PostgreSQL speed</li>
+                            <li>15 read replicas max</li>
+                            <li>128TB storage max</li>
+                            <li>6 copies across 3 AZs</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="memory-trick">
+                    <div class="memory-title">When to use Aurora?</div>
+                    <div class="memory-text">"High performance, HA, more replicas" = Aurora. "Other DB engines" = RDS.</div>
+                </div>
+            </div>
+
+            <!-- CloudFront vs Global Accelerator -->
+            <div class="cheat-card" data-category="comparisons">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F680;</span>
+                    <span class="cheat-title">CloudFront vs Global Accelerator</span>
+                    <span class="cheat-category">NETWORK</span>
+                </div>
+                <div class="comparison">
+                    <div class="compare-col">
+                        <div class="compare-title">CloudFront</div>
+                        <ul class="compare-list">
+                            <li>HTTP/HTTPS only</li>
+                            <li>Content caching at edge</li>
+                            <li>Dynamic & static content</li>
+                            <li>No static IP</li>
+                            <li>Cache TTL control</li>
+                        </ul>
+                    </div>
+                    <div class="compare-col">
+                        <div class="compare-title">Global Accelerator</div>
+                        <ul class="compare-list">
+                            <li>TCP/UDP support</li>
+                            <li>Network optimization, no cache</li>
+                            <li>Proxies to applications</li>
+                            <li>2 static anycast IPs</li>
+                            <li>Health checks & failover</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <div class="highlight-text">
+                        <strong>CF</strong> = "Content" caching. <strong>GA</strong> = "Accelerate" network performance for apps.
+                    </div>
+                </div>
+            </div>
+
+            <!-- EFS vs FSx -->
+            <div class="cheat-card" data-category="comparisons">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F4BE;</span>
+                    <span class="cheat-title">EFS vs FSx Variants</span>
+                    <span class="cheat-category">STORAGE</span>
+                </div>
+                <div class="comparison">
+                    <div class="compare-col">
+                        <div class="compare-title">EFS</div>
+                        <ul class="compare-list">
+                            <li>Linux only (NFS)</li>
+                            <li>Multi-AZ by default</li>
+                            <li>Automatic scaling</li>
+                            <li>Lifecycle to EFS-IA</li>
+                        </ul>
+                    </div>
+                    <div class="compare-col">
+                        <div class="compare-title">FSx</div>
+                        <ul class="compare-list">
+                            <li>Windows (SMB/AD integration)</li>
+                            <li>Lustre (HPC, ML, S3 integration)</li>
+                            <li>NetApp ONTAP (multi-protocol)</li>
+                            <li>OpenZFS (Linux workloads)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="memory-trick">
+                    <div class="memory-title">Quick Pick</div>
+                    <div class="memory-text">"Linux shared FS" = EFS. "Windows" = FSx Windows. "HPC/ML" = FSx Lustre.</div>
+                </div>
+            </div>
+
+            <!-- Standard vs FIFO SQS -->
+            <div class="cheat-card" data-category="comparisons">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F4E6;</span>
+                    <span class="cheat-title">SQS Standard vs FIFO</span>
+                    <span class="cheat-category">INTEGRATION</span>
+                </div>
+                <div class="comparison">
+                    <div class="compare-col">
+                        <div class="compare-title">Standard</div>
+                        <ul class="compare-list">
+                            <li>Unlimited throughput</li>
+                            <li>At-least-once delivery</li>
+                            <li>Best-effort ordering</li>
+                            <li>Duplicates possible</li>
+                        </ul>
+                    </div>
+                    <div class="compare-col">
+                        <div class="compare-title">FIFO</div>
+                        <ul class="compare-list">
+                            <li>300 msg/s (3000 batched)</li>
+                            <li>Exactly-once delivery</li>
+                            <li>Strict ordering</li>
+                            <li>No duplicates</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <div class="highlight-text">
+                        "Order matters" or "no duplicates" = <strong>FIFO</strong>. "High throughput" = <strong>Standard</strong>.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Container Services -->
+            <div class="cheat-card" data-category="facts">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F4E6;</span>
+                    <span class="cheat-title">Container Services</span>
+                    <span class="cheat-category">COMPUTE</span>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">ECS (Elastic Container Service)</div>
+                    <div class="fact-value">AWS-native, EC2 or Fargate launch types</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">ECS Fargate</div>
+                    <div class="fact-value">Serverless containers, no EC2 management</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">EKS (Kubernetes)</div>
+                    <div class="fact-value">Managed Kubernetes, multi-cloud portability</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">ECR (Container Registry)</div>
+                    <div class="fact-value">Docker image storage, integrates with ECS/EKS</div>
+                </div>
+                <div class="memory-trick">
+                    <div class="memory-title">Decision Tree</div>
+                    <div class="memory-text">"No servers" = Fargate. "Need Kubernetes" = EKS. "AWS-native" = ECS.</div>
+                </div>
+            </div>
+
+            <!-- Route 53 Routing Policies -->
+            <div class="cheat-card" data-category="facts">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F30E;</span>
+                    <span class="cheat-title">Route 53 Routing Policies</span>
+                    <span class="cheat-category">NETWORK</span>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Simple</div>
+                    <div class="fact-value">Single resource, no health checks</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Weighted</div>
+                    <div class="fact-value">Traffic distribution by weight (A/B testing)</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Latency</div>
+                    <div class="fact-value">Route to lowest latency region</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Failover</div>
+                    <div class="fact-value">Primary/Secondary with health checks</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Geolocation</div>
+                    <div class="fact-value">Based on user location (country/continent)</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Geoproximity</div>
+                    <div class="fact-value">Based on resource location + bias</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Multi-Value</div>
+                    <div class="fact-value">Multiple IPs with health checks (not LB)</div>
+                </div>
+            </div>
+
+            <!-- Kinesis Family -->
+            <div class="cheat-card" data-category="facts">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F4CA;</span>
+                    <span class="cheat-title">Kinesis Family</span>
+                    <span class="cheat-category">ANALYTICS</span>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Data Streams</div>
+                    <div class="fact-value">Real-time streaming, custom consumers, 1-365 day retention</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Data Firehose</div>
+                    <div class="fact-value">Load to S3/Redshift/ES, near real-time (60s min), no retention</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Data Analytics</div>
+                    <div class="fact-value">SQL queries on streaming data, serverless</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Video Streams</div>
+                    <div class="fact-value">Video ingestion for ML/playback</div>
+                </div>
+                <div class="highlight-box">
+                    <div class="highlight-text">
+                        <strong>Streams</strong> = Custom processing. <strong>Firehose</strong> = Direct load to destinations.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aurora Features -->
+            <div class="cheat-card" data-category="facts">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x2728;</span>
+                    <span class="cheat-title">Aurora Features</span>
+                    <span class="cheat-category">DATABASE</span>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Aurora Serverless</div>
+                    <div class="fact-value">Auto-scaling, pay per second, intermittent workloads</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Aurora Global</div>
+                    <div class="fact-value">Cross-region replication <1s, read from any region</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Aurora Multi-Master</div>
+                    <div class="fact-value">Multiple write nodes, immediate failover</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Backtrack</div>
+                    <div class="fact-value">Rewind DB to point in time (no restore)</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Cloning</div>
+                    <div class="fact-value">Copy-on-write clone, fast & cost-effective</div>
+                </div>
+            </div>
+
+            <!-- DynamoDB Features -->
+            <div class="cheat-card" data-category="facts">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F5C3;</span>
+                    <span class="cheat-title">DynamoDB Features</span>
+                    <span class="cheat-category">DATABASE</span>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">DAX (Cache)</div>
+                    <div class="fact-value">Microsecond latency, in-memory cache</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Global Tables</div>
+                    <div class="fact-value">Multi-region active-active, eventual consistency</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Streams</div>
+                    <div class="fact-value">24hr change data capture, Lambda triggers</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">TTL</div>
+                    <div class="fact-value">Auto-delete expired items, no cost</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Point-in-Time Recovery</div>
+                    <div class="fact-value">35-day continuous backups</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">On-Demand Backup</div>
+                    <div class="fact-value">Manual snapshots, restore to new table</div>
+                </div>
+            </div>
+
+            <!-- Auto Scaling Policies -->
+            <div class="cheat-card" data-category="facts">
+                <div class="cheat-header">
+                    <span class="cheat-icon">&#x1F4C8;</span>
+                    <span class="cheat-title">Auto Scaling Policies</span>
+                    <span class="cheat-category">COMPUTE</span>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Target Tracking</div>
+                    <div class="fact-value">Maintain metric at target (e.g., 50% CPU) - Simplest</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Step Scaling</div>
+                    <div class="fact-value">Add/remove based on alarm thresholds</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Simple Scaling</div>
+                    <div class="fact-value">Single adjustment, cooldown period (legacy)</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Scheduled</div>
+                    <div class="fact-value">Scale based on time/day (predictable patterns)</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-key">Predictive</div>
+                    <div class="fact-value">ML-based forecasting, pre-emptive scaling</div>
+                </div>
+                <div class="memory-trick">
+                    <div class="memory-title">Recommendation</div>
+                    <div class="memory-text">Target Tracking is simplest and recommended for most use cases.</div>
+                </div>
+            </div>
         </div>
     </div>
 
