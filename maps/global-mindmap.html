@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>AWS SAA-C03 Global Mind Map</title>
+    <title>AWS SAA-C03 Enhanced Mind Map</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -21,6 +21,8 @@
             --integration: #ec4899;
             --analytics: #06b6d4;
             --management: #84cc16;
+            --ml: #f472b6;
+            --iot: #0ea5e9;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,6 +33,102 @@
             color: var(--text-primary);
             overflow: hidden;
             height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            right: -420px;
+            top: 0;
+            width: 420px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-left: 2px solid var(--accent-orange);
+            z-index: 2000;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            padding: 30px;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+        }
+
+        .sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: 2px solid var(--accent-red);
+            color: var(--accent-red);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .sidebar-close:hover {
+            background: var(--accent-red);
+            color: var(--bg-primary);
+            transform: rotate(90deg);
+        }
+
+        .sidebar-content h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .sidebar-section {
+            margin: 25px 0;
+        }
+
+        .sidebar-section h3 {
+            color: var(--accent-orange);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-section p, .sidebar-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin: 8px 0;
+        }
+
+        .sidebar-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .sidebar-section li::before {
+            content: "▸ ";
+            color: var(--accent-blue);
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .limit-badge {
+            display: inline-block;
+            background: rgba(255,107,53,0.2);
+            color: var(--accent-orange);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin: 4px 4px 4px 0;
         }
 
         /* Controls */
@@ -86,7 +184,6 @@
             color: var(--bg-primary);
         }
 
-        /* Zoom Level Display */
         .zoom-level {
             position: fixed;
             bottom: 20px;
@@ -99,41 +196,13 @@
             z-index: 1000;
         }
 
-        /* View Mode Toggle */
-        .view-toggle {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 1000;
-        }
-
-        .toggle-btn {
-            padding: 10px 20px;
-            border-radius: 30px;
-            border: 2px solid var(--accent-orange);
-            background: transparent;
-            color: var(--accent-orange);
-            font-family: inherit;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .toggle-btn.active {
-            background: var(--accent-orange);
-            color: var(--bg-primary);
-        }
-
-        /* Legend */
         .legend {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
             justify-content: center;
             z-index: 1000;
@@ -141,13 +210,14 @@
             padding: 12px 24px;
             border-radius: 30px;
             border: 1px solid var(--accent-orange);
+            max-width: 90vw;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
         .legend-dot {
@@ -156,7 +226,6 @@
             border-radius: 50%;
         }
 
-        /* Map Container */
         #mapContainer {
             width: 100vw;
             height: 100vh;
@@ -171,12 +240,11 @@
 
         #map {
             position: absolute;
-            width: 3200px;
-            height: 2400px;
+            width: 4000px;
+            height: 3000px;
             transform-origin: center center;
         }
 
-        /* SVG Connections */
         .connections {
             position: absolute;
             top: 0;
@@ -187,9 +255,19 @@
         }
 
         .connection-line {
-            stroke-width: 3;
+            stroke-width: 2;
             fill: none;
-            opacity: 0.6;
+            opacity: 0.4;
+            transition: opacity 0.3s, stroke-width 0.3s;
+        }
+
+        .connection-line.focused {
+            opacity: 0.8;
+            stroke-width: 3;
+        }
+
+        .connection-line.dimmed {
+            opacity: 0.1;
         }
 
         .connection-line.compute { stroke: var(--compute); }
@@ -200,7 +278,9 @@
         .connection-line.integration { stroke: var(--integration); }
         .connection-line.analytics { stroke: var(--analytics); }
         .connection-line.management { stroke: var(--management); }
-        .connection-line.central { stroke: var(--accent-orange); stroke-width: 4; }
+        .connection-line.ml { stroke: var(--ml); }
+        .connection-line.iot { stroke: var(--iot); }
+        .connection-line.central { stroke: var(--accent-orange); stroke-width: 3; }
 
         /* Nodes */
         .node {
@@ -217,69 +297,65 @@
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
+            opacity: 1;
         }
 
         .node:hover {
             transform: scale(1.15);
             z-index: 100;
-            box-shadow: 0 0 30px rgba(255,255,255,0.2);
+            box-shadow: 0 0 30px rgba(255,255,255,0.3);
         }
 
-        .node.expanded {
-            width: 200px;
-            height: auto;
-            min-height: 90px;
-            border-radius: 20px;
-            padding: 15px;
+        .node.dimmed {
+            opacity: 0.2;
+            filter: grayscale(0.8);
+        }
+
+        .node.focused {
+            opacity: 1;
+            filter: grayscale(0);
+        }
+
+        /* Sub-nodes - smaller and lighter */
+        .node.sub-node {
+            width: 70px;
+            height: 70px;
+            border-width: 2px;
+            background: rgba(26,35,50,0.7);
+        }
+
+        .node.sub-sub-node {
+            width: 55px;
+            height: 55px;
+            border-width: 2px;
+            background: rgba(26,35,50,0.5);
         }
 
         .node-icon {
             font-size: 1.8rem;
         }
 
+        .sub-node .node-icon {
+            font-size: 1.3rem;
+        }
+
+        .sub-sub-node .node-icon {
+            font-size: 1rem;
+        }
+
         .node-title {
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             margin-top: 4px;
             line-height: 1.2;
         }
 
-        .node.expanded .node-title {
-            font-size: 0.9rem;
-        }
-
-        .node-subtitle {
+        .sub-node .node-title {
             font-size: 0.6rem;
-            color: var(--text-secondary);
-            display: none;
         }
 
-        .node.expanded .node-subtitle {
-            display: block;
-            margin-top: 4px;
-        }
-
-        .node-details {
-            display: none;
-            margin-top: 10px;
-            text-align: left;
-            font-size: 0.75rem;
-            width: 100%;
-        }
-
-        .node.expanded .node-details {
-            display: block;
-        }
-
-        .node-detail-item {
-            margin: 4px 0;
-            color: var(--text-secondary);
-        }
-
-        .node-limit {
-            color: var(--accent-orange);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
+        .sub-sub-node .node-title {
+            font-size: 0.5rem;
         }
 
         /* Category Colors */
@@ -291,6 +367,8 @@
         .node.integration { border-color: var(--integration); }
         .node.analytics { border-color: var(--analytics); }
         .node.management { border-color: var(--management); }
+        .node.ml { border-color: var(--ml); }
+        .node.iot { border-color: var(--iot); }
 
         .node.compute:hover { box-shadow: 0 0 30px var(--compute); }
         .node.storage:hover { box-shadow: 0 0 30px var(--storage); }
@@ -300,12 +378,13 @@
         .node.integration:hover { box-shadow: 0 0 30px var(--integration); }
         .node.analytics:hover { box-shadow: 0 0 30px var(--analytics); }
         .node.management:hover { box-shadow: 0 0 30px var(--management); }
+        .node.ml:hover { box-shadow: 0 0 30px var(--ml); }
+        .node.iot:hover { box-shadow: 0 0 30px var(--iot); }
 
-        /* Central Hub */
         .central-hub {
             position: absolute;
-            left: 1555px;
-            top: 1155px;
+            left: 1955px;
+            top: 1455px;
             width: 130px;
             height: 130px;
             background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
@@ -328,7 +407,6 @@
             box-shadow: 0 0 80px rgba(255,107,53,0.7);
         }
 
-        /* Category Labels */
         .category-label {
             position: absolute;
             font-size: 1rem;
@@ -338,6 +416,24 @@
             background: var(--bg-card);
             border: 2px solid;
             z-index: 10;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .category-label:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        .category-label.dimmed {
+            opacity: 0.3;
+            filter: grayscale(0.8);
+        }
+
+        .category-label.focused {
+            opacity: 1;
+            filter: grayscale(0);
+            box-shadow: 0 0 30px currentColor;
         }
 
         .category-label.compute { border-color: var(--compute); color: var(--compute); }
@@ -348,36 +444,13 @@
         .category-label.integration { border-color: var(--integration); color: var(--integration); }
         .category-label.analytics { border-color: var(--analytics); color: var(--analytics); }
         .category-label.management { border-color: var(--management); color: var(--management); }
+        .category-label.ml { border-color: var(--ml); color: var(--ml); }
+        .category-label.iot { border-color: var(--iot); color: var(--iot); }
 
-        /* Instructions popup */
-        .instructions {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: var(--bg-card);
-            padding: 15px 20px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            z-index: 1000;
-            max-width: 250px;
-            border: 1px solid var(--accent-orange);
-        }
-
-        .instructions h4 {
-            color: var(--accent-orange);
-            margin-bottom: 8px;
-        }
-
-        .instructions p {
-            color: var(--text-secondary);
-            margin: 4px 0;
-        }
-
-        /* Mobile adjustments */
         @media (max-width: 768px) {
             .legend { display: none; }
-            .instructions { display: none; }
-
+            .sidebar { width: 100vw; right: -100vw; }
+            .sidebar.open { right: 0; }
             .controls {
                 top: auto;
                 bottom: 20px;
@@ -385,18 +458,10 @@
                 transform: translateX(-50%);
                 flex-direction: row;
             }
-
             .control-btn {
                 width: 45px;
                 height: 45px;
             }
-
-            .view-toggle {
-                top: 80px;
-                bottom: auto;
-                right: 20px;
-            }
-
             .zoom-level { display: none; }
         }
     </style>
@@ -405,10 +470,11 @@
     <div class="controls">
         <button class="control-btn" onclick="zoomIn()" title="Zoom In">+</button>
         <button class="control-btn" onclick="zoomOut()" title="Zoom Out">-</button>
-        <button class="control-btn" onclick="centerView()" title="Center View">&#x2302;</button>
+        <button class="control-btn" onclick="centerView()" title="Center View">⌂</button>
+        <button class="control-btn" onclick="resetFocus()" title="Reset Focus">⦿</button>
     </div>
 
-    <a href="../index.html" class="back-btn">&#x2190; Back to Hub</a>
+    <a href="../index.html" class="back-btn">← Back to Hub</a>
 
     <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background: var(--compute)"></div> Compute</div>
@@ -419,548 +485,732 @@
         <div class="legend-item"><div class="legend-dot" style="background: var(--integration)"></div> Integration</div>
         <div class="legend-item"><div class="legend-dot" style="background: var(--analytics)"></div> Analytics</div>
         <div class="legend-item"><div class="legend-dot" style="background: var(--management)"></div> Management</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--ml)"></div> ML & AI</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--iot)"></div> IoT</div>
     </div>
 
     <div class="zoom-level" id="zoomLevel">Zoom: 100%</div>
 
-    <div class="view-toggle">
-        <button class="toggle-btn active" onclick="setView('full')">Full View</button>
-        <button class="toggle-btn" onclick="setView('minimal')">Minimal</button>
-    </div>
-
-    <div class="instructions">
-        <h4>Controls</h4>
-        <p>&#x2022; Drag to pan</p>
-        <p>&#x2022; Scroll to zoom</p>
-        <p>&#x2022; Click node to expand</p>
-        <p>&#x2022; Pinch to zoom (mobile)</p>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-close" onclick="closeSidebar()">×</button>
+        <div class="sidebar-content" id="sidebarContent"></div>
     </div>
 
     <div id="mapContainer">
         <div id="map">
-            <svg class="connections" id="connections">
-                <!-- Central to Category connections -->
-                <path class="connection-line central" d="M1620,1220 Q1500,1100 1350,950" />
-                <path class="connection-line central" d="M1620,1220 Q1750,1100 1900,950" />
-                <path class="connection-line central" d="M1620,1220 Q1750,1350 1900,1500" />
-                <path class="connection-line central" d="M1620,1220 Q1500,1350 1350,1500" />
-                <path class="connection-line central" d="M1555,1220 L1200,1220" />
-                <path class="connection-line central" d="M1685,1220 L2050,1220" />
-                <path class="connection-line central" d="M1620,1155 L1620,850" />
-                <path class="connection-line central" d="M1620,1285 L1620,1600" />
-
-                <!-- Compute branch -->
-                <path class="connection-line compute" d="M1200,800 L1050,800" />
-                <path class="connection-line compute" d="M1200,800 L1200,700" />
-                <path class="connection-line compute" d="M1200,800 L1200,900" />
-                <path class="connection-line compute" d="M1050,800 L950,700" />
-                <path class="connection-line compute" d="M1050,800 L950,900" />
-                <path class="connection-line compute" d="M1200,900 L1100,1000" />
-
-                <!-- Storage branch -->
-                <path class="connection-line storage" d="M2050,800 L2200,800" />
-                <path class="connection-line storage" d="M2050,800 L2050,700" />
-                <path class="connection-line storage" d="M2050,800 L2050,900" />
-                <path class="connection-line storage" d="M2200,800 L2300,700" />
-                <path class="connection-line storage" d="M2200,800 L2300,900" />
-
-                <!-- Database branch -->
-                <path class="connection-line database" d="M2050,1500 L2200,1500" />
-                <path class="connection-line database" d="M2050,1500 L2050,1400" />
-                <path class="connection-line database" d="M2050,1500 L2050,1600" />
-                <path class="connection-line database" d="M2200,1500 L2300,1400" />
-                <path class="connection-line database" d="M2200,1500 L2300,1600" />
-
-                <!-- Network branch -->
-                <path class="connection-line network" d="M1200,1500 L1050,1500" />
-                <path class="connection-line network" d="M1200,1500 L1200,1400" />
-                <path class="connection-line network" d="M1200,1500 L1200,1600" />
-                <path class="connection-line network" d="M1050,1500 L950,1400" />
-                <path class="connection-line network" d="M1050,1500 L950,1600" />
-
-                <!-- Security branch (left) -->
-                <path class="connection-line security" d="M1100,1220 L900,1220" />
-                <path class="connection-line security" d="M900,1220 L750,1120" />
-                <path class="connection-line security" d="M900,1220 L750,1320" />
-                <path class="connection-line security" d="M750,1120 L600,1050" />
-                <path class="connection-line security" d="M750,1320 L600,1390" />
-
-                <!-- Integration branch (right) -->
-                <path class="connection-line integration" d="M2150,1220 L2350,1220" />
-                <path class="connection-line integration" d="M2350,1220 L2500,1120" />
-                <path class="connection-line integration" d="M2350,1220 L2500,1320" />
-                <path class="connection-line integration" d="M2500,1120 L2650,1050" />
-                <path class="connection-line integration" d="M2500,1320 L2650,1390" />
-
-                <!-- Analytics branch (bottom) -->
-                <path class="connection-line analytics" d="M1620,1700 L1500,1800" />
-                <path class="connection-line analytics" d="M1620,1700 L1740,1800" />
-                <path class="connection-line analytics" d="M1500,1800 L1400,1900" />
-                <path class="connection-line analytics" d="M1740,1800 L1840,1900" />
-
-                <!-- Management branch (top) -->
-                <path class="connection-line management" d="M1620,750 L1500,650" />
-                <path class="connection-line management" d="M1620,750 L1740,650" />
-                <path class="connection-line management" d="M1500,650 L1400,550" />
-                <path class="connection-line management" d="M1740,650 L1840,550" />
-            </svg>
+            <svg class="connections" id="connections" viewBox="0 0 4000 3000"></svg>
 
             <!-- Central Hub -->
-            <div class="central-hub" id="centralHub">
-                <div style="font-size: 2rem;">&#x2601;</div>
+            <div class="central-hub">
+                <div style="font-size: 2rem;">☁</div>
                 <div>AWS</div>
                 <div style="font-size: 0.8rem; font-weight: 400;">SAA-C03</div>
             </div>
 
-            <!-- Category Labels -->
-            <div class="category-label compute" style="left: 1050px; top: 650px;">COMPUTE</div>
-            <div class="category-label storage" style="left: 2050px; top: 650px;">STORAGE</div>
-            <div class="category-label database" style="left: 2050px; top: 1350px;">DATABASE</div>
-            <div class="category-label network" style="left: 1050px; top: 1350px;">NETWORK</div>
-            <div class="category-label security" style="left: 550px; top: 950px;">SECURITY</div>
-            <div class="category-label integration" style="left: 2500px; top: 950px;">INTEGRATION</div>
-            <div class="category-label analytics" style="left: 1550px; top: 1950px;">ANALYTICS</div>
-            <div class="category-label management" style="left: 1550px; top: 450px;">MANAGEMENT</div>
+            <!-- Category Labels - Clickable for focus -->
+            <div class="category-label compute" style="left: 1350px; top: 850px;" onclick="focusCategory('compute')">COMPUTE</div>
+            <div class="category-label storage" style="left: 2550px; top: 850px;" onclick="focusCategory('storage')">STORAGE</div>
+            <div class="category-label database" style="left: 2550px; top: 1850px;" onclick="focusCategory('database')">DATABASE</div>
+            <div class="category-label network" style="left: 1350px; top: 1850px;" onclick="focusCategory('network')">NETWORK</div>
+            <div class="category-label security" style="left: 750px; top: 1200px;" onclick="focusCategory('security')">SECURITY</div>
+            <div class="category-label integration" style="left: 3100px; top: 1200px;" onclick="focusCategory('integration')">INTEGRATION</div>
+            <div class="category-label analytics" style="left: 1950px; top: 2450px;" onclick="focusCategory('analytics')">ANALYTICS</div>
+            <div class="category-label management" style="left: 1950px; top: 550px;" onclick="focusCategory('management')">MANAGEMENT</div>
+            <div class="category-label ml" style="left: 3100px; top: 550px;" onclick="focusCategory('ml')">ML & AI</div>
+            <div class="category-label iot" style="left: 750px; top: 550px;" onclick="focusCategory('iot')">IoT</div>
 
-            <!-- COMPUTE NODES -->
-            <div class="node compute" id="ec2" style="left: 1155px; top: 755px;">
-                <div class="node-icon">&#x1F5A5;</div>
-                <div class="node-title">EC2</div>
-                <div class="node-subtitle">Elastic Compute</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Instance types: T, M, C, R, X</div>
-                    <div class="node-detail-item"><span class="node-limit">Spot: up to 90% off</span></div>
-                </div>
-            </div>
-
-            <div class="node compute" id="lambda" style="left: 1155px; top: 655px;">
-                <div class="node-icon">&#x03BB;</div>
-                <div class="node-title">Lambda</div>
-                <div class="node-subtitle">Serverless</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">Timeout: 15 min</span></div>
-                    <div class="node-detail-item"><span class="node-limit">Memory: 10GB max</span></div>
-                </div>
-            </div>
-
-            <div class="node compute" id="ecs" style="left: 1155px; top: 855px;">
-                <div class="node-icon">&#x1F433;</div>
-                <div class="node-title">ECS</div>
-                <div class="node-subtitle">Containers</div>
-                <div class="node-details">
-                    <div class="node-detail-item">EC2 or Fargate launch</div>
-                </div>
-            </div>
-
-            <div class="node compute" id="eks" style="left: 905px; top: 655px;">
-                <div class="node-icon">&#x2638;</div>
-                <div class="node-title">EKS</div>
-                <div class="node-subtitle">Kubernetes</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Managed K8s control plane</div>
-                </div>
-            </div>
-
-            <div class="node compute" id="fargate" style="left: 905px; top: 855px;">
-                <div class="node-icon">&#x1F680;</div>
-                <div class="node-title">Fargate</div>
-                <div class="node-subtitle">Serverless</div>
-                <div class="node-details">
-                    <div class="node-detail-item">No EC2 management</div>
-                </div>
-            </div>
-
-            <div class="node compute" id="beanstalk" style="left: 1005px; top: 755px;">
-                <div class="node-icon">&#x1F331;</div>
-                <div class="node-title">Beanstalk</div>
-                <div class="node-subtitle">PaaS</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Automated deployment</div>
-                </div>
-            </div>
-
-            <div class="node compute" id="asg" style="left: 1055px; top: 955px;">
-                <div class="node-icon">&#x1F4C8;</div>
-                <div class="node-title">ASG</div>
-                <div class="node-subtitle">Auto Scaling</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Target, Step, Scheduled</div>
-                </div>
-            </div>
-
-            <!-- STORAGE NODES -->
-            <div class="node storage" id="s3" style="left: 2005px; top: 755px;">
-                <div class="node-icon">&#x1FAA3;</div>
-                <div class="node-title">S3</div>
-                <div class="node-subtitle">Object Storage</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">Object: 5TB max</span></div>
-                    <div class="node-detail-item"><span class="node-limit">Multipart: >100MB</span></div>
-                </div>
-            </div>
-
-            <div class="node storage" id="ebs" style="left: 2005px; top: 655px;">
-                <div class="node-icon">&#x1F4BE;</div>
-                <div class="node-title">EBS</div>
-                <div class="node-subtitle">Block Storage</div>
-                <div class="node-details">
-                    <div class="node-detail-item">gp3: 16K IOPS</div>
-                    <div class="node-detail-item"><span class="node-limit">Max: 64TB</span></div>
-                </div>
-            </div>
-
-            <div class="node storage" id="efs" style="left: 2005px; top: 855px;">
-                <div class="node-icon">&#x1F4C2;</div>
-                <div class="node-title">EFS</div>
-                <div class="node-subtitle">File Storage</div>
-                <div class="node-details">
-                    <div class="node-detail-item">NFS v4, Linux only</div>
-                </div>
-            </div>
-
-            <div class="node storage" id="glacier" style="left: 2255px; top: 655px;">
-                <div class="node-icon">&#x1F9CA;</div>
-                <div class="node-title">Glacier</div>
-                <div class="node-subtitle">Archive</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">Deep: 12-48 hrs</span></div>
-                </div>
-            </div>
-
-            <div class="node storage" id="fsx" style="left: 2255px; top: 855px;">
-                <div class="node-icon">&#x1FA9F;</div>
-                <div class="node-title">FSx</div>
-                <div class="node-subtitle">Managed FS</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Windows, Lustre, NetApp</div>
-                </div>
-            </div>
-
-            <div class="node storage" id="storagegateway" style="left: 2155px; top: 755px;">
-                <div class="node-icon">&#x1F309;</div>
-                <div class="node-title">Gateway</div>
-                <div class="node-subtitle">Hybrid</div>
-                <div class="node-details">
-                    <div class="node-detail-item">File, Volume, Tape</div>
-                </div>
-            </div>
-
-            <!-- DATABASE NODES -->
-            <div class="node database" id="rds" style="left: 2005px; top: 1455px;">
-                <div class="node-icon">&#x1F5C4;</div>
-                <div class="node-title">RDS</div>
-                <div class="node-subtitle">Relational</div>
-                <div class="node-details">
-                    <div class="node-detail-item">MySQL, PostgreSQL, etc</div>
-                    <div class="node-detail-item"><span class="node-limit">5 read replicas</span></div>
-                </div>
-            </div>
-
-            <div class="node database" id="aurora" style="left: 2005px; top: 1355px;">
-                <div class="node-icon">&#x2728;</div>
-                <div class="node-title">Aurora</div>
-                <div class="node-subtitle">Cloud-Native</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">15 replicas, 128TB</span></div>
-                </div>
-            </div>
-
-            <div class="node database" id="dynamodb" style="left: 2005px; top: 1555px;">
-                <div class="node-icon">&#x26A1;</div>
-                <div class="node-title">DynamoDB</div>
-                <div class="node-subtitle">NoSQL</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">Item: 400KB max</span></div>
-                </div>
-            </div>
-
-            <div class="node database" id="elasticache" style="left: 2255px; top: 1355px;">
-                <div class="node-icon">&#x26A1;</div>
-                <div class="node-title">ElastiCache</div>
-                <div class="node-subtitle">In-Memory</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Redis or Memcached</div>
-                </div>
-            </div>
-
-            <div class="node database" id="redshift" style="left: 2255px; top: 1555px;">
-                <div class="node-icon">&#x1F4CA;</div>
-                <div class="node-title">Redshift</div>
-                <div class="node-subtitle">Warehouse</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Columnar, MPP</div>
-                </div>
-            </div>
-
-            <div class="node database" id="documentdb" style="left: 2155px; top: 1455px;">
-                <div class="node-icon">&#x1F4C4;</div>
-                <div class="node-title">DocumentDB</div>
-                <div class="node-subtitle">MongoDB</div>
-                <div class="node-details">
-                    <div class="node-detail-item">MongoDB compatible</div>
-                </div>
-            </div>
-
-            <!-- NETWORK NODES -->
-            <div class="node network" id="vpc" style="left: 1155px; top: 1455px;">
-                <div class="node-icon">&#x1F310;</div>
-                <div class="node-title">VPC</div>
-                <div class="node-subtitle">Private Cloud</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">CIDR: /16 to /28</span></div>
-                </div>
-            </div>
-
-            <div class="node network" id="elb" style="left: 1155px; top: 1355px;">
-                <div class="node-icon">&#x2696;</div>
-                <div class="node-title">ELB</div>
-                <div class="node-subtitle">Load Balancer</div>
-                <div class="node-details">
-                    <div class="node-detail-item">ALB (L7), NLB (L4)</div>
-                </div>
-            </div>
-
-            <div class="node network" id="route53" style="left: 1155px; top: 1555px;">
-                <div class="node-icon">&#x1F5FA;</div>
-                <div class="node-title">Route 53</div>
-                <div class="node-subtitle">DNS</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Routing policies</div>
-                </div>
-            </div>
-
-            <div class="node network" id="cloudfront" style="left: 905px; top: 1355px;">
-                <div class="node-icon">&#x1F30D;</div>
-                <div class="node-title">CloudFront</div>
-                <div class="node-subtitle">CDN</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Edge locations, OAC</div>
-                </div>
-            </div>
-
-            <div class="node network" id="apigateway" style="left: 905px; top: 1555px;">
-                <div class="node-icon">&#x1F6AA;</div>
-                <div class="node-title">API GW</div>
-                <div class="node-subtitle">APIs</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">Timeout: 29s</span></div>
-                </div>
-            </div>
-
-            <div class="node network" id="directconnect" style="left: 1005px; top: 1455px;">
-                <div class="node-icon">&#x1F50C;</div>
-                <div class="node-title">Direct Connect</div>
-                <div class="node-subtitle">Dedicated</div>
-                <div class="node-details">
-                    <div class="node-detail-item">1Gbps or 10Gbps</div>
-                </div>
-            </div>
-
-            <!-- SECURITY NODES -->
-            <div class="node security" id="iam" style="left: 855px; top: 1175px;">
-                <div class="node-icon">&#x1F511;</div>
-                <div class="node-title">IAM</div>
-                <div class="node-subtitle">Identity</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Users, Roles, Policies</div>
-                </div>
-            </div>
-
-            <div class="node security" id="kms" style="left: 705px; top: 1075px;">
-                <div class="node-icon">&#x1F510;</div>
-                <div class="node-title">KMS</div>
-                <div class="node-subtitle">Keys</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">Direct: 4KB max</span></div>
-                </div>
-            </div>
-
-            <div class="node security" id="waf" style="left: 555px; top: 1005px;">
-                <div class="node-icon">&#x1F6E1;</div>
-                <div class="node-title">WAF</div>
-                <div class="node-subtitle">Firewall</div>
-                <div class="node-details">
-                    <div class="node-detail-item">SQLi, XSS protection</div>
-                </div>
-            </div>
-
-            <div class="node security" id="shield" style="left: 705px; top: 1275px;">
-                <div class="node-icon">&#x1F6E1;</div>
-                <div class="node-title">Shield</div>
-                <div class="node-subtitle">DDoS</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">Adv: $3000/mo</span></div>
-                </div>
-            </div>
-
-            <div class="node security" id="cognito" style="left: 555px; top: 1345px;">
-                <div class="node-icon">&#x1F464;</div>
-                <div class="node-title">Cognito</div>
-                <div class="node-subtitle">Users</div>
-                <div class="node-details">
-                    <div class="node-detail-item">User & Identity Pools</div>
-                </div>
-            </div>
-
-            <div class="node security" id="secretsmanager" style="left: 605px; top: 1175px;">
-                <div class="node-icon">&#x1F5DD;</div>
-                <div class="node-title">Secrets</div>
-                <div class="node-subtitle">Manager</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Auto-rotation</div>
-                </div>
-            </div>
-
-            <!-- INTEGRATION NODES -->
-            <div class="node integration" id="sqs" style="left: 2305px; top: 1175px;">
-                <div class="node-icon">&#x1F4EC;</div>
-                <div class="node-title">SQS</div>
-                <div class="node-subtitle">Queue</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">256KB, 14 days</span></div>
-                </div>
-            </div>
-
-            <div class="node integration" id="sns" style="left: 2455px; top: 1075px;">
-                <div class="node-icon">&#x1F4E2;</div>
-                <div class="node-title">SNS</div>
-                <div class="node-subtitle">Pub/Sub</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Fan-out pattern</div>
-                </div>
-            </div>
-
-            <div class="node integration" id="eventbridge" style="left: 2605px; top: 1005px;">
-                <div class="node-icon">&#x1F68C;</div>
-                <div class="node-title">EventBridge</div>
-                <div class="node-subtitle">Events</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Event bus, rules</div>
-                </div>
-            </div>
-
-            <div class="node integration" id="stepfunctions" style="left: 2455px; top: 1275px;">
-                <div class="node-icon">&#x1F500;</div>
-                <div class="node-title">Step Fn</div>
-                <div class="node-subtitle">Workflow</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Standard, Express</div>
-                </div>
-            </div>
-
-            <div class="node integration" id="kinesis" style="left: 2605px; top: 1345px;">
-                <div class="node-icon">&#x1F4E1;</div>
-                <div class="node-title">Kinesis</div>
-                <div class="node-subtitle">Streaming</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">1-365 days</span></div>
-                </div>
-            </div>
-
-            <div class="node integration" id="mq" style="left: 2405px; top: 1175px;">
-                <div class="node-icon">&#x1F4E8;</div>
-                <div class="node-title">MQ</div>
-                <div class="node-subtitle">Broker</div>
-                <div class="node-details">
-                    <div class="node-detail-item">ActiveMQ, RabbitMQ</div>
-                </div>
-            </div>
-
-            <!-- ANALYTICS NODES -->
-            <div class="node analytics" id="athena" style="left: 1455px; top: 1755px;">
-                <div class="node-icon">&#x1F50E;</div>
-                <div class="node-title">Athena</div>
-                <div class="node-subtitle">SQL</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">$5/TB scanned</span></div>
-                </div>
-            </div>
-
-            <div class="node analytics" id="emr" style="left: 1695px; top: 1755px;">
-                <div class="node-icon">&#x1F525;</div>
-                <div class="node-title">EMR</div>
-                <div class="node-subtitle">Big Data</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Spark, Hadoop</div>
-                </div>
-            </div>
-
-            <div class="node analytics" id="glue" style="left: 1355px; top: 1855px;">
-                <div class="node-icon">&#x1F9EA;</div>
-                <div class="node-title">Glue</div>
-                <div class="node-subtitle">ETL</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Data Catalog, Crawlers</div>
-                </div>
-            </div>
-
-            <div class="node analytics" id="quicksight" style="left: 1795px; top: 1855px;">
-                <div class="node-icon">&#x1F4C8;</div>
-                <div class="node-title">QuickSight</div>
-                <div class="node-subtitle">BI</div>
-                <div class="node-details">
-                    <div class="node-detail-item">SPICE engine</div>
-                </div>
-            </div>
-
-            <div class="node analytics" id="opensearch" style="left: 1575px; top: 1655px;">
-                <div class="node-icon">&#x1F50D;</div>
-                <div class="node-title">OpenSearch</div>
-                <div class="node-subtitle">Search</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Log analytics</div>
-                </div>
-            </div>
-
-            <!-- MANAGEMENT NODES -->
-            <div class="node management" id="cloudwatch" style="left: 1455px; top: 605px;">
-                <div class="node-icon">&#x1F4CA;</div>
-                <div class="node-title">CloudWatch</div>
-                <div class="node-subtitle">Monitoring</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Metrics, Logs, Alarms</div>
-                </div>
-            </div>
-
-            <div class="node management" id="cloudtrail" style="left: 1695px; top: 605px;">
-                <div class="node-icon">&#x1F4DD;</div>
-                <div class="node-title">CloudTrail</div>
-                <div class="node-subtitle">Audit</div>
-                <div class="node-details">
-                    <div class="node-detail-item"><span class="node-limit">90 days default</span></div>
-                </div>
-            </div>
-
-            <div class="node management" id="config" style="left: 1355px; top: 505px;">
-                <div class="node-icon">&#x2699;</div>
-                <div class="node-title">Config</div>
-                <div class="node-subtitle">Compliance</div>
-                <div class="node-details">
-                    <div class="node-detail-item">Config rules</div>
-                </div>
-            </div>
-
-            <div class="node management" id="ssm" style="left: 1795px; top: 505px;">
-                <div class="node-icon">&#x1F527;</div>
-                <div class="node-title">SSM</div>
-                <div class="node-subtitle">Systems Mgr</div>
-                <div class="node-details">
-                    <div class="node-detail-item">No SSH needed</div>
-                </div>
-            </div>
-
-            <div class="node management" id="cloudformation" style="left: 1575px; top: 705px;">
-                <div class="node-icon">&#x1F3D7;</div>
-                <div class="node-title">CFn</div>
-                <div class="node-subtitle">IaC</div>
-                <div class="node-details">
-                    <div class="node-detail-item">JSON/YAML templates</div>
-                </div>
-            </div>
+            <!-- NODES WILL BE INSERTED HERE BY JAVASCRIPT -->
         </div>
     </div>
 
     <script>
+        // Service data with detailed information
+        const serviceData = {
+            // COMPUTE
+            'ec2': {
+                name: 'EC2',
+                icon: '🖥️',
+                category: 'compute',
+                description: 'Elastic Compute Cloud - Virtual servers in the cloud',
+                details: [
+                    'Instance families: T (burstable), M (general), C (compute), R (memory), X (memory optimized)',
+                    'Purchasing options: On-Demand, Reserved (up to 72% savings), Spot (up to 90% savings)',
+                    'Placement groups: Cluster (low latency), Spread (HA), Partition (big data)'
+                ],
+                limits: ['Soft limit varies by region and instance type', 'Request limit increases via support'],
+                useCase: 'General-purpose computing, web servers, batch processing, enterprise applications'
+            },
+            'lambda': {
+                name: 'Lambda',
+                icon: 'λ',
+                category: 'compute',
+                description: 'Serverless compute - Run code without servers',
+                details: [
+                    'Timeout: 15 minutes maximum',
+                    'Memory: 128MB to 10GB',
+                    'Package size: 50MB zipped, 250MB unzipped',
+                    'Concurrent executions: 1000 (soft limit)',
+                    '/tmp storage: 512MB to 10GB'
+                ],
+                limits: ['15 min timeout', '10GB memory max', '250MB package unzipped', '1000 concurrent default'],
+                useCase: 'Event-driven processing, microservices, real-time file/data processing, APIs'
+            },
+            'ecs': {
+                name: 'ECS',
+                icon: '🐳',
+                category: 'compute',
+                description: 'Elastic Container Service - Docker container orchestration',
+                details: [
+                    'Launch types: EC2 (you manage instances), Fargate (serverless)',
+                    'Task definitions specify container configuration',
+                    'Service for long-running tasks, Task for batch jobs'
+                ],
+                limits: [],
+                useCase: 'Microservices, batch processing, containerized applications'
+            },
+            'fargate': {
+                name: 'Fargate',
+                icon: '🚀',
+                category: 'compute',
+                description: 'Serverless compute for containers',
+                details: [
+                    'No EC2 instance management required',
+                    'Pay only for resources used by containers',
+                    'Works with both ECS and EKS'
+                ],
+                limits: [],
+                useCase: 'Serverless containers, microservices without infrastructure management'
+            },
+            'batch': {
+                name: 'Batch',
+                icon: '📦',
+                category: 'compute',
+                description: 'Fully managed batch processing at any scale',
+                details: [
+                    'Dynamically provisions compute resources',
+                    'Supports EC2 and Spot instances',
+                    'Job queues and compute environments'
+                ],
+                limits: [],
+                useCase: 'Batch jobs, video transcoding, financial modeling, data analysis'
+            },
+
+            // STORAGE - With dense sub-trees
+            's3': {
+                name: 'S3',
+                icon: '🪣',
+                category: 'storage',
+                description: 'Simple Storage Service - Object storage',
+                details: [
+                    'Object size: 0 bytes to 5TB',
+                    'Multipart upload: Required for >5GB, recommended for >100MB',
+                    'Versioning: Keep multiple versions of objects',
+                    'Lifecycle policies: Automate transitions and deletions',
+                    'Replication: Cross-region (CRR) and Same-region (SRR)'
+                ],
+                limits: ['5TB max per object', '100MB multipart recommended', 'Unlimited buckets per account'],
+                useCase: 'Data lakes, backups, static website hosting, big data analytics'
+            },
+            's3-standard': {
+                name: 'Standard',
+                icon: '📁',
+                category: 'storage',
+                description: 'S3 Standard - Frequently accessed data',
+                details: [
+                    'Availability: 99.99%',
+                    'Durability: 11 nines (99.999999999%)',
+                    'Use for frequently accessed data',
+                    'No retrieval fees'
+                ],
+                limits: [],
+                useCase: 'Active data, frequently accessed content'
+            },
+            's3-ia': {
+                name: 'IA',
+                icon: '📂',
+                category: 'storage',
+                description: 'S3 Infrequent Access - Lower cost for infrequent access',
+                details: [
+                    'Lower storage cost than Standard',
+                    'Retrieval fees apply',
+                    'Minimum storage duration: 30 days',
+                    'Minimum object size: 128KB'
+                ],
+                limits: ['30 day minimum', '128KB minimum object size'],
+                useCase: 'Backups, disaster recovery, long-term storage accessed monthly'
+            },
+            's3-glacier': {
+                name: 'Glacier',
+                icon: '🧊',
+                category: 'storage',
+                description: 'S3 Glacier - Long-term archive',
+                details: [
+                    'Flexible Retrieval: 1-5 min (expedited), 3-5 hrs (standard), 5-12 hrs (bulk)',
+                    'Deep Archive: 12-48 hours retrieval',
+                    'Minimum storage duration: 90-180 days',
+                    'Cheapest storage option'
+                ],
+                limits: ['12-48 hrs Deep Archive retrieval', '90-180 day minimum storage'],
+                useCase: 'Compliance archives, long-term backups, rarely accessed data'
+            },
+            's3-intelligent': {
+                name: 'Intelligent',
+                icon: '🧠',
+                category: 'storage',
+                description: 'S3 Intelligent-Tiering - Automatic cost optimization',
+                details: [
+                    'Automatically moves objects between access tiers',
+                    'Monitoring and automation fee per object',
+                    'No retrieval fees',
+                    'No minimum storage duration'
+                ],
+                limits: [],
+                useCase: 'Unknown or changing access patterns'
+            },
+            'ebs': {
+                name: 'EBS',
+                icon: '💾',
+                category: 'storage',
+                description: 'Elastic Block Store - Block storage for EC2',
+                details: [
+                    'Attached to single EC2 instance',
+                    'Persistent storage survives instance termination',
+                    'Snapshots stored in S3',
+                    'Max volume size: 64TB'
+                ],
+                limits: ['64TB max volume size', '16,000 IOPS for gp3', '64,000 IOPS for io2'],
+                useCase: 'Database storage, boot volumes, enterprise applications'
+            },
+            'ebs-gp3': {
+                name: 'gp3',
+                icon: '⚡',
+                category: 'storage',
+                description: 'General Purpose SSD (gp3)',
+                details: [
+                    'Baseline: 3000 IOPS',
+                    'Up to 16,000 IOPS',
+                    'Throughput: 125 MB/s baseline, up to 1000 MB/s',
+                    'Latest generation general purpose'
+                ],
+                limits: ['16,000 IOPS max'],
+                useCase: 'Boot volumes, development environments, low-latency apps'
+            },
+            'ebs-io2': {
+                name: 'io2',
+                icon: '⚡',
+                category: 'storage',
+                description: 'Provisioned IOPS SSD (io2)',
+                details: [
+                    'Up to 64,000 IOPS (io2 Block Express on Nitro)',
+                    'Sub-millisecond latency',
+                    'Highest performance EBS'
+                ],
+                limits: ['64,000 IOPS max'],
+                useCase: 'Mission-critical databases, high-performance applications'
+            },
+            'efs': {
+                name: 'EFS',
+                icon: '📂',
+                category: 'storage',
+                description: 'Elastic File System - Managed NFS file system',
+                details: [
+                    'NFS v4.1 protocol',
+                    'Linux only (POSIX compliant)',
+                    'Can be mounted to multiple EC2 instances',
+                    'Automatically scales, pay for what you use',
+                    'Multi-AZ by default'
+                ],
+                limits: [],
+                useCase: 'Shared file storage, content management, web serving, data analytics'
+            },
+            'efs-standard': {
+                name: 'Standard',
+                icon: '🏃',
+                category: 'storage',
+                description: 'EFS Standard - Frequently accessed files',
+                details: [
+                    'Standard storage class for active data',
+                    'Performance modes: General Purpose, Max I/O'
+                ],
+                limits: [],
+                useCase: 'Active file sharing, web content'
+            },
+            'efs-ia': {
+                name: 'IA',
+                icon: '💤',
+                category: 'storage',
+                description: 'EFS Infrequent Access - Cost-optimized for less active files',
+                details: [
+                    'Lower cost storage',
+                    'Lifecycle management auto-moves files',
+                    'Retrieval fees apply'
+                ],
+                limits: [],
+                useCase: 'Archives, backups, infrequently accessed shared files'
+            },
+
+            // DATABASE - With dense sub-trees
+            'rds': {
+                name: 'RDS',
+                icon: '🗄️',
+                category: 'database',
+                description: 'Relational Database Service - Managed SQL databases',
+                details: [
+                    'Engines: MySQL, PostgreSQL, MariaDB, Oracle, SQL Server',
+                    'Read replicas: Up to 5',
+                    'Multi-AZ: Automatic failover',
+                    'Automated backups and snapshots'
+                ],
+                limits: ['5 read replicas', 'Multi-AZ for HA'],
+                useCase: 'Transactional applications, OLTP workloads, traditional databases'
+            },
+            'aurora': {
+                name: 'Aurora',
+                icon: '✨',
+                category: 'database',
+                description: 'Aurora - Cloud-native relational database',
+                details: [
+                    'MySQL and PostgreSQL compatible',
+                    '5x faster than MySQL, 3x faster than PostgreSQL',
+                    'Storage auto-scales in 10GB increments up to 128TB',
+                    '6 copies across 3 AZs',
+                    'Up to 15 read replicas',
+                    'Global Database: <1s replication to 5 regions'
+                ],
+                limits: ['128TB storage', '15 read replicas'],
+                useCase: 'Enterprise applications, SaaS, gaming, web applications'
+            },
+            'aurora-serverless': {
+                name: 'Serverless',
+                icon: '🔋',
+                category: 'database',
+                description: 'Aurora Serverless - Auto-scaling database',
+                details: [
+                    'Automatically scales capacity based on demand',
+                    'Pay per second when database is active',
+                    'Good for intermittent workloads'
+                ],
+                limits: [],
+                useCase: 'Dev/test, unpredictable workloads, infrequent usage'
+            },
+            'dynamodb': {
+                name: 'DynamoDB',
+                icon: '⚡',
+                category: 'database',
+                description: 'DynamoDB - Fully managed NoSQL database',
+                details: [
+                    'Single-digit millisecond latency',
+                    'Item size: 400KB maximum',
+                    'Auto-scaling read/write capacity',
+                    'Global Tables: Multi-region, active-active',
+                    'DynamoDB Streams: Change data capture'
+                ],
+                limits: ['400KB per item', 'Partition key 2KB max', 'Sort key 1KB max'],
+                useCase: 'Mobile apps, gaming, IoT, real-time applications'
+            },
+            'dynamodb-dax': {
+                name: 'DAX',
+                icon: '🚀',
+                category: 'database',
+                description: 'DynamoDB Accelerator - In-memory cache',
+                details: [
+                    'Microsecond read latency',
+                    'Fully managed, in-memory cache',
+                    'Compatible with DynamoDB API'
+                ],
+                limits: [],
+                useCase: 'Read-heavy workloads requiring microsecond latency'
+            },
+            'elasticache': {
+                name: 'ElastiCache',
+                icon: '⚡',
+                category: 'database',
+                description: 'ElastiCache - In-memory caching',
+                details: [
+                    'Redis: Persistence, replication, complex data structures',
+                    'Memcached: Simple, multi-threaded',
+                    'Sub-millisecond latency'
+                ],
+                limits: [],
+                useCase: 'Session management, caching, real-time analytics, leaderboards'
+            },
+
+            // NETWORK
+            'vpc': {
+                name: 'VPC',
+                icon: '🌐',
+                category: 'network',
+                description: 'Virtual Private Cloud - Isolated network',
+                details: [
+                    'CIDR: /16 to /28',
+                    'Subnets, route tables, internet gateway',
+                    'Security Groups (stateful), NACLs (stateless)',
+                    'VPC Peering, Transit Gateway, PrivateLink'
+                ],
+                limits: ['/16 to /28 CIDR', '5 VPCs per region (soft limit)', '5 IP addresses reserved per subnet'],
+                useCase: 'Isolated cloud network, hybrid cloud, multi-tier applications'
+            },
+            'elb': {
+                name: 'ELB',
+                icon: '⚖',
+                category: 'network',
+                description: 'Elastic Load Balancing',
+                details: [
+                    'ALB: Layer 7 (HTTP/HTTPS), path/host-based routing',
+                    'NLB: Layer 4 (TCP/UDP), ultra-low latency, static IP',
+                    'GWLB: Layer 3/4, third-party appliances'
+                ],
+                limits: [],
+                useCase: 'High availability, distribute traffic, auto-scaling integration'
+            },
+            'cloudfront': {
+                name: 'CloudFront',
+                icon: '🌍',
+                category: 'network',
+                description: 'CloudFront - Content Delivery Network (CDN)',
+                details: [
+                    '400+ edge locations globally',
+                    'Caches content at edge for low latency',
+                    'Origin Access Control (OAC) for S3',
+                    'Supports HTTP/HTTPS, RTMP (legacy)',
+                    'Integration with WAF, Shield'
+                ],
+                limits: [],
+                useCase: 'Static/dynamic content delivery, video streaming, API acceleration'
+            },
+            'apigateway': {
+                name: 'API GW',
+                icon: '🚪',
+                category: 'network',
+                description: 'API Gateway - Create and manage APIs',
+                details: [
+                    'REST APIs, WebSocket APIs, HTTP APIs',
+                    'Timeout: 29 seconds maximum',
+                    'Throttling, caching, authorization',
+                    'Integration with Lambda, HTTP endpoints, AWS services'
+                ],
+                limits: ['29 second timeout', '10MB payload limit'],
+                useCase: 'RESTful APIs, WebSocket real-time, microservices gateway'
+            },
+
+            // ML & AI
+            'sagemaker': {
+                name: 'SageMaker',
+                icon: '🤖',
+                category: 'ml',
+                description: 'SageMaker - Build, train, and deploy ML models',
+                details: [
+                    'Managed Jupyter notebooks',
+                    'Built-in algorithms and frameworks',
+                    'Distributed training with GPU support',
+                    'One-click deployment to endpoints',
+                    'AutoML with Autopilot'
+                ],
+                limits: [],
+                useCase: 'ML model development, training, deployment, MLOps'
+            },
+            'rekognition': {
+                name: 'Rekognition',
+                icon: '👁️',
+                category: 'ml',
+                description: 'Rekognition - Image and video analysis',
+                details: [
+                    'Object and scene detection',
+                    'Facial analysis and recognition',
+                    'Celebrity recognition',
+                    'Content moderation',
+                    'Text detection in images'
+                ],
+                limits: [],
+                useCase: 'Content moderation, facial recognition, image search'
+            },
+            'polly': {
+                name: 'Polly',
+                icon: '🗣️',
+                category: 'ml',
+                description: 'Polly - Text-to-speech service',
+                details: [
+                    'Lifelike speech synthesis',
+                    '60+ voices in 29 languages',
+                    'Neural TTS for most natural speech',
+                    'SSML support for pronunciation control'
+                ],
+                limits: [],
+                useCase: 'Voice applications, accessibility, content narration'
+            },
+            'transcribe': {
+                name: 'Transcribe',
+                icon: '🎤',
+                category: 'ml',
+                description: 'Transcribe - Speech-to-text service',
+                details: [
+                    'Automatic speech recognition',
+                    'Speaker identification',
+                    'Custom vocabularies',
+                    'Real-time and batch transcription'
+                ],
+                limits: [],
+                useCase: 'Call center analytics, subtitles, meeting transcription'
+            },
+            'comprehend': {
+                name: 'Comprehend',
+                icon: '📖',
+                category: 'ml',
+                description: 'Comprehend - Natural language processing',
+                details: [
+                    'Sentiment analysis',
+                    'Entity recognition',
+                    'Topic modeling',
+                    'Language detection',
+                    'Custom entity recognition'
+                ],
+                limits: [],
+                useCase: 'Customer feedback analysis, document processing, social media monitoring'
+            },
+
+            // IoT
+            'iot-core': {
+                name: 'IoT Core',
+                icon: '📡',
+                category: 'iot',
+                description: 'IoT Core - Connect IoT devices to the cloud',
+                details: [
+                    'MQTT, HTTP, WebSockets protocols',
+                    'Device shadows for state management',
+                    'Rules engine for data processing',
+                    'Integration with AWS services',
+                    'Device registry and authentication'
+                ],
+                limits: [],
+                useCase: 'IoT device connectivity, industrial IoT, smart home'
+            },
+            'iot-greengrass': {
+                name: 'Greengrass',
+                icon: '🌿',
+                category: 'iot',
+                description: 'IoT Greengrass - Local compute and messaging',
+                details: [
+                    'Run Lambda functions locally on devices',
+                    'Local messaging between devices',
+                    'ML inference at the edge',
+                    'Works offline, syncs when connected'
+                ],
+                limits: [],
+                useCase: 'Edge computing, offline IoT, local processing'
+            },
+
+            // SECURITY
+            'iam': {
+                name: 'IAM',
+                icon: '🔑',
+                category: 'security',
+                description: 'Identity and Access Management',
+                details: [
+                    'Users, Groups, Roles, Policies',
+                    'MFA support',
+                    'Identity federation (SAML, OAuth)',
+                    'Fine-grained permissions',
+                    'Service Control Policies (SCPs) with Organizations'
+                ],
+                limits: ['5000 users per account (soft limit)'],
+                useCase: 'Access control, authentication, authorization, compliance'
+            },
+            'kms': {
+                name: 'KMS',
+                icon: '🔐',
+                category: 'security',
+                description: 'Key Management Service - Encryption keys',
+                details: [
+                    'Create and manage encryption keys',
+                    'Automatic key rotation',
+                    'Direct encryption: 4KB maximum',
+                    'Envelope encryption for larger data',
+                    'Integration with most AWS services'
+                ],
+                limits: ['4KB direct encryption max'],
+                useCase: 'Data encryption, compliance, key management'
+            },
+            'waf': {
+                name: 'WAF',
+                icon: '🛡️',
+                category: 'security',
+                description: 'Web Application Firewall',
+                details: [
+                    'Protect against SQL injection, XSS',
+                    'Rate limiting',
+                    'Geo-blocking',
+                    'AWS Managed Rules available',
+                    'Works with CloudFront, ALB, API Gateway'
+                ],
+                limits: [],
+                useCase: 'Web application protection, DDoS mitigation, bot management'
+            },
+            'cognito': {
+                name: 'Cognito',
+                icon: '👤',
+                category: 'security',
+                description: 'Cognito - User authentication and authorization',
+                details: [
+                    'User Pools: Sign-up/sign-in, MFA',
+                    'Identity Pools: AWS credentials for users',
+                    'Social identity providers (Google, Facebook, etc.)',
+                    'SAML 2.0 federation'
+                ],
+                limits: [],
+                useCase: 'Mobile/web app authentication, user management'
+            },
+
+            // INTEGRATION
+            'sqs': {
+                name: 'SQS',
+                icon: '📬',
+                category: 'integration',
+                description: 'Simple Queue Service - Message queue',
+                details: [
+                    'Standard: Unlimited throughput, at-least-once delivery',
+                    'FIFO: 300 msg/s (3000 with batching), exactly-once',
+                    'Message size: 256KB',
+                    'Retention: 1 min to 14 days'
+                ],
+                limits: ['256KB per message', '14 days retention max', 'FIFO: 300 msg/s default'],
+                useCase: 'Decouple applications, buffer requests, asynchronous processing'
+            },
+            'sns': {
+                name: 'SNS',
+                icon: '📢',
+                category: 'integration',
+                description: 'Simple Notification Service - Pub/Sub messaging',
+                details: [
+                    'Publish to topics, multiple subscribers',
+                    'Protocols: HTTP/S, Email, SMS, SQS, Lambda',
+                    'Message size: 256KB',
+                    'Fan-out pattern with SQS'
+                ],
+                limits: ['256KB per message'],
+                useCase: 'Notifications, fan-out messaging, alerts'
+            },
+            'eventbridge': {
+                name: 'EventBridge',
+                icon: '🚌',
+                category: 'integration',
+                description: 'EventBridge - Serverless event bus',
+                details: [
+                    'Connect applications with events',
+                    'Event patterns and rules',
+                    'Schema registry',
+                    'SaaS integrations'
+                ],
+                limits: ['256KB per event'],
+                useCase: 'Event-driven architectures, SaaS integration, event routing'
+            },
+            'kinesis': {
+                name: 'Kinesis',
+                icon: '📡',
+                category: 'integration',
+                description: 'Kinesis - Real-time data streaming',
+                details: [
+                    'Data Streams: Real-time data streaming, 1-365 day retention',
+                    'Firehose: Load streams into S3, Redshift, etc.',
+                    'Analytics: Real-time SQL on streams',
+                    'Video Streams: Video ingestion and processing'
+                ],
+                limits: ['1MB/s per shard', '365 days max retention'],
+                useCase: 'Real-time analytics, log aggregation, clickstream analysis'
+            },
+
+            // ANALYTICS
+            'athena': {
+                name: 'Athena',
+                icon: '🔎',
+                category: 'analytics',
+                description: 'Athena - Serverless SQL queries on S3',
+                details: [
+                    'Standard SQL (Presto based)',
+                    'Query data directly in S3',
+                    'Pay per TB scanned ($5/TB)',
+                    'Supports Parquet, ORC, Avro, JSON, CSV',
+                    'Partition data to reduce cost'
+                ],
+                limits: [],
+                useCase: 'Ad-hoc queries, log analysis, data lake analytics'
+            },
+            'glue': {
+                name: 'Glue',
+                icon: '🧪',
+                category: 'analytics',
+                description: 'Glue - Serverless ETL service',
+                details: [
+                    'Data Catalog: Central metadata repository',
+                    'Crawlers: Discover data schema',
+                    'ETL Jobs: Apache Spark based',
+                    'Job bookmarks: Process new data only'
+                ],
+                limits: [],
+                useCase: 'ETL, data preparation, data catalog'
+            },
+            'emr': {
+                name: 'EMR',
+                icon: '🔥',
+                category: 'analytics',
+                description: 'Elastic MapReduce - Big data processing',
+                details: [
+                    'Managed Hadoop, Spark, Hive, Presto',
+                    'Process vast amounts of data',
+                    'Spot instances for cost savings',
+                    'Integrates with S3 for storage'
+                ],
+                limits: [],
+                useCase: 'Big data analytics, machine learning, data transformation'
+            },
+
+            // MANAGEMENT
+            'cloudwatch': {
+                name: 'CloudWatch',
+                icon: '📊',
+                category: 'management',
+                description: 'CloudWatch - Monitoring and observability',
+                details: [
+                    'Metrics: Monitor AWS resources',
+                    'Logs: Collect and analyze logs',
+                    'Alarms: Trigger actions based on metrics',
+                    'Events: Respond to state changes',
+                    'Dashboards: Visualize metrics'
+                ],
+                limits: [],
+                useCase: 'Monitoring, logging, alerting, troubleshooting'
+            },
+            'cloudtrail': {
+                name: 'CloudTrail',
+                icon: '📝',
+                category: 'management',
+                description: 'CloudTrail - API activity logging',
+                details: [
+                    'Records all API calls',
+                    '90 days in console (default)',
+                    'Create trail for S3 storage (long-term)',
+                    'Integration with CloudWatch Logs'
+                ],
+                limits: ['90 days default retention'],
+                useCase: 'Audit trails, compliance, security analysis, troubleshooting'
+            },
+            'cloudformation': {
+                name: 'CloudFormation',
+                icon: '🏗️',
+                category: 'management',
+                description: 'CloudFormation - Infrastructure as Code',
+                details: [
+                    'JSON or YAML templates',
+                    'Create, update, delete stacks',
+                    'StackSets: Multi-account/region',
+                    'Drift detection',
+                    'Change sets: Preview changes'
+                ],
+                limits: [],
+                useCase: 'Infrastructure automation, repeatable deployments, disaster recovery'
+            }
+        };
+
         // Map state
         let scale = 1;
         let translateX = 0;
@@ -968,21 +1218,146 @@
         let isDragging = false;
         let startX, startY;
         let lastTranslateX, lastTranslateY;
-        let currentView = 'full';
-
-        // Smooth animation variables
         let velocityX = 0;
         let velocityY = 0;
         let animationFrame = null;
         const friction = 0.92;
         const minVelocity = 0.1;
+        let currentFocusCategory = null;
 
         const map = document.getElementById('map');
         const container = document.getElementById('mapContainer');
+        const mapWidth = 4000;
+        const mapHeight = 3000;
 
-        // Map dimensions
-        const mapWidth = 3200;
-        const mapHeight = 2400;
+        // Node positions - organized by category with sub-nodes
+        const nodePositions = {
+            // COMPUTE
+            'ec2': { x: 1555, y: 955 },
+            'lambda': { x: 1555, y: 855 },
+            'ecs': { x: 1555, y: 1055 },
+            'fargate': { x: 1305, y: 1055 },
+            'batch': { x: 1455, y: 1155 },
+
+            // STORAGE with sub-nodes
+            's3': { x: 2705, y: 955 },
+            's3-standard': { x: 2605, y: 855, sub: true },
+            's3-ia': { x: 2805, y: 855, sub: true },
+            's3-glacier': { x: 2605, y: 1055, sub: true },
+            's3-intelligent': { x: 2805, y: 1055, sub: true },
+            'ebs': { x: 2705, y: 755 },
+            'ebs-gp3': { x: 2855, y: 685, sub: true },
+            'ebs-io2': { x: 2855, y: 825, sub: true },
+            'efs': { x: 2405, y: 955 },
+            'efs-standard': { x: 2555, y: 885, sub: true },
+            'efs-ia': { x: 2555, y: 1025, sub: true },
+
+            // DATABASE with sub-nodes
+            'rds': { x: 2705, y: 1655 },
+            'aurora': { x: 2705, y: 1555 },
+            'aurora-serverless': { x: 2855, y: 1605, sub: true },
+            'dynamodb': { x: 2705, y: 1755 },
+            'dynamodb-dax': { x: 2555, y: 1805, sub: true },
+            'elasticache': { x: 2405, y: 1655 },
+
+            // NETWORK
+            'vpc': { x: 1555, y: 1655 },
+            'elb': { x: 1555, y: 1555 },
+            'cloudfront': { x: 1305, y: 1555 },
+            'apigateway': { x: 1305, y: 1755 },
+
+            // ML & AI
+            'sagemaker': { x: 2955, y: 655 },
+            'rekognition': { x: 3155, y: 655 },
+            'polly': { x: 2955, y: 805 },
+            'transcribe': { x: 3155, y: 805 },
+            'comprehend': { x: 3055, y: 730 },
+
+            // IoT
+            'iot-core': { x: 805, y: 655 },
+            'iot-greengrass': { x: 655, y: 730 },
+
+            // SECURITY
+            'iam': { x: 1055, y: 1375 },
+            'kms': { x: 905, y: 1275 },
+            'waf': { x: 755, y: 1205 },
+            'cognito': { x: 755, y: 1405 },
+
+            // INTEGRATION
+            'sqs': { x: 2705, y: 1375 },
+            'sns': { x: 2855, y: 1275 },
+            'eventbridge': { x: 3005, y: 1205 },
+            'kinesis': { x: 3005, y: 1445 },
+
+            // ANALYTICS
+            'athena': { x: 1855, y: 1955 },
+            'glue': { x: 1755, y: 2055 },
+            'emr': { x: 2095, y: 1955 },
+
+            // MANAGEMENT
+            'cloudwatch': { x: 1855, y: 805 },
+            'cloudtrail': { x: 2095, y: 805 },
+            'cloudformation': { x: 1975, y: 905 }
+        };
+
+        function createNodes() {
+            const mapEl = document.getElementById('map');
+
+            Object.keys(nodePositions).forEach(serviceId => {
+                const pos = nodePositions[serviceId];
+                const data = serviceData[serviceId];
+
+                if (!data) return;
+
+                const node = document.createElement('div');
+                node.className = `node ${data.category}${pos.sub ? ' sub-node' : ''}`;
+                node.style.left = `${pos.x}px`;
+                node.style.top = `${pos.y}px`;
+                node.setAttribute('data-category', data.category);
+                node.setAttribute('data-service', serviceId);
+                node.onclick = () => showServiceDetails(serviceId);
+
+                node.innerHTML = `
+                    <div class="node-icon">${data.icon}</div>
+                    <div class="node-title">${data.name}</div>
+                `;
+
+                mapEl.appendChild(node);
+            });
+        }
+
+        function createConnections() {
+            const svg = document.getElementById('connections');
+            const centerX = 2020;
+            const centerY = 1520;
+
+            // Draw connections from center to main category nodes
+            const mainNodes = {
+                'ec2': 'compute',
+                's3': 'storage',
+                'rds': 'database',
+                'vpc': 'network',
+                'iam': 'security',
+                'sqs': 'integration',
+                'athena': 'analytics',
+                'cloudwatch': 'management',
+                'sagemaker': 'ml',
+                'iot-core': 'iot'
+            };
+
+            Object.keys(mainNodes).forEach(serviceId => {
+                const pos = nodePositions[serviceId];
+                const category = mainNodes[serviceId];
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const d = `M${centerX},${centerY} Q${(centerX + pos.x) / 2},${(centerY + pos.y) / 2} ${pos.x + 45},${pos.y + 45}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', `connection-line central ${category}`);
+                path.setAttribute('data-category', category);
+
+                svg.appendChild(path);
+            });
+        }
 
         function updateTransform() {
             map.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
@@ -1014,31 +1389,12 @@
         function zoomAtPoint(factor, pointX, pointY) {
             const newScale = Math.max(0.25, Math.min(2.5, scale * factor));
             const scaleChange = newScale / scale;
-
-            // Adjust translation to zoom toward the point
             translateX = pointX - (pointX - translateX) * scaleChange;
             translateY = pointY - (pointY - translateY) * scaleChange;
-
             scale = newScale;
             updateTransform();
         }
 
-        function setView(view) {
-            currentView = view;
-            document.querySelectorAll('.toggle-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(view));
-            });
-
-            document.querySelectorAll('.node-details').forEach(el => {
-                el.style.display = view === 'minimal' ? 'none' : '';
-            });
-
-            document.querySelectorAll('.node-subtitle').forEach(el => {
-                el.style.display = view === 'minimal' ? 'none' : '';
-            });
-        }
-
-        // Momentum animation
         function animateMomentum() {
             if (Math.abs(velocityX) > minVelocity || Math.abs(velocityY) > minVelocity) {
                 translateX += velocityX;
@@ -1059,7 +1415,7 @@
             velocityY = 0;
         }
 
-        // Mouse events
+        // Pan and zoom controls
         container.addEventListener('mousedown', (e) => {
             stopMomentum();
             isDragging = true;
@@ -1073,19 +1429,16 @@
 
         container.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
-
             velocityX = (lastTranslateX + dx - translateX) * 0.3;
             velocityY = (lastTranslateY + dy - translateY) * 0.3;
-
             translateX = lastTranslateX + dx;
             translateY = lastTranslateY + dy;
             updateTransform();
         });
 
-        container.addEventListener('mouseup', (e) => {
+        container.addEventListener('mouseup', () => {
             if (isDragging) {
                 isDragging = false;
                 container.style.cursor = 'grab';
@@ -1100,131 +1453,111 @@
             }
         });
 
-        // Wheel zoom - smooth and centered at mouse
         container.addEventListener('wheel', (e) => {
             e.preventDefault();
             stopMomentum();
-
-            // Normalize wheel delta for consistent behavior across browsers/trackpads
             let delta = e.deltaY;
-
-            // Detect if this is a trackpad (smaller, more frequent deltas)
             const isTrackpad = Math.abs(delta) < 50;
-
-            // Adjust sensitivity based on input device
             const sensitivity = isTrackpad ? 0.002 : 0.001;
             const factor = 1 - delta * sensitivity;
-
-            // Clamp the factor for smooth zooming
             const clampedFactor = Math.max(0.9, Math.min(1.1, factor));
-
             zoomAtPoint(clampedFactor, e.clientX, e.clientY);
         }, { passive: false });
 
-        // Touch events for mobile
-        let lastTouchDist = 0;
-        let lastTouchX = 0;
-        let lastTouchY = 0;
-        let lastTouchTime = 0;
-        let touchVelocityX = 0;
-        let touchVelocityY = 0;
-
-        container.addEventListener('touchstart', (e) => {
-            stopMomentum();
-
-            if (e.touches.length === 1) {
-                isDragging = true;
-                lastTouchX = e.touches[0].clientX;
-                lastTouchY = e.touches[0].clientY;
-                lastTouchTime = Date.now();
-            } else if (e.touches.length === 2) {
-                isDragging = false;
-                lastTouchDist = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
+        // Focus functionality
+        function focusCategory(category) {
+            if (currentFocusCategory === category) {
+                resetFocus();
+                return;
             }
-        }, { passive: true });
 
-        container.addEventListener('touchmove', (e) => {
-            e.preventDefault();
+            currentFocusCategory = category;
 
-            if (e.touches.length === 1 && isDragging) {
-                const currentTime = Date.now();
-                const dt = Math.max(1, currentTime - lastTouchTime);
-
-                const dx = e.touches[0].clientX - lastTouchX;
-                const dy = e.touches[0].clientY - lastTouchY;
-
-                touchVelocityX = dx / dt * 16;
-                touchVelocityY = dy / dt * 16;
-
-                translateX += dx;
-                translateY += dy;
-
-                lastTouchX = e.touches[0].clientX;
-                lastTouchY = e.touches[0].clientY;
-                lastTouchTime = currentTime;
-
-                updateTransform();
-            } else if (e.touches.length === 2) {
-                const dist = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
-
-                if (lastTouchDist > 0) {
-                    const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                    const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                    const factor = dist / lastTouchDist;
-                    zoomAtPoint(factor, centerX, centerY);
+            // Dim/focus nodes
+            document.querySelectorAll('.node').forEach(node => {
+                if (node.getAttribute('data-category') === category) {
+                    node.classList.add('focused');
+                    node.classList.remove('dimmed');
+                } else {
+                    node.classList.add('dimmed');
+                    node.classList.remove('focused');
                 }
-
-                lastTouchDist = dist;
-            }
-        }, { passive: false });
-
-        container.addEventListener('touchend', (e) => {
-            if (e.touches.length === 0) {
-                isDragging = false;
-                lastTouchDist = 0;
-
-                // Apply momentum from touch
-                velocityX = touchVelocityX;
-                velocityY = touchVelocityY;
-                animateMomentum();
-            } else if (e.touches.length === 1) {
-                lastTouchX = e.touches[0].clientX;
-                lastTouchY = e.touches[0].clientY;
-                isDragging = true;
-            }
-        });
-
-        // Node click to expand
-        document.querySelectorAll('.node').forEach(node => {
-            node.addEventListener('click', (e) => {
-                e.stopPropagation();
-
-                // If we were dragging, don't toggle
-                if (Math.abs(velocityX) > 1 || Math.abs(velocityY) > 1) return;
-
-                // Close other expanded nodes
-                document.querySelectorAll('.node.expanded').forEach(n => {
-                    if (n !== node) n.classList.remove('expanded');
-                });
-
-                node.classList.toggle('expanded');
             });
-        });
 
-        // Close expanded nodes when clicking elsewhere
-        container.addEventListener('click', (e) => {
-            if (e.target === container || e.target === map) {
-                document.querySelectorAll('.node.expanded').forEach(n => {
-                    n.classList.remove('expanded');
-                });
-            }
-        });
+            // Dim/focus category labels
+            document.querySelectorAll('.category-label').forEach(label => {
+                if (label.classList.contains(category)) {
+                    label.classList.add('focused');
+                    label.classList.remove('dimmed');
+                } else {
+                    label.classList.add('dimmed');
+                    label.classList.remove('focused');
+                }
+            });
+
+            // Dim/focus connection lines
+            document.querySelectorAll('.connection-line').forEach(line => {
+                if (line.getAttribute('data-category') === category || line.classList.contains('central')) {
+                    line.classList.add('focused');
+                    line.classList.remove('dimmed');
+                } else {
+                    line.classList.add('dimmed');
+                    line.classList.remove('focused');
+                }
+            });
+        }
+
+        function resetFocus() {
+            currentFocusCategory = null;
+
+            document.querySelectorAll('.node, .category-label, .connection-line').forEach(el => {
+                el.classList.remove('focused', 'dimmed');
+            });
+        }
+
+        // Sidebar functionality
+        function showServiceDetails(serviceId) {
+            const data = serviceData[serviceId];
+            if (!data) return;
+
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('sidebarContent');
+
+            content.innerHTML = `
+                <div class="service-icon">${data.icon}</div>
+                <h2>${data.name}</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">${data.description}</p>
+
+                ${data.details.length > 0 ? `
+                    <div class="sidebar-section">
+                        <h3>Key Features</h3>
+                        <ul>
+                            ${data.details.map(d => `<li>${d}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+
+                ${data.limits.length > 0 ? `
+                    <div class="sidebar-section">
+                        <h3>Important Limits</h3>
+                        ${data.limits.map(l => `<span class="limit-badge">${l}</span>`).join('')}
+                    </div>
+                ` : ''}
+
+                ${data.useCase ? `
+                    <div class="sidebar-section">
+                        <h3>Common Use Cases</h3>
+                        <p>${data.useCase}</p>
+                    </div>
+                ` : ''}
+            `;
+
+            sidebar.classList.add('open');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+        }
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -1232,16 +1565,15 @@
             if (e.key === '-') zoomOut();
             if (e.key === '0') centerView();
             if (e.key === 'Escape') {
-                document.querySelectorAll('.node.expanded').forEach(n => {
-                    n.classList.remove('expanded');
-                });
+                closeSidebar();
+                resetFocus();
             }
         });
 
-        // Initial center
-        window.addEventListener('load', centerView);
-        window.addEventListener('resize', () => {
-            // Re-center on resize
+        // Initialize
+        window.addEventListener('load', () => {
+            createNodes();
+            createConnections();
             centerView();
         });
     </script>
