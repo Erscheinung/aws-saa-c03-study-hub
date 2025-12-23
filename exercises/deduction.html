@@ -715,6 +715,202 @@
                     { step: '<span class="eliminate">Eliminate A</span>: Security Groups = ONLY allow rules, no deny' },
                     { step: '<span class="keep">Keep B</span>: NACLs = subnet level, support deny rules' }
                 ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A company needs to process <span class="keyword">real-time streaming data</span> from IoT devices and perform <span class="keyword">SQL queries</span> on the data <span class="keyword">within seconds</span> of arrival. The solution must be <span class="keyword">serverless</span>.',
+                options: [
+                    { letter: 'A', text: 'Kinesis Data Streams + Lambda + DynamoDB', eliminate: true, reason: 'No direct SQL capability on streams; requires additional processing layer' },
+                    { letter: 'B', text: 'Kinesis Data Analytics for SQL Applications', correct: true, reason: 'Serverless, real-time SQL on streaming data, exactly what is needed' },
+                    { letter: 'C', text: 'EMR with Spark Streaming', eliminate: true, reason: 'EMR requires cluster management - not serverless' },
+                    { letter: 'D', text: 'S3 + Athena with scheduled queries', eliminate: true, reason: 'Athena is not real-time (batch queries on S3 data)' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "real-time", "streaming", "SQL queries", "within seconds", "serverless"' },
+                    { step: '<span class="eliminate">Eliminate C</span>: EMR = cluster management, NOT serverless' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Athena = batch queries on S3, NOT real-time streaming' },
+                    { step: '<span class="eliminate">Eliminate A</span>: No direct SQL capability; complex architecture vs requirement' },
+                    { step: '<span class="keep">Keep B</span>: Kinesis Data Analytics = serverless, real-time SQL on streams' },
+                    { step: 'Validation: All keywords satisfied - real-time ✓, SQL ✓, serverless ✓, seconds latency ✓' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A web application experiences <span class="keyword">unpredictable traffic spikes</span>. The company wants to cache content at edge locations globally while maintaining <span class="keyword">low latency</span> and <span class="keyword">reducing origin load</span>.',
+                options: [
+                    { letter: 'A', text: 'Global Accelerator with ELB', eliminate: true, reason: 'Global Accelerator routes traffic but does not cache content' },
+                    { letter: 'B', text: 'CloudFront CDN', correct: true, reason: 'Edge caching, low latency, reduces origin load, perfect fit' },
+                    { letter: 'C', text: 'ElastiCache in multiple regions', eliminate: true, reason: 'ElastiCache is application-level caching, not edge/global caching' },
+                    { letter: 'D', text: 'Route 53 with latency-based routing', eliminate: true, reason: 'DNS routing does not cache content, only directs traffic' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "edge locations", "cache content", "low latency", "reduce origin load"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Route 53 = DNS routing, does NOT cache content' },
+                    { step: '<span class="eliminate">Eliminate C</span>: ElastiCache = application cache, NOT edge locations' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Global Accelerator = routing optimization, no caching' },
+                    { step: '<span class="keep">Keep B</span>: CloudFront = CDN with edge caching, global low latency' },
+                    { step: 'Confirm: Edge locations ✓, content caching ✓, reduces origin load ✓' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A financial application requires <span class="keyword">ACID transactions</span> across <span class="keyword">multiple tables</span> with <span class="keyword">complex JOINs</span>. The database must support <span class="keyword">read replicas</span> for reporting and handle <span class="keyword">automatic failover</span>.',
+                options: [
+                    { letter: 'A', text: 'DynamoDB with DynamoDB Transactions', eliminate: true, reason: 'DynamoDB does not support complex JOINs or SQL queries' },
+                    { letter: 'B', text: 'Aurora MySQL with Multi-AZ', correct: true, reason: 'ACID compliant, complex JOINs (SQL), read replicas, automatic failover' },
+                    { letter: 'C', text: 'Redshift with Redshift Spectrum', eliminate: true, reason: 'Redshift is for analytics/OLAP, not OLTP with automatic failover' },
+                    { letter: 'D', text: 'DocumentDB with replica sets', eliminate: true, reason: 'DocumentDB is NoSQL (MongoDB), does not support SQL JOINs' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "ACID transactions", "multiple tables", "complex JOINs", "read replicas", "automatic failover"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: DocumentDB = NoSQL, no SQL JOINs capability' },
+                    { step: '<span class="eliminate">Eliminate C</span>: Redshift = data warehouse/analytics, not OLTP' },
+                    { step: '<span class="eliminate">Eliminate A</span>: DynamoDB = NoSQL, cannot do complex JOINs' },
+                    { step: '<span class="keep">Keep B</span>: Aurora = relational DB, ACID, JOINs, replicas, failover' },
+                    { step: 'Full validation: ACID ✓, JOINs ✓, replicas (15 max) ✓, Multi-AZ failover ✓' }
+                ]
+            },
+            {
+                difficulty: 'easy',
+                scenario: 'A startup needs to deploy a <span class="keyword">containerized application</span> without managing servers. The solution must be <span class="keyword">serverless</span> and integrate with <span class="keyword">Application Load Balancer</span>.',
+                options: [
+                    { letter: 'A', text: 'ECS with EC2 launch type', eliminate: true, reason: 'EC2 launch type requires managing EC2 instances - not serverless' },
+                    { letter: 'B', text: 'ECS with Fargate launch type', correct: true, reason: 'Fargate is serverless containers, integrates with ALB' },
+                    { letter: 'C', text: 'Lambda with container images', eliminate: true, reason: 'Lambda does not directly integrate with ALB for container images' },
+                    { letter: 'D', text: 'EKS with managed node groups', eliminate: true, reason: 'Managed node groups still require managing nodes - not fully serverless' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "containerized", "serverless", "Application Load Balancer"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: ECS EC2 = server management required' },
+                    { step: '<span class="eliminate">Eliminate D</span>: EKS managed nodes = still managing infrastructure' },
+                    { step: '<span class="eliminate">Eliminate C</span>: Lambda container images do not integrate with ALB directly' },
+                    { step: '<span class="keep">Keep B</span>: ECS Fargate = serverless containers + native ALB integration' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'An application stores <span class="keyword">sensitive customer data</span> in S3. The company must ensure <span class="keyword">encryption at rest</span> using <span class="keyword">keys they fully control</span>, with <span class="keyword">automatic key rotation</span>.',
+                options: [
+                    { letter: 'A', text: 'SSE-S3 with Amazon-managed keys', eliminate: true, reason: 'SSE-S3 uses Amazon-managed keys - customer does not control' },
+                    { letter: 'B', text: 'SSE-KMS with customer managed CMK', correct: true, reason: 'Customer controls keys in KMS, automatic rotation available' },
+                    { letter: 'C', text: 'SSE-C with customer-provided keys', eliminate: true, reason: 'Customer provides keys manually each request - no automatic rotation' },
+                    { letter: 'D', text: 'Client-side encryption before upload', eliminate: true, reason: 'Client-side requires application-managed rotation - complex' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "encryption at rest", "fully control keys", "automatic rotation"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: SSE-S3 = Amazon controls keys, not customer' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Client-side = manual key management, complex rotation' },
+                    { step: '<span class="eliminate">Eliminate C</span>: SSE-C = provide key each request, no auto-rotation' },
+                    { step: '<span class="keep">Keep B</span>: SSE-KMS CMK = customer controls keys, KMS auto-rotation' },
+                    { step: 'Confirm: Encryption ✓, key control ✓, automatic rotation (annually) ✓' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A machine learning team needs to train models using <span class="keyword">large datasets</span> stored in S3. They require <span class="keyword">GPU instances</span>, <span class="keyword">distributed training</span>, and <span class="keyword">automatic model deployment</span> with <span class="keyword">minimal infrastructure management</span>.',
+                options: [
+                    { letter: 'A', text: 'EC2 P3 instances with custom ML scripts', eliminate: true, reason: 'Requires significant infrastructure management and deployment automation' },
+                    { letter: 'B', text: 'SageMaker with built-in algorithms', correct: true, reason: 'Fully managed: GPU support, distributed training, auto model deployment' },
+                    { letter: 'C', text: 'EMR with Spark MLlib', eliminate: true, reason: 'EMR is for big data processing, not specialized ML training/deployment' },
+                    { letter: 'D', text: 'Lambda with ML libraries', eliminate: true, reason: 'Lambda has no GPU support, 15-min timeout, not for large dataset training' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "large datasets", "GPU", "distributed training", "auto deployment", "minimal management"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Lambda = no GPU, 15-min limit, not for large training' },
+                    { step: '<span class="eliminate">Eliminate C</span>: EMR = big data processing, not ML-focused platform' },
+                    { step: '<span class="eliminate">Eliminate A</span>: EC2 custom = high infrastructure management (contradicts "minimal")' },
+                    { step: '<span class="keep">Keep B</span>: SageMaker = managed ML, GPU ✓, distributed ✓, auto deployment ✓' },
+                    { step: 'Final check: All requirements met with SageMaker Training Jobs + Endpoints' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A company wants to analyze <span class="keyword">clickstream data</span> from their website using <span class="keyword">standard SQL</span>. The data is already stored in <span class="keyword">S3 in Parquet format</span>. The solution should be <span class="keyword">serverless</span> and <span class="keyword">pay per query</span>.',
+                options: [
+                    { letter: 'A', text: 'Load data into Redshift cluster', eliminate: true, reason: 'Redshift requires provisioned cluster - not serverless, pay even when idle' },
+                    { letter: 'B', text: 'Amazon Athena', correct: true, reason: 'Serverless SQL on S3, pay per TB scanned, supports Parquet' },
+                    { letter: 'C', text: 'RDS with data import jobs', eliminate: true, reason: 'RDS is provisioned, not designed for S3 analytics, ongoing costs' },
+                    { letter: 'D', text: 'DynamoDB with S3 import', eliminate: true, reason: 'DynamoDB is NoSQL, does not support standard SQL queries' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "S3", "standard SQL", "Parquet", "serverless", "pay per query"' },
+                    { step: '<span class="eliminate">Eliminate D</span>: DynamoDB = NoSQL, no standard SQL support' },
+                    { step: '<span class="eliminate">Eliminate C</span>: RDS = provisioned, not for S3 analytics use case' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Redshift = provisioned cluster, costs even idle' },
+                    { step: '<span class="keep">Keep B</span>: Athena = serverless SQL on S3, $5/TB scanned, Parquet optimized' },
+                    { step: 'Perfect fit: Serverless ✓, pay-per-query ✓, SQL ✓, S3 ✓, Parquet ✓' }
+                ]
+            },
+            {
+                difficulty: 'easy',
+                scenario: 'A development team needs to store <span class="keyword">application configuration</span> parameters that are <span class="keyword">accessed frequently</span>. The solution must be <span class="keyword">free</span> and support <span class="keyword">hierarchical organization</span>.',
+                options: [
+                    { letter: 'A', text: 'AWS Secrets Manager', eliminate: true, reason: 'Secrets Manager charges per secret stored - not free' },
+                    { letter: 'B', text: 'Systems Manager Parameter Store (Standard)', correct: true, reason: 'Free tier, hierarchical parameters, frequent access support' },
+                    { letter: 'C', text: 'S3 bucket with versioning', eliminate: true, reason: 'S3 has storage costs and is not optimized for parameter management' },
+                    { letter: 'D', text: 'DynamoDB table', eliminate: true, reason: 'DynamoDB has costs for storage and throughput - not free' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "config parameters", "frequently accessed", "free", "hierarchical"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Secrets Manager = $0.40/secret/month, NOT free' },
+                    { step: '<span class="eliminate">Eliminate D</span>: DynamoDB = storage and throughput costs' },
+                    { step: '<span class="eliminate">Eliminate C</span>: S3 = storage costs, not for parameter management' },
+                    { step: '<span class="keep">Keep B</span>: Parameter Store Standard = free (10K params), hierarchical paths' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A media company needs to transcode <span class="keyword">thousands of videos</span> uploaded to S3. The processing is <span class="keyword">CPU-intensive</span>, can tolerate <span class="keyword">interruptions</span>, and should be <span class="keyword">cost-optimized</span>. Completion time is flexible.',
+                options: [
+                    { letter: 'A', text: 'Lambda functions for each video', eliminate: true, reason: 'Lambda 15-min timeout insufficient for video transcoding' },
+                    { letter: 'B', text: 'AWS Batch with Spot instances', correct: true, reason: 'Managed batch, Spot for cost savings (90% off), handles interruptions' },
+                    { letter: 'C', text: 'ECS with On-Demand instances', eliminate: true, reason: 'On-Demand is full price - not cost-optimized for interruptible workloads' },
+                    { letter: 'D', text: 'EC2 Reserved Instances', eliminate: true, reason: 'Reserved requires commitment - not ideal for variable batch workloads' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "thousands", "CPU-intensive", "interruptions OK", "cost-optimized", "flexible time"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Lambda = 15 min max, videos need longer' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Reserved = commitment, batch is variable workload' },
+                    { step: '<span class="eliminate">Eliminate C</span>: On-Demand = full price, not cost-optimized' },
+                    { step: '<span class="keep">Keep B</span>: Batch + Spot = up to 90% savings, handles interruptions, scales' },
+                    { step: 'Validation: Batch manages queue, Spot handles interruptions, perfect for batch transcoding' }
+                ]
+            },
+            {
+                difficulty: 'medium',
+                scenario: 'A SaaS application needs to provide <span class="keyword">temporary AWS credentials</span> to mobile app users after they <span class="keyword">authenticate via Google</span>. Users should only access <span class="keyword">their own S3 folder</span>.',
+                options: [
+                    { letter: 'A', text: 'IAM users for each mobile user', eliminate: true, reason: 'IAM has 5000 user limit, not scalable for millions of mobile users' },
+                    { letter: 'B', text: 'Cognito Identity Pools with Google federation', correct: true, reason: 'Provides temporary credentials, supports Google auth, fine-grained S3 access' },
+                    { letter: 'C', text: 'API Gateway with Lambda authorizer', eliminate: true, reason: 'Does not provide AWS credentials, only API authorization' },
+                    { letter: 'D', text: 'STS AssumeRole called from mobile app', eliminate: true, reason: 'Requires embedding AWS credentials in app - major security risk' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "temporary credentials", "Google auth", "mobile users", "own S3 folder"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: IAM users = 5000 limit, not for millions of app users' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Direct STS from mobile = security risk (embedded credentials)' },
+                    { step: '<span class="eliminate">Eliminate C</span>: API Gateway = API auth only, no AWS credentials' },
+                    { step: '<span class="keep">Keep B</span>: Cognito Identity = temp credentials, Google federation, S3 policy vars' },
+                    { step: 'Technical fit: Uses ${cognito-identity.amazonaws.com:sub} for folder isolation' }
+                ]
+            },
+            {
+                difficulty: 'hard',
+                scenario: 'A global application requires <span class="keyword">active-active deployment</span> across <span class="keyword">two AWS regions</span> with <span class="keyword">automatic failover</span>. The database must support <span class="keyword">low-latency writes in both regions</span> and maintain <span class="keyword">data consistency</span>.',
+                options: [
+                    { letter: 'A', text: 'RDS Multi-AZ with cross-region read replicas', eliminate: true, reason: 'Multi-AZ is active-passive, read replicas are read-only and async' },
+                    { letter: 'B', text: 'DynamoDB Global Tables', correct: true, reason: 'Multi-region active-active, low-latency writes in all regions, automatic replication' },
+                    { letter: 'C', text: 'Aurora Global Database with write forwarding', eliminate: true, reason: 'Write forwarding adds latency - writes go to primary region only' },
+                    { letter: 'D', text: 'Two independent RDS instances with app-level sync', eliminate: true, reason: 'No automatic failover, manual sync is complex and error-prone' }
+                ],
+                deduction: [
+                    { step: 'Keywords: "active-active", "two regions", "automatic failover", "low-latency writes both regions"' },
+                    { step: '<span class="eliminate">Eliminate A</span>: Multi-AZ = single region, read replicas = read-only' },
+                    { step: '<span class="eliminate">Eliminate D</span>: Independent DBs = manual management, no auto-failover' },
+                    { step: '<span class="eliminate">Eliminate C</span>: Aurora write forwarding = writes to primary add latency' },
+                    { step: '<span class="keep">Keep B</span>: DynamoDB Global Tables = true active-active, writes in any region' },
+                    { step: 'Final validation: Multi-region ✓, active-active ✓, low-latency writes ✓, auto-replication ✓' }
+                ]
             }
         ];
         

@@ -531,13 +531,14 @@
         <!-- ADHD Pomodoro Timer -->
         <section class="adhd-tools">
             <h2 class="adhd-title">🧠 ADHD Study Timer</h2>
-            <div class="timer-display" id="timerDisplay">25:00</div>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px;">
+                Use these external Pomodoro timers with sound alerts for your study sessions:
+            </p>
             <div class="timer-controls">
-                <button class="timer-btn" onclick="setTimer(15)">15 min Sprint</button>
-                <button class="timer-btn active" onclick="setTimer(25)">25 min Focus</button>
-                <button class="timer-btn" onclick="setTimer(5)">5 min Break</button>
-                <button class="timer-btn" onclick="toggleTimer()" id="startBtn">▶ Start</button>
-                <button class="timer-btn" onclick="resetTimer()">↺ Reset</button>
+                <a href="https://pomofocus.io/" target="_blank" class="timer-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">🍅 PomoFocus</a>
+                <a href="https://www.marinaratimer.com/" target="_blank" class="timer-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">⏱️ Marinara</a>
+                <a href="https://pomodorotimer.online/" target="_blank" class="timer-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">⏰ Pomodoro Online</a>
+                <a href="https://focus-to-do.com/" target="_blank" class="timer-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">✓ Focus To-Do</a>
             </div>
             <p class="pomodoro-tip">💡 Tip: Short bursts work better for ADHD brains. Try 15-min sprints if 25 feels too long!</p>
         </section>
@@ -639,59 +640,7 @@
     </div>
     
     <script>
-        // Pomodoro Timer
-        let timeLeft = 25 * 60;
-        let timerInterval = null;
-        let isRunning = false;
-        
-        function updateDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            document.getElementById('timerDisplay').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        function setTimer(minutes) {
-            timeLeft = minutes * 60;
-            updateDisplay();
-            document.querySelectorAll('.timer-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.includes(minutes)) btn.classList.add('active');
-            });
-        }
-        
-        function toggleTimer() {
-            const btn = document.getElementById('startBtn');
-            if (isRunning) {
-                clearInterval(timerInterval);
-                btn.textContent = '▶ Start';
-                isRunning = false;
-            } else {
-                timerInterval = setInterval(() => {
-                    if (timeLeft > 0) {
-                        timeLeft--;
-                        updateDisplay();
-                    } else {
-                        clearInterval(timerInterval);
-                        isRunning = false;
-                        btn.textContent = '▶ Start';
-                        alert('⏰ Time\'s up! Take a break or start your next session!');
-                    }
-                }, 1000);
-                btn.textContent = '⏸ Pause';
-                isRunning = true;
-            }
-        }
-        
-        function resetTimer() {
-            clearInterval(timerInterval);
-            isRunning = false;
-            document.getElementById('startBtn').textContent = '▶ Start';
-            const activeBtn = document.querySelector('.timer-btn.active');
-            const minutes = parseInt(activeBtn?.textContent) || 25;
-            timeLeft = minutes * 60;
-            updateDisplay();
-        }
+        // Timer functionality removed - using external Pomodoro links instead
     </script>
 </body>
 </html>

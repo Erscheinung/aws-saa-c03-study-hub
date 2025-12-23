@@ -857,6 +857,242 @@
                 hint: 'One thousand',
                 tip: 'Lambda: 1000 concurrent (soft limit). Request increase for production.',
                 aliases: ['1000', '1,000', 'one thousand', '1000 concurrent']
+            },
+
+            // New Comprehensive Questions
+
+            // Integration & Messaging
+            {
+                category: 'limits',
+                text: 'EventBridge events can be up to <span class="blank" id="blank"></span> KB in size.',
+                answer: '256',
+                hint: 'Same as SQS and SNS',
+                tip: 'EventBridge: 256KB per event. Built on CloudWatch Events.',
+                aliases: ['256', '256kb', '256 kb']
+            },
+            {
+                category: 'network',
+                text: '<span class="blank" id="blank"></span> is a managed GraphQL service for real-time and offline apps.',
+                answer: 'AppSync',
+                hint: 'Application Sync',
+                tip: 'AppSync: GraphQL API, real-time subscriptions, offline sync.',
+                aliases: ['appsync', 'app sync', 'aws appsync']
+            },
+            {
+                category: 'compute',
+                text: 'AWS <span class="blank" id="blank"></span> runs batch jobs at any scale without managing infrastructure.',
+                answer: 'Batch',
+                hint: 'Named after what it does',
+                tip: 'Batch: Managed batch computing. Uses EC2 or Fargate. Cost-optimized with Spot.',
+                aliases: ['batch', 'aws batch']
+            },
+
+            // ML & AI Services
+            {
+                category: 'security',
+                text: '<span class="blank" id="blank"></span> provides ML-powered image and video analysis.',
+                answer: 'Rekognition',
+                hint: 'Recognition spelled differently',
+                tip: 'Rekognition: Face detection, celebrity recognition, content moderation.',
+                aliases: ['rekognition', 'aws rekognition']
+            },
+            {
+                category: 'compute',
+                text: 'AWS <span class="blank" id="blank"></span> is a fully managed ML service for building and training models.',
+                answer: 'SageMaker',
+                hint: 'Makes sages?',
+                tip: 'SageMaker: Build, train, deploy ML models. Notebooks, training jobs, endpoints.',
+                aliases: ['sagemaker', 'aws sagemaker', 'sage maker']
+            },
+            {
+                category: 'network',
+                text: '<span class="blank" id="blank"></span> converts text to lifelike speech in multiple languages.',
+                answer: 'Polly',
+                hint: 'Bird name',
+                tip: 'Polly: Text-to-speech, 60+ voices, 20+ languages. SSML support.',
+                aliases: ['polly', 'aws polly', 'amazon polly']
+            },
+            {
+                category: 'compute',
+                text: '<span class="blank" id="blank"></span> automatically converts speech to text.',
+                answer: 'Transcribe',
+                hint: 'What you do with audio',
+                tip: 'Transcribe: Speech-to-text, speaker identification, custom vocabularies.',
+                aliases: ['transcribe', 'aws transcribe', 'amazon transcribe']
+            },
+            {
+                category: 'network',
+                text: 'AWS <span class="blank" id="blank"></span> provides natural language processing for text analysis.',
+                answer: 'Comprehend',
+                hint: 'Understanding',
+                tip: 'Comprehend: Sentiment analysis, entity recognition, topic modeling.',
+                aliases: ['comprehend', 'aws comprehend', 'amazon comprehend']
+            },
+
+            // Advanced Database
+            {
+                category: 'database',
+                text: '<span class="blank" id="blank"></span> is a graph database for highly connected data.',
+                answer: 'Neptune',
+                hint: 'Planet name',
+                tip: 'Neptune: Graph database. Supports Gremlin and SPARQL. Social networks, fraud detection.',
+                aliases: ['neptune', 'aws neptune', 'amazon neptune']
+            },
+            {
+                category: 'database',
+                text: 'Amazon <span class="blank" id="blank"></span> is a MongoDB-compatible document database.',
+                answer: 'DocumentDB',
+                hint: 'Documents in a database',
+                tip: 'DocumentDB: MongoDB compatible, fully managed, JSON documents.',
+                aliases: ['documentdb', 'document db', 'amazon documentdb']
+            },
+            {
+                category: 'database',
+                text: 'Redshift uses <span class="blank" id="blank"></span> storage for fast data warehouse queries.',
+                answer: 'columnar',
+                hint: 'Opposite of row-based',
+                tip: 'Redshift: Columnar storage, MPP (Massively Parallel Processing), OLAP.',
+                aliases: ['columnar', 'column-based', 'column based']
+            },
+
+            // Advanced Storage
+            {
+                category: 'storage',
+                text: 'FSx for <span class="blank" id="blank"></span> provides high-performance Windows file storage.',
+                answer: 'Windows',
+                hint: 'Microsoft OS',
+                tip: 'FSx for Windows: SMB protocol, Active Directory integration, Windows apps.',
+                aliases: ['windows', 'windows file server']
+            },
+            {
+                category: 'storage',
+                text: 'FSx for <span class="blank" id="blank"></span> provides high-performance computing file systems.',
+                answer: 'Lustre',
+                hint: 'HPC workloads',
+                tip: 'FSx for Lustre: Sub-millisecond latency, ML training, HPC, video processing.',
+                aliases: ['lustre', 'luster']
+            },
+            {
+                category: 'storage',
+                text: 'S3 <span class="blank" id="blank"></span> Access Points simplify data access for shared datasets.',
+                answer: 'Access',
+                hint: 'In the name',
+                tip: 'S3 Access Points: Unique hostname, dedicated access policy, simplify management.',
+                aliases: ['access', 's3 access']
+            },
+
+            // Advanced Network
+            {
+                category: 'network',
+                text: '<span class="blank" id="blank"></span> Gateway connects VPCs and on-premises networks in a hub-and-spoke topology.',
+                answer: 'Transit',
+                hint: 'Movement/transportation',
+                tip: 'Transit Gateway: Central hub for VPCs, VPN, Direct Connect. Simplifies network topology.',
+                aliases: ['transit', 'transit gateway', 'aws transit gateway', 'tgw']
+            },
+            {
+                category: 'network',
+                text: 'VPC <span class="blank" id="blank"></span> is a managed NAT service that connects private subnets to the internet.',
+                answer: 'NAT Gateway',
+                hint: 'Network Address Translation',
+                tip: 'NAT Gateway: Managed, highly available, 45 Gbps bandwidth. NAT Instance: Self-managed.',
+                aliases: ['nat gateway', 'nat', 'natgw']
+            },
+            {
+                category: 'network',
+                text: '<span class="blank" id="blank"></span> endpoints connect VPCs to AWS services privately.',
+                answer: 'Interface',
+                hint: 'Not Gateway',
+                tip: 'Interface Endpoints: PrivateLink, ENI with private IP. Most AWS services.',
+                aliases: ['interface', 'interface endpoint', 'interface endpoints']
+            },
+
+            // Advanced Security
+            {
+                category: 'security',
+                text: 'AWS <span class="blank" id="blank"></span> automatically assesses applications for vulnerabilities.',
+                answer: 'Inspector',
+                hint: 'Inspects your resources',
+                tip: 'Inspector: Automated vulnerability assessment. Network, host assessments.',
+                aliases: ['inspector', 'aws inspector', 'amazon inspector']
+            },
+            {
+                category: 'security',
+                text: '<span class="blank" id="blank"></span> provides dedicated hardware for cryptographic key storage.',
+                answer: 'CloudHSM',
+                hint: 'Hardware Security Module',
+                tip: 'CloudHSM: FIPS 140-2 Level 3, dedicated hardware, full key control.',
+                aliases: ['cloudhsm', 'cloud hsm', 'aws cloudhsm', 'hsm']
+            },
+            {
+                category: 'security',
+                text: 'AWS <span class="blank" id="blank"></span> continuously monitors resource configurations for compliance.',
+                answer: 'Config',
+                hint: 'Configuration management',
+                tip: 'Config: Configuration history, compliance rules, change notifications.',
+                aliases: ['config', 'aws config']
+            },
+
+            // Advanced Management
+            {
+                category: 'compute',
+                text: 'Systems Manager <span class="blank" id="blank"></span> Manager allows remote command execution without SSH.',
+                answer: 'Session',
+                hint: 'Session',
+                tip: 'Session Manager: Secure shell access without bastion hosts, SSH keys, or open ports.',
+                aliases: ['session', 'session manager', 'ssm session']
+            },
+            {
+                category: 'network',
+                text: 'AWS <span class="blank" id="blank"></span> simplifies multi-account and multi-region deployments.',
+                answer: 'Organizations',
+                hint: 'Organizing accounts',
+                tip: 'Organizations: Centralized billing, SCPs, account management, consolidated billing.',
+                aliases: ['organizations', 'aws organizations', 'orgs']
+            },
+            {
+                category: 'compute',
+                text: '<span class="blank" id="blank"></span> Tower automates multi-account AWS environment setup.',
+                answer: 'Control',
+                hint: 'Control',
+                tip: 'Control Tower: Landing zone, guardrails, account factory, best practices.',
+                aliases: ['control', 'control tower', 'aws control tower']
+            },
+
+            // Analytics & Big Data
+            {
+                category: 'database',
+                text: 'Amazon <span class="blank" id="blank"></span> is a managed Apache Kafka service.',
+                answer: 'MSK',
+                hint: 'Managed Streaming for Kafka',
+                tip: 'MSK: Fully managed Kafka, open source compatible, streaming data.',
+                aliases: ['msk', 'managed streaming for kafka', 'amazon msk']
+            },
+            {
+                category: 'database',
+                text: 'AWS <span class="blank" id="blank"></span> is a serverless ETL service for data preparation.',
+                answer: 'Glue',
+                hint: 'Sticks data together',
+                tip: 'Glue: Data catalog, crawlers, ETL jobs, Spark-based, serverless.',
+                aliases: ['glue', 'aws glue']
+            },
+            {
+                category: 'database',
+                text: 'Amazon <span class="blank" id="blank"></span> processes big data workloads using Hadoop and Spark.',
+                answer: 'EMR',
+                hint: 'Elastic MapReduce',
+                tip: 'EMR: Managed Hadoop, Spark, Hive, Presto. Big data processing.',
+                aliases: ['emr', 'elastic mapreduce', 'amazon emr']
+            },
+
+            // Cost Optimization
+            {
+                category: 'storage',
+                text: 'S3 <span class="blank" id="blank"></span> Retrieval provides faster access than Deep Archive.',
+                answer: 'Glacier Flexible',
+                hint: 'Flexible',
+                tip: 'Glacier Flexible: 1-5 min expedited, 3-5 hrs standard, 5-12 hrs bulk retrieval.',
+                aliases: ['glacier flexible', 'flexible', 'glacier flexible retrieval']
             }
         ];
         
