@@ -292,6 +292,70 @@
             line-height: 1.6;
         }
 
+        /* Sub-topics (nested expandable sections) */
+        .sub-topics {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .sub-topic-item {
+            background: var(--bg-primary);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-topic-item:hover {
+            background: rgba(79,172,254,0.05);
+            border-color: var(--accent-blue);
+        }
+
+        .sub-topic-item.expanded {
+            border-color: var(--accent-blue);
+        }
+
+        .sub-topic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sub-topic-name {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--accent-blue);
+        }
+
+        .sub-topic-toggle {
+            color: var(--accent-blue);
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .sub-topic-item.expanded .sub-topic-toggle {
+            transform: rotate(180deg);
+        }
+
+        .sub-topic-content {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(79,172,254,0.2);
+        }
+
+        .sub-topic-item.expanded .sub-topic-content {
+            display: block;
+        }
+
+        .sub-topic-content .key-point {
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
+
         /* Progress indicator */
         .progress-indicator {
             display: flex;
@@ -406,6 +470,89 @@
                             <div class="exam-tip">
                                 <div class="exam-tip-title">Exam Tip</div>
                                 <div class="exam-tip-text">If a question mentions "federated users" or "SAML", think IAM Roles with STS AssumeRoleWithSAML. For mobile apps, Cognito is usually the answer.</div>
+                            </div>
+
+                            <div class="sub-topics">
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ IAM Roles vs Users Deep Dive</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">IAM Users</span>: Long-term credentials (password/access keys). Max 5000 users per account</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">IAM Roles</span>: Temporary credentials from STS. No limits, preferred for services and cross-account</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">EC2 instance = always use IAM Role, NEVER store credentials in instance</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">Trust Policy: Who can assume the role. Permission Policy: What the role can do</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ Cognito User Pools vs Identity Pools</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">User Pools</span>: Authentication (sign in). Returns JWT tokens. Social logins (Google, Facebook)</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Identity Pools</span>: Authorization (AWS access). Exchanges tokens for temporary AWS credentials via STS</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">Typical flow: User Pool (login) → JWT token → Identity Pool → AWS credentials → Access S3/DynamoDB</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">User Pools can work standalone without Identity Pools for app authentication</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ Policy Types & Evaluation Logic</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Identity-based</span>: Attached to users/groups/roles. Managed (AWS/Customer) or Inline</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Resource-based</span>: Attached to resources (S3 bucket policy, Lambda policy). Can specify principals</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">SCPs</span> (Service Control Policies): Apply to OUs/accounts in AWS Organizations. Don't grant permissions, only limit</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">Evaluation: <span class="highlight">Explicit Deny > Explicit Allow > Implicit Deny</span> (default deny all)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -614,6 +761,93 @@
                                 <div class="exam-tip-title">Exam Tip</div>
                                 <div class="exam-tip-text">"Decouple" + "async" = SQS. "Multiple subscribers" = SNS. "Guaranteed order" = SQS FIFO. "Event-driven" = EventBridge.</div>
                             </div>
+
+                            <div class="sub-topics">
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ SQS Standard vs FIFO</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Standard</span>: Unlimited throughput, at-least-once delivery, best-effort ordering</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">FIFO</span>: 300 msg/s (3000 with batching), exactly-once delivery, strict ordering</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Dead Letter Queue</span>: Failed messages after maxReceiveCount attempts</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Visibility Timeout</span>: Message hidden during processing (30s default, 12hr max)</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Long Polling</span>: 1-20s wait for messages, reduces API calls and cost</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ SNS vs SQS vs EventBridge</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">SNS</span>: Pub/sub, push to multiple subscribers (SQS, Lambda, HTTP, email, SMS)</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">SQS</span>: Queue, pull-based, decoupling, buffering, async processing</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">EventBridge</span>: Event bus, filter/route events, 100+ AWS service integrations, scheduled events</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Fan-out pattern</span>: SNS topic → Multiple SQS queues. One message, many processors</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ Step Functions Workflows</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Standard</span>: Long-running (up to 1 year), exactly-once execution, full history</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Express</span>: High-volume (100K/s), 5 min max, at-least-once, lower cost</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">Integrates: Lambda, ECS, SNS, SQS, DynamoDB, Batch, Glue, SageMaker</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">Use cases: Order processing, ETL workflows, ML pipelines, human approval steps</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -700,6 +934,101 @@
                                 <div class="exam-tip-title">Exam Tip</div>
                                 <div class="exam-tip-text">"Highest IOPS" + "can lose data" = Instance Store. "Shared file system Linux" = EFS. "Windows" = FSx for Windows.</div>
                             </div>
+
+                            <div class="sub-topics">
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ S3 Storage Classes Deep Dive</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">S3 Standard</span>: Frequent access, 99.99% availability, 11 9's durability</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">S3 Standard-IA</span>: Infrequent access (once/month), lower storage cost, retrieval fee, 30-day min</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">S3 One Zone-IA</span>: Single AZ, 20% cheaper than Standard-IA, 99.5% availability</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Glacier Instant</span>: Quarterly access, millisecond retrieval, 90-day min, 128KB min</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Glacier Flexible</span>: Expedited (1-5min), Standard (3-5hr), Bulk (5-12hr), 90-day min</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Glacier Deep Archive</span>: Yearly access, Standard (12hr), Bulk (48hr), 180-day min, cheapest</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ EBS Volume Types Comparison</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">gp3</span> (General Purpose SSD): 3000 IOPS baseline, 16,000 max, 125-1000 MB/s, cost-effective</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">gp2</span>: Legacy, 3 IOPS/GB (max 16,000), performance scales with size</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">io2 Block Express</span>: 64,000 IOPS (Nitro), 256,000 IOPS max, sub-ms latency, databases</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">st1</span> (Throughput Optimized HDD): 500 IOPS, 500 MB/s, big data, cannot be boot volume</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">sc1</span> (Cold HDD): 250 IOPS, 250 MB/s, cheapest, infrequent access, cannot be boot</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ EFS vs FSx Comparison</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">EFS</span>: Linux NFS, petabyte scale, automatic scaling, lifecycle management to EFS-IA</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">FSx for Windows</span>: Windows SMB, Active Directory integration, DFS namespaces</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">FSx for Lustre</span>: HPC, ML, sub-ms latency, 100s GB/s throughput, S3 integration</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">FSx for NetApp ONTAP</span>: Multi-protocol (NFS, SMB, iSCSI), snapshots, replication</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -734,6 +1063,93 @@
                                 <div class="key-point">
                                     <span class="point-bullet">&#x2713;</span>
                                     <span class="point-text">ElastiCache: Redis (persistence, replication) vs Memcached (multi-threaded, simple)</span>
+                                </div>
+                            </div>
+
+                            <div class="sub-topics">
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ RDS vs Aurora Comparison</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">RDS</span>: MySQL, PostgreSQL, MariaDB, Oracle, SQL Server. Max 5 read replicas, 64TB storage</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Aurora</span>: MySQL/PostgreSQL compatible, 5x/3x faster, 128TB, 15 read replicas, 6 copies 3 AZs</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Aurora Serverless</span>: Auto-scaling, pay per second, good for intermittent/unpredictable workloads</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Aurora Global</span>: Cross-region read replicas, <1s replication, write forwarding for consistency</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ DynamoDB Deep Dive</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Capacity</span>: On-Demand (pay per request) vs Provisioned (RCU/WCU with auto-scaling)</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">DAX</span>: In-memory cache, microsecond latency, 10x performance, no app changes needed</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Global Tables</span>: Multi-region active-active, eventual consistency, conflict resolution</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Streams</span>: Change data capture, 24hr retention, Lambda integration for triggers</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">TTL</span>: Automatic expiration, no WCU cost, good for session data</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sub-topic-item" onclick="toggleSubTopic(event, this)">
+                                    <div class="sub-topic-header">
+                                        <div class="sub-topic-name">➤ Redis vs Memcached</div>
+                                        <div class="sub-topic-toggle">▼</div>
+                                    </div>
+                                    <div class="sub-topic-content">
+                                        <div class="key-points">
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Redis</span>: Persistence (RDB, AOF), replication, Multi-AZ, complex data structures (sorted sets, etc)</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text"><span class="highlight">Memcached</span>: Simple caching, multi-threaded, horizontal scaling (sharding), no persistence</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">Use Redis for: Persistence, HA, pub/sub, leaderboards, geospatial</span>
+                                            </div>
+                                            <div class="key-point">
+                                                <span class="point-bullet">✓</span>
+                                                <span class="point-text">Use Memcached for: Simple key-value cache, multi-core CPU utilization</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -905,6 +1321,11 @@
             }
 
             updateProgress();
+        }
+
+        function toggleSubTopic(event, element) {
+            event.stopPropagation(); // Prevent parent topic from toggling
+            element.classList.toggle('expanded');
         }
 
         function updateProgress() {
