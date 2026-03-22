@@ -424,13 +424,13 @@ function Section({ children, style, delay = 0 }) {
 /* ─── Study Module Cards ─── */
 
 const modules = [
-  { emoji: '\uD83E\uDDE0', title: 'Mind Map', desc: 'Interactive service explorer with 50+ AWS services', to: `${BASE}/mindmap` },
-  { emoji: '\u270D\uFE0F', title: 'Fill Blanks', desc: 'Test your memory on critical AWS limits', to: `${BASE}/exercises/fill-blanks` },
-  { emoji: '\uD83D\uDD17', title: 'Connection Game', desc: 'Match services, find links, sort categories', to: `${BASE}/exercises/connection-game` },
-  { emoji: '\uD83D\uDD0D', title: 'Deduction Trainer', desc: 'Master exam elimination strategy', to: `${BASE}/exercises/deduction` },
-  { emoji: '\uD83C\uDFAE', title: 'Cloud Walker', desc: 'Explore an AWS pixel world', to: `${BASE}/games/cloud-walker` },
-  { emoji: '\uD83D\uDCCB', title: 'Cheatsheet', desc: 'Quick reference for exam day', to: `${BASE}/cheatsheet` },
-  { emoji: '\uD83D\uDCDA', title: 'Chapters', desc: 'Domain-by-domain deep dive', to: `${BASE}/chapters` },
+  { emoji: '\uD83E\uDDE0', title: 'Mind Map', desc: 'Interactive service explorer with 50+ AWS services', to: '/mindmap' },
+  { emoji: '\u270D\uFE0F', title: 'Fill Blanks', desc: 'Test your memory on critical AWS limits', to: '/exercises/fill-blanks' },
+  { emoji: '\uD83D\uDD17', title: 'Connection Game', desc: 'Match services, find links, sort categories', to: '/exercises/connection-game' },
+  { emoji: '\uD83D\uDD0D', title: 'Deduction Trainer', desc: 'Master exam elimination strategy', to: '/exercises/deduction' },
+  { emoji: '\uD83C\uDFAE', title: 'Cloud Walker', desc: 'Explore an AWS pixel world', to: '/games/cloud-walker' },
+  { emoji: '\uD83D\uDCCB', title: 'Cheatsheet', desc: 'Quick reference for exam day', to: '/cheatsheet' },
+  { emoji: '\uD83D\uDCDA', title: 'Chapters', desc: 'Domain-by-domain deep dive', to: '/chapters' },
 ]
 
 function ModuleCard({ emoji, title, desc, to, index }) {
@@ -579,7 +579,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
-            <Link to={`${BASE}/mindmap`} style={s.ctaBtn}>
+            <Link to="/mindmap" style={s.ctaBtn}>
               Start Studying {'\u2192'}
             </Link>
           </motion.div>
