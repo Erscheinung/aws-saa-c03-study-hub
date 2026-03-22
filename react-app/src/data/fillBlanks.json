@@ -1,0 +1,227 @@
+[
+  {
+    "id": "fb-1",
+    "category": "storage",
+    "text": "The maximum size of a single S3 object is _____.",
+    "answer": "5TB",
+    "aliases": ["5 TB", "5 terabytes"],
+    "hint": "Think about the upper limit for a single PUT or multipart upload",
+    "tip": "You must use multipart upload for objects larger than 5GB. The max object size is 5TB."
+  },
+  {
+    "id": "fb-2",
+    "category": "compute",
+    "text": "The maximum execution time for an AWS Lambda function is _____ minutes.",
+    "answer": "15",
+    "aliases": ["15 minutes", "fifteen"],
+    "hint": "It was increased from 5 minutes to this value",
+    "tip": "Lambda max timeout is 15 minutes (900 seconds). For longer tasks, use Step Functions or ECS."
+  },
+  {
+    "id": "fb-3",
+    "category": "database",
+    "text": "RDS supports up to _____ read replicas per instance (non-Aurora).",
+    "answer": "5",
+    "aliases": ["five"],
+    "hint": "Aurora supports more, but standard RDS has a lower limit",
+    "tip": "Standard RDS supports up to 5 read replicas. Aurora supports up to 15 read replicas."
+  },
+  {
+    "id": "fb-4",
+    "category": "networking",
+    "text": "Security Groups are _____, meaning return traffic is automatically allowed.",
+    "answer": "stateful",
+    "aliases": [],
+    "hint": "The opposite of NACLs which are stateless",
+    "tip": "Security Groups are stateful - if you allow inbound traffic, the response is automatically allowed. NACLs are stateless."
+  },
+  {
+    "id": "fb-5",
+    "category": "storage",
+    "text": "S3 provides _____ 9's of durability (99.999999999%).",
+    "answer": "11",
+    "aliases": ["eleven", "11 nines"],
+    "hint": "Count the nines in 99.999999999%",
+    "tip": "S3 is designed for 99.999999999% (11 nines) durability across all storage classes."
+  },
+  {
+    "id": "fb-6",
+    "category": "security",
+    "text": "IAM policies are written in _____ format.",
+    "answer": "JSON",
+    "aliases": ["json"],
+    "hint": "A lightweight data-interchange format",
+    "tip": "IAM policies are JSON documents with Effect, Action, Resource, and optional Condition elements."
+  },
+  {
+    "id": "fb-7",
+    "category": "database",
+    "text": "Aurora automatically replicates data _____ times across 3 AZs.",
+    "answer": "6",
+    "aliases": ["six"],
+    "hint": "2 copies per AZ across 3 AZs",
+    "tip": "Aurora stores 6 copies of your data across 3 AZs. It can lose 2 copies without affecting writes."
+  },
+  {
+    "id": "fb-8",
+    "category": "compute",
+    "text": "EC2 Spot Instances can save up to _____% compared to On-Demand pricing.",
+    "answer": "90",
+    "aliases": ["90%", "ninety"],
+    "hint": "The highest discount among EC2 pricing models",
+    "tip": "Spot Instances offer up to 90% discount but can be interrupted with 2-minute notice."
+  },
+  {
+    "id": "fb-9",
+    "category": "networking",
+    "text": "AWS reserves _____ IP addresses in each VPC subnet.",
+    "answer": "5",
+    "aliases": ["five"],
+    "hint": "Network address, router, DNS, future, broadcast",
+    "tip": "AWS reserves 5 IPs: network address, VPC router, DNS server, future use, and broadcast address."
+  },
+  {
+    "id": "fb-10",
+    "category": "storage",
+    "text": "The minimum storage duration for S3 Glacier Deep Archive is _____ days.",
+    "answer": "180",
+    "aliases": ["180 days"],
+    "hint": "Half a year",
+    "tip": "Glacier Deep Archive: 180 days minimum. Glacier Flexible/Instant Retrieval: 90 days minimum."
+  },
+  {
+    "id": "fb-11",
+    "category": "security",
+    "text": "AWS Shield Advanced costs _____ per month.",
+    "answer": "$3,000",
+    "aliases": ["3000", "$3000", "3,000"],
+    "hint": "A significant monthly cost for DDoS protection",
+    "tip": "Shield Advanced costs $3,000/month and includes DDoS response team, cost protection, and Layer 7 protection."
+  },
+  {
+    "id": "fb-12",
+    "category": "database",
+    "text": "DynamoDB strongly consistent reads consume _____ RCU per 4KB item.",
+    "answer": "1",
+    "aliases": ["one"],
+    "hint": "Eventually consistent reads use half of this",
+    "tip": "1 RCU = 1 strongly consistent read/s for 4KB. Eventually consistent reads use 0.5 RCU."
+  },
+  {
+    "id": "fb-13",
+    "category": "networking",
+    "text": "Route 53 has a _____% availability SLA.",
+    "answer": "100",
+    "aliases": ["100%", "one hundred"],
+    "hint": "The highest possible SLA",
+    "tip": "Route 53 is one of the few AWS services with a 100% availability SLA."
+  },
+  {
+    "id": "fb-14",
+    "category": "compute",
+    "text": "In a Spread placement group, you can have a maximum of _____ instances per AZ.",
+    "answer": "7",
+    "aliases": ["seven"],
+    "hint": "A small number to ensure physical separation",
+    "tip": "Spread placement groups limit 7 instances per AZ to ensure each is on different hardware."
+  },
+  {
+    "id": "fb-15",
+    "category": "storage",
+    "text": "EBS volumes of type gp3 have a baseline of _____ IOPS.",
+    "answer": "3000",
+    "aliases": ["3,000", "3000 IOPS"],
+    "hint": "This is independent of volume size unlike gp2",
+    "tip": "gp3 provides 3,000 IOPS baseline (independent of size) and can scale up to 16,000 IOPS."
+  },
+  {
+    "id": "fb-16",
+    "category": "serverless",
+    "text": "SQS messages can be up to _____ KB in size.",
+    "answer": "256",
+    "aliases": ["256KB", "256 KB"],
+    "hint": "Use S3 with the SQS Extended Client for larger payloads",
+    "tip": "SQS max message size is 256KB. For larger messages, store in S3 and send a reference."
+  },
+  {
+    "id": "fb-17",
+    "category": "networking",
+    "text": "An ALB operates at Layer _____ of the OSI model.",
+    "answer": "7",
+    "aliases": ["seven", "layer 7"],
+    "hint": "The application layer",
+    "tip": "ALB = Layer 7 (HTTP/HTTPS). NLB = Layer 4 (TCP/UDP). GLB = Layer 3 (IP)."
+  },
+  {
+    "id": "fb-18",
+    "category": "database",
+    "text": "Aurora can auto-scale storage up to _____ TB.",
+    "answer": "128",
+    "aliases": ["128TB", "128 TB"],
+    "hint": "Over 100TB capacity",
+    "tip": "Aurora storage auto-scales in 10GB increments up to 128TB with no impact to performance."
+  },
+  {
+    "id": "fb-19",
+    "category": "security",
+    "text": "CloudTrail keeps _____ days of management event history by default.",
+    "answer": "90",
+    "aliases": ["90 days", "ninety"],
+    "hint": "About 3 months",
+    "tip": "CloudTrail retains 90 days of event history by default. Create a trail to store logs longer in S3."
+  },
+  {
+    "id": "fb-20",
+    "category": "compute",
+    "text": "EC2 Reserved Instances can save up to _____% vs On-Demand pricing.",
+    "answer": "72",
+    "aliases": ["72%"],
+    "hint": "3-year All Upfront provides the maximum discount",
+    "tip": "Reserved Instances: up to 72% discount (3-year, All Upfront). Savings Plans offer similar discounts."
+  },
+  {
+    "id": "fb-21",
+    "category": "storage",
+    "text": "S3 _____ Replication requires versioning to be enabled on both buckets.",
+    "answer": "Cross-Region",
+    "aliases": ["CRR", "cross region", "cross-region replication"],
+    "hint": "Replicating data between different AWS regions",
+    "tip": "Both CRR and SRR require versioning. CRR is for compliance, lower latency access, cross-account replication."
+  },
+  {
+    "id": "fb-22",
+    "category": "monitoring",
+    "text": "CloudWatch default metric resolution is every _____ minutes.",
+    "answer": "5",
+    "aliases": ["five"],
+    "hint": "Detailed monitoring reduces this to 1 minute",
+    "tip": "Default: 5 minutes. Detailed monitoring: 1 minute. Custom metrics can go to 1-second resolution."
+  },
+  {
+    "id": "fb-23",
+    "category": "networking",
+    "text": "NACLs are _____, meaning you must explicitly allow return traffic.",
+    "answer": "stateless",
+    "aliases": [],
+    "hint": "The opposite of Security Groups",
+    "tip": "NACLs are stateless - you need separate inbound and outbound rules. Security Groups are stateful."
+  },
+  {
+    "id": "fb-24",
+    "category": "database",
+    "text": "DynamoDB DAX provides _____ latency for cached reads.",
+    "answer": "microsecond",
+    "aliases": ["microseconds", "microsecond latency"],
+    "hint": "Even faster than DynamoDB's single-digit millisecond latency",
+    "tip": "DAX is an in-memory cache for DynamoDB that provides microsecond latency for reads."
+  },
+  {
+    "id": "fb-25",
+    "category": "security",
+    "text": "SCP stands for Service _____ Policy.",
+    "answer": "Control",
+    "aliases": ["control"],
+    "hint": "These restrict what actions accounts in an Organization can perform",
+    "tip": "Service Control Policies (SCPs) set maximum permissions for accounts in AWS Organizations."
+  }
+]

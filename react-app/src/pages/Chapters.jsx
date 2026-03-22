@@ -1,0 +1,528 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const CHAPTERS = [
+  {
+    id: 1,
+    domain: 'Design Secure Architectures',
+    weight: '30%',
+    color: '#ef4444',
+    icon: '🔒',
+    topics: [
+      {
+        title: 'IAM (Identity & Access Management)',
+        points: [
+          'Users, Groups, Roles, and Policies form the core of IAM',
+          'Always follow the principle of least privilege',
+          'Use IAM Roles for EC2 instances and Lambda functions instead of access keys',
+          'Cross-account access: use AssumeRole via STS',
+          'Permission boundaries set the maximum permissions a user/role can have',
+          'Policy evaluation: explicit Deny > explicit Allow > implicit Deny',
+          'MFA should be enabled for root and privileged users',
+        ],
+      },
+      {
+        title: 'Encryption & Key Management',
+        points: [
+          'KMS: managed encryption keys, integrates with most AWS services',
+          'SSE-S3: S3-managed keys, simplest option',
+          'SSE-KMS: customer-managed keys, audit trail via CloudTrail',
+          'SSE-C: customer-provided keys, you manage everything',
+          'Client-side encryption: encrypt before sending to AWS',
+          'Envelope encryption: data key encrypts data, KMS key encrypts data key',
+          'CloudHSM: dedicated hardware security module for regulatory compliance',
+        ],
+      },
+      {
+        title: 'Network Security',
+        points: [
+          'Security Groups: stateful, allow rules only, instance-level',
+          'NACLs: stateless, allow + deny rules, subnet-level',
+          'WAF: protects against SQL injection, XSS (deployed on ALB/CloudFront/API Gateway)',
+          'Shield Standard: free DDoS protection (L3/L4)',
+          'Shield Advanced: $3,000/mo, L7 protection, DDoS response team',
+          'VPC Flow Logs: capture IP traffic information',
+          'AWS Network Firewall: managed firewall for VPC',
+        ],
+      },
+      {
+        title: 'Logging & Monitoring',
+        points: [
+          'CloudTrail: records all API calls (who did what, when)',
+          'CloudWatch: metrics, logs, alarms, dashboards',
+          'GuardDuty: ML-based threat detection (analyzes CloudTrail, VPC Flow Logs, DNS)',
+          'AWS Config: tracks resource configuration changes, compliance rules',
+          'Macie: ML to discover and protect sensitive data in S3',
+          'Inspector: automated vulnerability scanning for EC2 and containers',
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    domain: 'Design Resilient Architectures',
+    weight: '26%',
+    color: '#3b82f6',
+    icon: '🏗️',
+    topics: [
+      {
+        title: 'High Availability & Fault Tolerance',
+        points: [
+          'Multi-AZ: resources across Availability Zones for HA',
+          'Multi-Region: resources across regions for DR',
+          'ELB: distributes traffic across healthy targets',
+          'Auto Scaling: automatically adjust capacity based on demand',
+          'RDS Multi-AZ: synchronous standby, automatic failover',
+          'Aurora: 6 copies across 3 AZs, self-healing storage',
+          'S3: 11 nines durability, cross-region replication for DR',
+        ],
+      },
+      {
+        title: 'Decoupled Architectures',
+        points: [
+          'SQS: message queue for async processing, buffering',
+          'SNS: pub/sub for event-driven fan-out',
+          'SNS + SQS fan-out: one event triggers multiple independent processes',
+          'EventBridge: serverless event bus, pattern matching',
+          'Step Functions: orchestrate multi-step workflows',
+          'Loose coupling = independent scaling, failure isolation',
+        ],
+      },
+      {
+        title: 'Disaster Recovery Strategies',
+        points: [
+          'Backup & Restore: lowest cost, highest RTO/RPO',
+          'Pilot Light: minimal version running (DB replication), scale up on disaster',
+          'Warm Standby: scaled-down but fully functional copy',
+          'Multi-Site Active-Active: lowest RTO/RPO, highest cost',
+          'RPO: how much data you can afford to lose',
+          'RTO: how quickly you need to recover',
+          'Route 53 failover routing for DNS-level failover',
+        ],
+      },
+      {
+        title: 'Data Resilience',
+        points: [
+          'S3 versioning: protect against accidental deletes',
+          'S3 Object Lock: WORM compliance (Governance/Compliance mode)',
+          'EBS snapshots: point-in-time, stored in S3, incremental',
+          'RDS automated backups: 1-35 day retention',
+          'DynamoDB point-in-time recovery: 35-day continuous backups',
+          'AWS Backup: centralized backup across services',
+        ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    domain: 'Design High-Performing Architectures',
+    weight: '24%',
+    color: '#a855f7',
+    icon: '⚡',
+    topics: [
+      {
+        title: 'Compute Optimization',
+        points: [
+          'Choose the right instance type for your workload',
+          'Placement groups: Cluster (low latency), Spread (HA), Partition (big data)',
+          'Lambda: serverless, event-driven, auto-scales, 15 min max',
+          'Fargate: serverless containers, no instance management',
+          'Auto Scaling target tracking: maintain metric at target value',
+          'Enhanced networking: higher PPS, lower latency (ENA, EFA)',
+        ],
+      },
+      {
+        title: 'Storage Performance',
+        points: [
+          'EBS io2: up to 64,000 IOPS (Block Express: 256,000)',
+          'EBS gp3: 3,000 IOPS baseline, decouple IOPS from size',
+          'Instance store: highest I/O, ephemeral (lost on stop)',
+          'S3 Transfer Acceleration: fast uploads via CloudFront edges',
+          'S3 multipart upload: parallel uploads for large files (>100MB)',
+          'EFS: scales automatically, choose burst vs provisioned throughput',
+        ],
+      },
+      {
+        title: 'Database Performance',
+        points: [
+          'RDS Read Replicas: scale read-heavy workloads',
+          'Aurora: auto-scaling readers, Global Database for cross-region',
+          'DynamoDB: provision WCU/RCU or use on-demand, DAX for caching',
+          'ElastiCache Redis: session store, leaderboards, caching',
+          'Redshift: columnar storage, MPP for analytics',
+          'Choose the right DB: relational vs NoSQL vs in-memory vs graph',
+        ],
+      },
+      {
+        title: 'Network Performance',
+        points: [
+          'CloudFront: cache at 400+ edge locations globally',
+          'Global Accelerator: route to optimal endpoint via AWS backbone',
+          'VPC endpoints: private connectivity to AWS services (no internet)',
+          'Direct Connect: dedicated 1/10 Gbps connection to AWS',
+          'NLB: millions of requests/sec, ultra-low latency (Layer 4)',
+          'API caching in API Gateway: reduce backend calls',
+        ],
+      },
+    ],
+  },
+  {
+    id: 4,
+    domain: 'Design Cost-Optimized Architectures',
+    weight: '20%',
+    color: '#22c55e',
+    icon: '💰',
+    topics: [
+      {
+        title: 'Compute Cost Optimization',
+        points: [
+          'Reserved Instances: up to 72% discount (1 or 3 year)',
+          'Savings Plans: flexible discount (Compute or EC2)',
+          'Spot Instances: up to 90% discount, interruptible workloads',
+          'Lambda: pay per request + compute time, no idle cost',
+          'Right-sizing: match instance type to actual usage',
+          'Auto Scaling: scale down during low demand',
+        ],
+      },
+      {
+        title: 'Storage Cost Optimization',
+        points: [
+          'S3 Lifecycle rules: transition to cheaper storage classes over time',
+          'S3 Intelligent-Tiering: auto-moves between tiers based on access',
+          'Glacier/Deep Archive: lowest cost for archival data',
+          'EBS: delete unused volumes, use gp3 over gp2 for cost savings',
+          'S3 analytics: identify optimal lifecycle transition timing',
+          'Compress and aggregate data before storing',
+        ],
+      },
+      {
+        title: 'Database Cost Optimization',
+        points: [
+          'Aurora Serverless v2: scales to zero for dev/test',
+          'DynamoDB On-Demand: pay per request for unpredictable workloads',
+          'DynamoDB Reserved Capacity: predictable workloads',
+          'RDS Reserved Instances: up to 69% discount',
+          'ElastiCache Reserved Nodes: lower long-term cost',
+          'Use read replicas to offload reads instead of scaling up primary',
+        ],
+      },
+      {
+        title: 'Architecture Cost Patterns',
+        points: [
+          'Serverless: pay only for what you use (Lambda, Fargate, S3, DynamoDB)',
+          'Use managed services to reduce operational overhead',
+          'Data transfer: minimize cross-AZ and cross-region transfers',
+          'VPC endpoints: avoid NAT Gateway data processing charges',
+          'CloudFront: reduce origin load and data transfer costs',
+          'Consolidated billing: volume discounts across accounts',
+          'AWS Cost Explorer, Budgets, and Trusted Advisor for monitoring',
+        ],
+      },
+    ],
+  },
+];
+
+const styles = {
+  page: {
+    maxWidth: 960,
+    margin: '0 auto',
+    padding: '2rem 1rem',
+    fontFamily: 'var(--sans)',
+    color: 'var(--text)',
+  },
+  header: {
+    textAlign: 'center',
+    marginBottom: '2.5rem',
+  },
+  title: {
+    fontSize: '2rem',
+    fontWeight: 700,
+    color: 'var(--text-h)',
+    margin: 0,
+  },
+  subtitle: {
+    color: 'var(--text)',
+    marginTop: '0.5rem',
+    fontSize: '1rem',
+  },
+  domainCard: {
+    marginBottom: '1.5rem',
+    borderRadius: 16,
+    border: '1px solid var(--border)',
+    background: 'var(--bg)',
+    overflow: 'hidden',
+  },
+  domainHeader: (color) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1.25rem 1.5rem',
+    cursor: 'pointer',
+    background: 'var(--code-bg)',
+    borderLeft: `5px solid ${color}`,
+    userSelect: 'none',
+  }),
+  domainIcon: {
+    fontSize: '2rem',
+    flexShrink: 0,
+  },
+  domainInfo: {
+    flex: 1,
+  },
+  domainTitle: {
+    fontSize: '1.15rem',
+    fontWeight: 700,
+    color: 'var(--text-h)',
+    margin: 0,
+  },
+  domainWeight: (color) => ({
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    color,
+    marginTop: '0.25rem',
+  }),
+  chevron: (expanded) => ({
+    fontSize: '1.2rem',
+    color: 'var(--text)',
+    transition: 'transform 0.25s',
+    transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+    flexShrink: 0,
+  }),
+  domainBody: {
+    padding: '1rem 1.5rem 1.5rem',
+  },
+  topicCard: {
+    marginBottom: '1rem',
+    borderRadius: 12,
+    border: '1px solid var(--border)',
+    background: 'var(--code-bg)',
+    overflow: 'hidden',
+  },
+  topicHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0.85rem 1.15rem',
+    cursor: 'pointer',
+    userSelect: 'none',
+  },
+  topicTitle: {
+    fontSize: '1rem',
+    fontWeight: 600,
+    color: 'var(--text-h)',
+    margin: 0,
+  },
+  topicChevron: (expanded) => ({
+    fontSize: '0.9rem',
+    color: 'var(--text)',
+    transition: 'transform 0.25s',
+    transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+  }),
+  pointsList: {
+    listStyle: 'none',
+    padding: '0 1.15rem 1rem',
+    margin: 0,
+  },
+  point: (color) => ({
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0.6rem',
+    padding: '0.4rem 0',
+    fontSize: '0.9rem',
+    color: 'var(--text)',
+    lineHeight: 1.6,
+  }),
+  bullet: (color) => ({
+    color,
+    fontWeight: 700,
+    flexShrink: 0,
+    marginTop: '0.15rem',
+  }),
+  progressWrap: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginBottom: '2rem',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  progressChip: (color, active) => ({
+    padding: '0.5rem 1rem',
+    borderRadius: 12,
+    border: `2px solid ${color}`,
+    background: active ? color : 'transparent',
+    color: active ? '#fff' : color,
+    fontWeight: 600,
+    fontSize: '0.82rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  }),
+};
+
+export default function Chapters() {
+  const [expandedDomains, setExpandedDomains] = useState({ 0: true });
+  const [expandedTopics, setExpandedTopics] = useState({});
+
+  const toggleDomain = (idx) => {
+    setExpandedDomains((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const toggleTopic = (key) => {
+    setExpandedTopics((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const expandAll = () => {
+    const domains = {};
+    const topics = {};
+    CHAPTERS.forEach((ch, di) => {
+      domains[di] = true;
+      ch.topics.forEach((_, ti) => {
+        topics[`${di}-${ti}`] = true;
+      });
+    });
+    setExpandedDomains(domains);
+    setExpandedTopics(topics);
+  };
+
+  const collapseAll = () => {
+    setExpandedDomains({});
+    setExpandedTopics({});
+  };
+
+  return (
+    <div style={styles.page}>
+      <header style={styles.header}>
+        <h1 style={styles.title}>SAA-C03 Study Chapters</h1>
+        <p style={styles.subtitle}>
+          Domain-by-domain deep dive into exam topics
+        </p>
+      </header>
+
+      <div style={styles.progressWrap}>
+        {CHAPTERS.map((ch) => (
+          <span
+            key={ch.id}
+            style={styles.progressChip(ch.color, false)}
+            onClick={() => {
+              const el = document.getElementById(`domain-${ch.id}`);
+              el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+          >
+            {ch.icon} {ch.weight}
+          </span>
+        ))}
+        <button
+          style={{
+            ...styles.progressChip('var(--accent, #a855f7)', false),
+            borderStyle: 'dashed',
+          }}
+          onClick={expandAll}
+        >
+          Expand All
+        </button>
+        <button
+          style={{
+            ...styles.progressChip('var(--accent, #a855f7)', false),
+            borderStyle: 'dashed',
+          }}
+          onClick={collapseAll}
+        >
+          Collapse All
+        </button>
+      </div>
+
+      {CHAPTERS.map((chapter, dIdx) => {
+        const domainExpanded = expandedDomains[dIdx] === true;
+
+        return (
+          <motion.div
+            key={chapter.id}
+            id={`domain-${chapter.id}`}
+            style={styles.domainCard}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: dIdx * 0.08 }}
+          >
+            <div
+              style={styles.domainHeader(chapter.color)}
+              onClick={() => toggleDomain(dIdx)}
+            >
+              <span style={styles.domainIcon}>{chapter.icon}</span>
+              <div style={styles.domainInfo}>
+                <h2 style={styles.domainTitle}>{chapter.domain}</h2>
+                <div style={styles.domainWeight(chapter.color)}>
+                  Exam Weight: {chapter.weight} &middot; {chapter.topics.length} topics
+                </div>
+              </div>
+              <span style={styles.chevron(domainExpanded)}>&#9662;</span>
+            </div>
+
+            <AnimatePresence initial={false}>
+              {domainExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div style={styles.domainBody}>
+                    {chapter.topics.map((topic, tIdx) => {
+                      const topicKey = `${dIdx}-${tIdx}`;
+                      const topicExpanded = expandedTopics[topicKey] !== false;
+
+                      return (
+                        <div key={tIdx} style={styles.topicCard}>
+                          <div
+                            style={styles.topicHeader}
+                            onClick={() => toggleTopic(topicKey)}
+                          >
+                            <h3 style={styles.topicTitle}>{topic.title}</h3>
+                            <span style={styles.topicChevron(topicExpanded)}>
+                              &#9662;
+                            </span>
+                          </div>
+
+                          <AnimatePresence initial={false}>
+                            {topicExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                style={{ overflow: 'hidden' }}
+                              >
+                                <ul style={styles.pointsList}>
+                                  {topic.points.map((point, pIdx) => (
+                                    <motion.li
+                                      key={pIdx}
+                                      style={styles.point(chapter.color)}
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{
+                                        duration: 0.2,
+                                        delay: pIdx * 0.03,
+                                      }}
+                                    >
+                                      <span style={styles.bullet(chapter.color)}>
+                                        &#9656;
+                                      </span>
+                                      <span>{point}</span>
+                                    </motion.li>
+                                  ))}
+                                </ul>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
