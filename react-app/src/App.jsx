@@ -49,10 +49,14 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="mindmap" element={<MindMap />} />
-          <Route path="fill-blanks" element={<FillBlanks />} />
-          <Route path="connection-game" element={<ConnectionGame />} />
-          <Route path="deduction" element={<Deduction />} />
-          <Route path="cloud-walker" element={<CloudWalker />} />
+          <Route path="exercises">
+            <Route path="fill-blanks" element={<FillBlanks />} />
+            <Route path="connection-game" element={<ConnectionGame />} />
+            <Route path="deduction" element={<Deduction />} />
+          </Route>
+          <Route path="games">
+            <Route path="cloud-walker" element={<CloudWalker />} />
+          </Route>
           <Route path="cheatsheet" element={<Cheatsheet />} />
           <Route path="chapters" element={<Chapters />} />
         </Route>

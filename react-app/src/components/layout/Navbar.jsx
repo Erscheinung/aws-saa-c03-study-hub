@@ -6,24 +6,24 @@ import { useThemeStore } from '../../hooks/useTheme'
 const BASE = '/aws-saa-c03-study-hub'
 
 const navItems = [
-  { label: 'Home', to: `${BASE}/` },
-  { label: 'Mind Map', to: `${BASE}/mindmap` },
+  { label: 'Home', to: '/' },
+  { label: 'Mind Map', to: '/mindmap' },
   {
     label: 'Exercises',
     children: [
-      { label: 'Fill Blanks', to: `${BASE}/exercises/fill-blanks` },
-      { label: 'Connection Game', to: `${BASE}/exercises/connection-game` },
-      { label: 'Deduction', to: `${BASE}/exercises/deduction` },
+      { label: 'Fill Blanks', to: '/exercises/fill-blanks' },
+      { label: 'Connection Game', to: '/exercises/connection-game' },
+      { label: 'Deduction', to: '/exercises/deduction' },
     ],
   },
   {
     label: 'Games',
     children: [
-      { label: 'Cloud Walker', to: `${BASE}/games/cloud-walker` },
+      { label: 'Cloud Walker', to: '/games/cloud-walker' },
     ],
   },
-  { label: 'Cheatsheet', to: `${BASE}/cheatsheet` },
-  { label: 'Chapters', to: `${BASE}/chapters` },
+  { label: 'Cheatsheet', to: '/cheatsheet' },
+  { label: 'Chapters', to: '/chapters' },
 ]
 
 const styles = {
@@ -285,7 +285,7 @@ export default function Navbar() {
     <nav style={styles.nav}>
       <div style={styles.inner}>
         {/* Logo */}
-        <Link to={`${BASE}/`} style={styles.logo}>
+        <Link to="/" style={styles.logo}>
           <span style={styles.cloudIcon}>{'\u2601'}</span>
           AWS SAA-C03
         </Link>
