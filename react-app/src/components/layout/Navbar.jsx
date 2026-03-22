@@ -20,6 +20,8 @@ const navItems = [
     label: 'Games',
     children: [
       { label: 'Cloud Walker', to: '/games/cloud-walker' },
+      { label: 'Jeopardy', to: '/games/jeopardy' },
+      { label: 'Service Sorter', to: '/games/service-sorter' },
     ],
   },
   { label: 'Cheatsheet', to: '/cheatsheet' },

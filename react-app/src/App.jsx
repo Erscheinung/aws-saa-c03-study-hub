@@ -11,6 +11,8 @@ const Deduction = lazy(() => import('./pages/Deduction'))
 const CloudWalker = lazy(() => import('./pages/CloudWalker'))
 const Cheatsheet = lazy(() => import('./pages/Cheatsheet'))
 const Chapters = lazy(() => import('./pages/Chapters'))
+const Jeopardy = lazy(() => import('./pages/Jeopardy'))
+const ServiceSorter = lazy(() => import('./pages/ServiceSorter'))
 
 function LoadingFallback() {
   return (
@@ -56,6 +58,8 @@ export default function App() {
           </Route>
           <Route path="games">
             <Route path="cloud-walker" element={<CloudWalker />} />
+            <Route path="jeopardy" element={<Jeopardy />} />
+            <Route path="service-sorter" element={<ServiceSorter />} />
           </Route>
           <Route path="cheatsheet" element={<Cheatsheet />} />
           <Route path="chapters" element={<Chapters />} />
