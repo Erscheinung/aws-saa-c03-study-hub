@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import data from '../data/cheatsheet.json';
 
@@ -22,359 +22,354 @@ const styles = {
     color: 'var(--text)',
   },
   header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: '1rem',
-    marginBottom: '1.5rem',
+    textAlign: 'center',
+    marginBottom: '2rem',
   },
   title: {
     fontSize: '2rem',
     fontWeight: 700,
     color: 'var(--text-h)',
     margin: 0,
-    fontFamily: 'var(--heading)',
   },
   subtitle: {
-    fontSize: '0.95rem',
     color: 'var(--text)',
-    margin: '0.25rem 0 0',
+    marginTop: '0.5rem',
+    fontSize: '1rem',
   },
-  controls: {
+  toolbar: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
     flexWrap: 'wrap',
+    gap: '0.75rem',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '1.5rem',
   },
   searchBox: {
-    padding: '0.5rem 0.85rem',
-    fontSize: '0.9rem',
-    border: '1px solid var(--border)',
+    padding: '0.5rem 1rem',
     borderRadius: 8,
+    border: '1px solid var(--border)',
     background: 'var(--bg)',
     color: 'var(--text-h)',
+    fontSize: '0.95rem',
     outline: 'none',
-    minWidth: 200,
+    minWidth: 220,
     fontFamily: 'var(--sans)',
-    transition: 'border-color 0.2s',
   },
   printBtn: {
     padding: '0.5rem 1rem',
-    fontSize: '0.85rem',
-    fontWeight: 600,
-    border: '1px solid var(--border)',
     borderRadius: 8,
+    border: '1px solid var(--border)',
     background: 'var(--code-bg)',
     color: 'var(--text-h)',
     cursor: 'pointer',
+    fontSize: '0.9rem',
     fontFamily: 'var(--sans)',
-    transition: 'background 0.2s',
   },
-  tabs: {
+  filterRow: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '0.5rem',
+    justifyContent: 'center',
     marginBottom: '1.5rem',
   },
-  tab: (color, active) => ({
-    padding: '0.4rem 0.9rem',
-    fontSize: '0.8rem',
-    fontWeight: 600,
+  filterTab: (color, active) => ({
+    padding: '0.35rem 0.85rem',
     borderRadius: 20,
     border: `2px solid ${color}`,
     background: active ? color : 'transparent',
     color: active ? '#fff' : color,
     cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '0.82rem',
     textTransform: 'capitalize',
     transition: 'all 0.2s',
     fontFamily: 'var(--sans)',
   }),
-  sectionCard: (color) => ({
-    border: '1px solid var(--border)',
+  sectionCard: {
+    marginBottom: '1.25rem',
     borderRadius: 12,
-    marginBottom: '1rem',
-    overflow: 'hidden',
+    border: '1px solid var(--border)',
     background: 'var(--bg)',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-  }),
+    overflow: 'hidden',
+    boxShadow: 'var(--shadow)',
+  },
   sectionHeader: (color) => ({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: '0.75rem',
     padding: '0.85rem 1.25rem',
     cursor: 'pointer',
+    background: 'var(--code-bg)',
     userSelect: 'none',
     borderLeft: `4px solid ${color}`,
-    background: 'var(--code-bg)',
   }),
   sectionTitle: {
-    fontSize: '1.05rem',
+    fontSize: '1.1rem',
     fontWeight: 700,
     color: 'var(--text-h)',
     margin: 0,
+    flex: 1,
   },
-  chevron: (open) => ({
-    fontSize: '0.85rem',
-    color: 'var(--text)',
-    transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+  categoryBadge: (color) => ({
+    fontSize: '0.72rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: color,
+    background: `${color}18`,
+    padding: '0.15rem 0.6rem',
+    borderRadius: 10,
+  }),
+  chevron: (expanded) => ({
     transition: 'transform 0.25s',
+    transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+    color: 'var(--text)',
+    fontSize: '1.1rem',
+    flexShrink: 0,
   }),
   sectionBody: {
     padding: '1rem 1.25rem',
   },
-  grid: {
+  factGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
     gap: '0.85rem',
   },
   factCard: (color) => ({
-    border: '1px solid var(--border)',
     borderRadius: 10,
-    padding: '0.85rem 1rem',
+    border: `1px solid var(--border)`,
     background: 'var(--bg)',
+    padding: '0.85rem 1rem',
     position: 'relative',
-    transition: 'box-shadow 0.2s',
+    borderTop: `3px solid ${color}`,
   }),
-  serviceName: (color) => ({
-    fontSize: '0.9rem',
+  serviceName: {
     fontWeight: 700,
-    color: color,
-    margin: '0 0 0.5rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  }),
+    fontSize: '0.95rem',
+    color: 'var(--text-h)',
+    marginBottom: '0.5rem',
+    fontFamily: 'var(--mono)',
+  },
   factList: {
     listStyle: 'none',
-    margin: 0,
     padding: 0,
+    margin: 0,
   },
   factItem: {
-    fontSize: '0.82rem',
+    fontSize: '0.85rem',
     color: 'var(--text)',
     padding: '0.2rem 0',
-    lineHeight: 1.45,
     display: 'flex',
     alignItems: 'flex-start',
     gap: '0.4rem',
-  },
-  bullet: (color) => ({
-    display: 'inline-block',
-    width: 5,
-    height: 5,
-    borderRadius: '50%',
-    background: color,
-    flexShrink: 0,
-    marginTop: '0.4em',
-  }),
-  copyBtn: {
-    background: 'none',
-    border: 'none',
     cursor: 'pointer',
-    fontSize: '0.75rem',
-    color: 'var(--text)',
-    padding: '0.1rem 0.3rem',
     borderRadius: 4,
-    opacity: 0.6,
-    transition: 'opacity 0.2s',
-    fontFamily: 'var(--sans)',
+    transition: 'background 0.15s',
   },
-  emptyState: {
+  factBullet: (color) => ({
+    color: color,
+    fontWeight: 700,
+    flexShrink: 0,
+    marginTop: '0.05rem',
+  }),
+  copyToast: {
+    position: 'fixed',
+    bottom: 24,
+    right: 24,
+    background: '#10b981',
+    color: '#fff',
+    padding: '0.6rem 1.2rem',
+    borderRadius: 8,
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    zIndex: 1000,
+    pointerEvents: 'none',
+  },
+  noResults: {
     textAlign: 'center',
     padding: '3rem 1rem',
     color: 'var(--text)',
-    fontSize: '1rem',
+    fontSize: '1.1rem',
   },
 };
-
-function CopyButton({ text }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(async (e) => {
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Fallback: silently fail
-    }
-  }, [text]);
-
-  return (
-    <button
-      style={styles.copyBtn}
-      onClick={handleCopy}
-      title="Copy to clipboard"
-      onMouseEnter={(e) => { e.currentTarget.style.opacity = 1; }}
-      onMouseLeave={(e) => { e.currentTarget.style.opacity = 0.6; }}
-    >
-      {copied ? '✓' : '⧉'}
-    </button>
-  );
-}
-
-function FactCard({ item, color }) {
-  const allFacts = `${item.service}: ${item.facts.join(', ')}`;
-
-  return (
-    <motion.div
-      style={styles.factCard(color)}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      whileHover={{ boxShadow: `0 0 0 1px ${color}40, 0 4px 12px rgba(0,0,0,0.08)` }}
-    >
-      <div style={styles.serviceName(color)}>
-        <span>{item.service}</span>
-        <CopyButton text={allFacts} />
-      </div>
-      <ul style={styles.factList}>
-        {item.facts.map((fact, i) => (
-          <li key={i} style={styles.factItem}>
-            <span style={styles.bullet(color)} />
-            <span>{fact}</span>
-          </li>
-        ))}
-      </ul>
-    </motion.div>
-  );
-}
-
-function Section({ section, defaultOpen }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const color = CATEGORY_COLORS[section.category] || 'var(--accent)';
-
-  return (
-    <div style={styles.sectionCard(color)}>
-      <div
-        style={styles.sectionHeader(color)}
-        onClick={() => setOpen((v) => !v)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((v) => !v); } }}
-      >
-        <h3 style={styles.sectionTitle}>{section.title}</h3>
-        <span style={styles.chevron(open)}>▼</span>
-      </div>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            style={{ overflow: 'hidden' }}
-          >
-            <div style={styles.sectionBody}>
-              <div style={styles.grid}>
-                {section.items.map((item, i) => (
-                  <FactCard key={item.service + i} item={item} color={color} />
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 export default function Cheatsheet() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [expandedSections, setExpandedSections] = useState({});
+  const [copiedFact, setCopiedFact] = useState(null);
 
   const categories = useMemo(() => {
-    const cats = new Set(data.sections.map((s) => s.category));
-    return ['all', ...Array.from(cats)];
+    const cats = new Set();
+    (data.sections || []).forEach((s) => cats.add(s.category));
+    return Array.from(cats);
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    return data.sections
+  const filteredSections = useMemo(() => {
+    return (data.sections || [])
       .filter((s) => activeCategory === 'all' || s.category === activeCategory)
-      .map((s) => {
-        if (!q) return s;
-        const matchedItems = s.items.filter(
+      .map((section) => {
+        if (!search.trim()) return section;
+        const q = search.toLowerCase();
+        const filtered = section.items.filter(
           (item) =>
             item.service.toLowerCase().includes(q) ||
             item.facts.some((f) => f.toLowerCase().includes(q))
         );
-        if (matchedItems.length === 0) return null;
-        return { ...s, items: matchedItems };
+        return filtered.length ? { ...section, items: filtered } : null;
       })
       .filter(Boolean);
   }, [search, activeCategory]);
 
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
+  const toggleSection = (idx) => {
+    setExpandedSections((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const copyFact = (service, fact) => {
+    const text = `${service}: ${fact}`;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedFact(text);
+      setTimeout(() => setCopiedFact(null), 1500);
+    });
+  };
+
+  const handlePrint = () => {
+    setExpandedSections(
+      Object.fromEntries(filteredSections.map((_, i) => [i, true]))
+    );
+    setTimeout(() => window.print(), 200);
+  };
 
   return (
     <div style={styles.page}>
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Cheatsheet</h1>
-          <p style={styles.subtitle}>Quick-reference for AWS SAA-C03 exam limits, facts, and key details</p>
-        </div>
-        <div style={styles.controls}>
-          <input
-            type="text"
-            placeholder="Search services or facts..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={styles.searchBox}
-            onFocus={(e) => { e.target.style.borderColor = 'var(--accent)'; }}
-            onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
-          />
+      <header style={styles.header}>
+        <h1 style={styles.title}>AWS SAA-C03 Cheatsheet</h1>
+        <p style={styles.subtitle}>
+          Quick-reference facts, limits, and key details for the exam
+        </p>
+      </header>
+
+      <div style={styles.toolbar}>
+        <input
+          type="text"
+          placeholder="Search services or facts..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={styles.searchBox}
+        />
+        <button style={styles.printBtn} onClick={handlePrint}>
+          Print View
+        </button>
+      </div>
+
+      <div style={styles.filterRow}>
+        <button
+          style={styles.filterTab('var(--accent)', activeCategory === 'all')}
+          onClick={() => setActiveCategory('all')}
+        >
+          All
+        </button>
+        {categories.map((cat) => (
           <button
-            style={styles.printBtn}
-            onClick={handlePrint}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-bg)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--code-bg)'; }}
+            key={cat}
+            style={styles.filterTab(
+              CATEGORY_COLORS[cat] || 'var(--accent)',
+              activeCategory === cat
+            )}
+            onClick={() => setActiveCategory(cat)}
           >
-            🖨 Print
+            {cat}
           </button>
-        </div>
+        ))}
       </div>
 
-      <div style={styles.tabs}>
-        {categories.map((cat) => {
-          const color = cat === 'all' ? 'var(--accent)' : (CATEGORY_COLORS[cat] || 'var(--accent)');
-          return (
-            <button
-              key={cat}
-              style={styles.tab(color, activeCategory === cat)}
-              onClick={() => setActiveCategory(cat)}
-              onMouseEnter={(e) => {
-                if (activeCategory !== cat) {
-                  e.currentTarget.style.background = color + '18';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeCategory !== cat) {
-                  e.currentTarget.style.background = 'transparent';
-                }
-              }}
-            >
-              {cat}
-            </button>
-          );
-        })}
-      </div>
-
-      {filtered.length === 0 ? (
-        <div style={styles.emptyState}>
-          No results found. Try a different search term or category.
+      {filteredSections.length === 0 && (
+        <div style={styles.noResults}>
+          No matching services or facts found.
         </div>
-      ) : (
-        <motion.div layout>
-          {filtered.map((section, i) => (
-            <Section key={section.title} section={section} defaultOpen={i === 0} />
-          ))}
-        </motion.div>
       )}
+
+      {filteredSections.map((section, idx) => {
+        const color = CATEGORY_COLORS[section.category] || 'var(--accent)';
+        const isExpanded = expandedSections[idx] !== false;
+
+        return (
+          <motion.div
+            key={section.title + idx}
+            style={styles.sectionCard}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: idx * 0.04 }}
+          >
+            <div
+              style={styles.sectionHeader(color)}
+              onClick={() => toggleSection(idx)}
+            >
+              <h2 style={styles.sectionTitle}>{section.title}</h2>
+              <span style={styles.categoryBadge(color)}>
+                {section.category}
+              </span>
+              <span style={styles.chevron(isExpanded)}>&#9662;</span>
+            </div>
+
+            <AnimatePresence initial={false}>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div style={styles.sectionBody}>
+                    <div style={styles.factGrid}>
+                      {section.items.map((item, iIdx) => (
+                        <motion.div
+                          key={item.service + iIdx}
+                          style={styles.factCard(color)}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.2, delay: iIdx * 0.03 }}
+                        >
+                          <div style={styles.serviceName}>{item.service}</div>
+                          <ul style={styles.factList}>
+                            {item.facts.map((fact, fIdx) => (
+                              <li
+                                key={fIdx}
+                                style={styles.factItem}
+                                title="Click to copy"
+                                onClick={() => copyFact(item.service, fact)}
+                              >
+                                <span style={styles.factBullet(color)}>
+                                  &#9656;
+                                </span>
+                                <span>{fact}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        );
+      })}
+
+      <AnimatePresence>
+        {copiedFact && (
+          <motion.div
+            style={styles.copyToast}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            Copied to clipboard!
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
