@@ -1,0 +1,163 @@
+{
+  "matchPairs": [
+    { "service": "EC2", "match": "Virtual servers" },
+    { "service": "S3", "match": "Object storage" },
+    { "service": "RDS", "match": "Managed relational DB" },
+    { "service": "Lambda", "match": "Serverless compute" },
+    { "service": "DynamoDB", "match": "NoSQL key-value DB" },
+    { "service": "CloudFront", "match": "CDN / Edge caching" },
+    { "service": "Route 53", "match": "DNS service" },
+    { "service": "IAM", "match": "Identity & access control" },
+    { "service": "VPC", "match": "Isolated network" },
+    { "service": "SQS", "match": "Message queue" },
+    { "service": "SNS", "match": "Pub/Sub notifications" },
+    { "service": "EBS", "match": "Block storage volumes" },
+    { "service": "EFS", "match": "Managed NFS file system" },
+    { "service": "Aurora", "match": "Cloud-native relational DB" },
+    { "service": "ElastiCache", "match": "In-memory caching" },
+    { "service": "KMS", "match": "Encryption key management" },
+    { "service": "CloudWatch", "match": "Monitoring & metrics" },
+    { "service": "CloudTrail", "match": "API audit logging" },
+    { "service": "WAF", "match": "Web app firewall" },
+    { "service": "ECS", "match": "Container orchestration" },
+    { "service": "Kinesis", "match": "Real-time data streaming" },
+    { "service": "Redshift", "match": "Data warehouse" },
+    { "service": "Athena", "match": "Serverless SQL on S3" },
+    { "service": "Step Functions", "match": "Workflow orchestration" }
+  ],
+  "linkQuestions": [
+    {
+      "service1": "CloudFront",
+      "service2": "S3",
+      "question": "What connects these services?",
+      "options": ["OAC (Origin Access Control)", "VPC Peering", "IAM Role", "Transit Gateway"],
+      "answer": 0
+    },
+    {
+      "service1": "SNS",
+      "service2": "SQS",
+      "question": "What pattern do these services implement together?",
+      "options": ["Circuit breaker", "Fan-out", "Saga pattern", "CQRS"],
+      "answer": 1
+    },
+    {
+      "service1": "Lambda",
+      "service2": "API Gateway",
+      "question": "What architecture do these enable?",
+      "options": ["Microservices", "Serverless REST API", "Message queue", "Data lake"],
+      "answer": 1
+    },
+    {
+      "service1": "Route 53",
+      "service2": "ELB",
+      "question": "What does Route 53 use to point to an ELB?",
+      "options": ["CNAME record", "Alias record", "MX record", "TXT record"],
+      "answer": 1
+    },
+    {
+      "service1": "EC2",
+      "service2": "EBS",
+      "question": "What is the relationship constraint?",
+      "options": ["Same region only", "Same AZ only", "Same VPC only", "No constraint"],
+      "answer": 1
+    },
+    {
+      "service1": "RDS",
+      "service2": "ElastiCache",
+      "question": "What pattern do these implement?",
+      "options": ["Write-through caching", "Event sourcing", "Sharding", "Federation"],
+      "answer": 0
+    },
+    {
+      "service1": "CloudTrail",
+      "service2": "S3",
+      "question": "Why are these commonly used together?",
+      "options": ["Static hosting", "Long-term log storage", "Data replication", "Encryption"],
+      "answer": 1
+    },
+    {
+      "service1": "DynamoDB",
+      "service2": "DAX",
+      "question": "What does DAX provide for DynamoDB?",
+      "options": ["Backup & restore", "Microsecond read caching", "Write scaling", "Schema migration"],
+      "answer": 1
+    },
+    {
+      "service1": "KMS",
+      "service2": "S3",
+      "question": "How do these integrate?",
+      "options": ["Bucket policies", "SSE-KMS encryption", "Access logging", "Transfer acceleration"],
+      "answer": 1
+    },
+    {
+      "service1": "VPC",
+      "service2": "NAT Gateway",
+      "question": "What does NAT Gateway enable?",
+      "options": [
+        "Public subnet internet access",
+        "Private subnet outbound internet",
+        "Cross-region connectivity",
+        "DNS resolution"
+      ],
+      "answer": 1
+    },
+    {
+      "service1": "GuardDuty",
+      "service2": "CloudTrail",
+      "question": "How does GuardDuty use CloudTrail?",
+      "options": [
+        "Encrypts CloudTrail logs",
+        "Analyzes logs for threats",
+        "Backs up CloudTrail data",
+        "Replaces CloudTrail"
+      ],
+      "answer": 1
+    },
+    {
+      "service1": "Glue",
+      "service2": "Athena",
+      "question": "What does Glue provide to Athena?",
+      "options": [
+        "Compute resources",
+        "Data Catalog schemas",
+        "Query optimization",
+        "Access control"
+      ],
+      "answer": 1
+    }
+  ],
+  "categorySort": [
+    { "service": "EC2", "category": "Compute" },
+    { "service": "Lambda", "category": "Compute" },
+    { "service": "ECS", "category": "Compute" },
+    { "service": "Fargate", "category": "Compute" },
+    { "service": "Elastic Beanstalk", "category": "Compute" },
+    { "service": "S3", "category": "Storage" },
+    { "service": "EBS", "category": "Storage" },
+    { "service": "EFS", "category": "Storage" },
+    { "service": "FSx", "category": "Storage" },
+    { "service": "Storage Gateway", "category": "Storage" },
+    { "service": "RDS", "category": "Database" },
+    { "service": "Aurora", "category": "Database" },
+    { "service": "DynamoDB", "category": "Database" },
+    { "service": "ElastiCache", "category": "Database" },
+    { "service": "Redshift", "category": "Database" },
+    { "service": "VPC", "category": "Network" },
+    { "service": "CloudFront", "category": "Network" },
+    { "service": "Route 53", "category": "Network" },
+    { "service": "API Gateway", "category": "Network" },
+    { "service": "Direct Connect", "category": "Network" },
+    { "service": "IAM", "category": "Security" },
+    { "service": "KMS", "category": "Security" },
+    { "service": "WAF", "category": "Security" },
+    { "service": "Shield", "category": "Security" },
+    { "service": "GuardDuty", "category": "Security" },
+    { "service": "Cognito", "category": "Security" },
+    { "service": "EKS", "category": "Compute" },
+    { "service": "Glacier", "category": "Storage" },
+    { "service": "Neptune", "category": "Database" },
+    { "service": "Global Accelerator", "category": "Network" },
+    { "service": "Inspector", "category": "Security" },
+    { "service": "Macie", "category": "Security" }
+  ]
+}
