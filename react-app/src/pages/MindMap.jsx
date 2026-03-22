@@ -270,7 +270,7 @@ function CategoryFilter({ categories, activeCategories, onToggle, onShowAll }) {
               background: cat.color, opacity: active ? 1 : 0.4,
               display: 'inline-block',
             }} />
-            {cat.label}
+            {cat.name}
           </button>
         );
       })}
@@ -714,7 +714,7 @@ export default function MindMap() {
           .map((s) => ({
             service: s,
             categoryKey: key,
-            categoryLabel: cat.label,
+            categoryLabel: cat.name,
             categoryColor: cat.color,
           }))
       ).slice(0, 12)
@@ -870,7 +870,7 @@ export default function MindMap() {
                 fontWeight: 700,
                 whiteSpace: 'nowrap',
               }}>
-                {cat.label}
+                {cat.name}
               </div>
             </motion.div>
           );
@@ -930,7 +930,7 @@ export default function MindMap() {
           <div data-no-pan>
             <DetailPanel
               service={selectedService}
-              category={selectedCategoryKey ? categories[selectedCategoryKey]?.label : ''}
+              category={selectedCategoryKey ? categories[selectedCategoryKey]?.name : ''}
               color={selectedCategoryKey ? categories[selectedCategoryKey]?.color : '#3b82f6'}
               onClose={() => setSelectedService(null)}
             />

@@ -40,6 +40,19 @@
   --shadow: 0 4px 20px rgba(0,0,0,0.4);
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
   --glow-orange: 0 0 20px rgba(255,107,53,0.3);
+
+  /* Component aliases */
+  --text: #f8fafc;
+  --text-h: #ffffff;
+  --bg: #0a0e17;
+  --border: #1e293b;
+  --code-bg: #1a2332;
+  --accent: #a855f7;
+  --accent-bg: rgba(168,85,247,0.12);
+  --accent-border: rgba(168,85,247,0.4);
+  --sans: 'Space Grotesk', sans-serif;
+  --heading: 'Space Grotesk', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
 }
 
 [data-theme="light"] {
@@ -61,6 +74,19 @@
   --shadow: 0 4px 20px rgba(0,0,0,0.08);
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
   --glow-orange: 0 0 20px rgba(234,88,12,0.15);
+
+  /* Component aliases */
+  --text: #475569;
+  --text-h: #0f172a;
+  --bg: #f8fafc;
+  --border: #e2e8f0;
+  --code-bg: #f1f5f9;
+  --accent: #7c3aed;
+  --accent-bg: rgba(124,58,237,0.08);
+  --accent-border: rgba(124,58,237,0.3);
+  --sans: 'Space Grotesk', sans-serif;
+  --heading: 'Space Grotesk', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
 }
 
 html {

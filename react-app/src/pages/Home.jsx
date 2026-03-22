@@ -429,6 +429,8 @@ const modules = [
   { emoji: '\uD83D\uDD17', title: 'Connection Game', desc: 'Match services, find links, sort categories', to: '/exercises/connection-game' },
   { emoji: '\uD83D\uDD0D', title: 'Deduction Trainer', desc: 'Master exam elimination strategy', to: '/exercises/deduction' },
   { emoji: '\uD83C\uDFAE', title: 'Cloud Walker', desc: 'Explore an AWS pixel world', to: '/games/cloud-walker' },
+  { emoji: '\uD83C\uDFC6', title: 'Jeopardy', desc: 'Classic quiz show with AWS categories', to: '/games/jeopardy' },
+  { emoji: '\uD83D\uDCE6', title: 'Service Sorter', desc: 'Sort services into categories at speed', to: '/games/service-sorter' },
   { emoji: '\uD83D\uDCCB', title: 'Cheatsheet', desc: 'Quick reference for exam day', to: '/cheatsheet' },
   { emoji: '\uD83D\uDCDA', title: 'Chapters', desc: 'Domain-by-domain deep dive', to: '/chapters' },
 ]
@@ -589,7 +591,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.5 }}
           >
-            {['65+ Questions', '50+ Services', '4 Game Modes'].map((text, i) => (
+            {['65+ Questions', '50+ Services', '6 Game Modes'].map((text, i) => (
               <span key={i} style={s.statBadge}>
                 {text}
               </span>

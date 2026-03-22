@@ -20,6 +20,8 @@ const CHAPTERS = [
           'Policy evaluation: explicit Deny > explicit Allow > implicit Deny',
           'MFA should be enabled for root and privileged users',
         ],
+        examTip: 'If the question mentions "cross-account access" the answer almost always involves IAM Roles + STS AssumeRole. If it mentions "temporary credentials", think STS. Never pick access keys for service-to-service communication.',
+        heuristic: 'D-A-I: Deny beats Allow beats Implicit deny. Remember "DAI" for policy evaluation order.',
       },
       {
         title: 'Encryption & Key Management',
@@ -32,6 +34,8 @@ const CHAPTERS = [
           'Envelope encryption: data key encrypts data, KMS key encrypts data key',
           'CloudHSM: dedicated hardware security module for regulatory compliance',
         ],
+        examTip: 'If the question asks about "audit trail for encryption" or "who used the key", the answer is SSE-KMS (logs to CloudTrail). If it mentions "regulatory compliance" or "FIPS 140-2 Level 3", choose CloudHSM.',
+        heuristic: 'S-K-C = Simple, Key-managed, Customer-managed. Complexity increases left to right: SSE-S3 < SSE-KMS < SSE-C.',
       },
       {
         title: 'Network Security',
@@ -44,6 +48,8 @@ const CHAPTERS = [
           'VPC Flow Logs: capture IP traffic information',
           'AWS Network Firewall: managed firewall for VPC',
         ],
+        examTip: 'Security Groups = stateFUL (remember: "Groups are Full of state"). NACLs = stateLESS. If the question says "block a specific IP", you need a NACL (SGs cannot deny). WAF = Layer 7 web attacks; Shield = DDoS.',
+        heuristic: 'SG vs NACL: "SG = allow only, instance | NACL = allow+deny, subnet". Think: SG is like a bouncer (only lets people in), NACL is a gate (blocks and allows).',
       },
       {
         title: 'Logging & Monitoring',
@@ -55,6 +61,8 @@ const CHAPTERS = [
           'Macie: ML to discover and protect sensitive data in S3',
           'Inspector: automated vulnerability scanning for EC2 and containers',
         ],
+        examTip: 'CloudTrail = WHO did WHAT (API audit). CloudWatch = HOW things are performing (metrics). GuardDuty = threat detection (malicious activity). Config = WHAT changed (compliance). Don\'t confuse them!',
+        heuristic: '"Trail = Trail of actions, Watch = Watch metrics, Guard = Guard against threats, Config = Configuration changes".',
       },
     ],
   },
@@ -76,6 +84,8 @@ const CHAPTERS = [
           'Aurora: 6 copies across 3 AZs, self-healing storage',
           'S3: 11 nines durability, cross-region replication for DR',
         ],
+        examTip: 'Multi-AZ = High Availability (same region, automatic failover). Multi-Region = Disaster Recovery (different regions). If the question says "survive an AZ failure", Multi-AZ is enough. If it says "survive a region failure", you need Multi-Region.',
+        heuristic: '"AZ = Availability, Region = Recovery". Multi-AZ handles zone failures; Multi-Region handles regional disasters.',
       },
       {
         title: 'Decoupled Architectures',
@@ -87,6 +97,8 @@ const CHAPTERS = [
           'Step Functions: orchestrate multi-step workflows',
           'Loose coupling = independent scaling, failure isolation',
         ],
+        examTip: 'SQS = pull-based (consumers poll). SNS = push-based (subscribers get notified). If you need "fan-out" to multiple targets, use SNS + SQS pattern. If you need "ordering", use SQS FIFO. EventBridge is for event-driven with filtering/routing.',
+        heuristic: '"SQS = Queue (pull), SNS = Notify (push), EventBridge = smart router". For ordering: FIFO. For fan-out: SNS->SQS.',
       },
       {
         title: 'Disaster Recovery Strategies',
@@ -99,6 +111,8 @@ const CHAPTERS = [
           'RTO: how quickly you need to recover',
           'Route 53 failover routing for DNS-level failover',
         ],
+        examTip: 'DR strategies from cheapest to most expensive: Backup & Restore < Pilot Light < Warm Standby < Active-Active. RTO/RPO decrease as cost increases. If budget is tight, Backup & Restore. If near-zero downtime, Active-Active.',
+        heuristic: '"B-P-W-A" (Backup, Pilot, Warm, Active) = cost goes UP, RTO/RPO go DOWN. Think of it as a dimmer switch: more money = faster recovery.',
       },
       {
         title: 'Data Resilience',
@@ -110,6 +124,8 @@ const CHAPTERS = [
           'DynamoDB point-in-time recovery: 35-day continuous backups',
           'AWS Backup: centralized backup across services',
         ],
+        examTip: 'If the question mentions "prevent accidental deletion": S3 Versioning + MFA Delete. "WORM/compliance": S3 Object Lock in Compliance mode (nobody can delete, not even root). "Centralized backup management": AWS Backup.',
+        heuristic: '"Versioning = Undo, Object Lock = Cannot touch, Backup = Centralized". Governance mode = admin can override. Compliance mode = nobody can override.',
       },
     ],
   },
@@ -130,6 +146,8 @@ const CHAPTERS = [
           'Auto Scaling target tracking: maintain metric at target value',
           'Enhanced networking: higher PPS, lower latency (ENA, EFA)',
         ],
+        examTip: 'Placement groups: "Cluster" = low latency HPC (same rack). "Spread" = max 7 instances/AZ, critical instances. "Partition" = big data (Hadoop/Kafka). If the question mentions "HPC" or "low latency between instances", choose Cluster.',
+        heuristic: '"C-S-P: Cluster = Close together, Spread = Separate, Partition = Parallel big data". ENA = Enhanced Network Adapter, EFA = Elastic Fabric Adapter (HPC).',
       },
       {
         title: 'Storage Performance',
@@ -141,6 +159,8 @@ const CHAPTERS = [
           'S3 multipart upload: parallel uploads for large files (>100MB)',
           'EFS: scales automatically, choose burst vs provisioned throughput',
         ],
+        examTip: 'For maximum IOPS: io2 Block Express (256K IOPS). For cost-effective general purpose: gp3. If "ephemeral" or "temporary high I/O": instance store. For large file uploads: S3 multipart (>100MB) + Transfer Acceleration (geographic distance).',
+        heuristic: '"gp3 = General, io2 = Intense, Instance Store = Insanely fast but lost on stop". Remember: gp3 lets you set IOPS independently of size (unlike gp2).',
       },
       {
         title: 'Database Performance',
@@ -152,6 +172,8 @@ const CHAPTERS = [
           'Redshift: columnar storage, MPP for analytics',
           'Choose the right DB: relational vs NoSQL vs in-memory vs graph',
         ],
+        examTip: 'Read-heavy workload? Read Replicas. Sub-millisecond reads on DynamoDB? DAX. Session management? ElastiCache Redis. Analytics/BI? Redshift. If "cross-region low-latency reads": Aurora Global Database.',
+        heuristic: '"Read Replicas for reads, DAX for DynamoDB speed, Redis for sessions, Redshift for reports". Think: Read/DAX/Redis/Redshift = the 4 R\'s of database performance.',
       },
       {
         title: 'Network Performance',
@@ -163,6 +185,8 @@ const CHAPTERS = [
           'NLB: millions of requests/sec, ultra-low latency (Layer 4)',
           'API caching in API Gateway: reduce backend calls',
         ],
+        examTip: 'CloudFront = cache static/dynamic content at edge. Global Accelerator = static IP + AWS backbone for non-HTTP (TCP/UDP) or multi-region failover. CloudFront caches; Global Accelerator routes. If "static IP" or "gaming/IoT": Global Accelerator.',
+        heuristic: '"CloudFront = Content caching, Global Accelerator = Connection routing". CF = HTTP content at edge. GA = TCP/UDP via backbone. Both reduce latency, different mechanisms.',
       },
     ],
   },
@@ -183,6 +207,8 @@ const CHAPTERS = [
           'Right-sizing: match instance type to actual usage',
           'Auto Scaling: scale down during low demand',
         ],
+        examTip: 'Predictable steady-state = Reserved Instances or Savings Plans. Interruptible/fault-tolerant = Spot (batch processing, CI/CD, big data). Short unpredictable bursts = On-Demand. Savings Plans are more flexible than RIs.',
+        heuristic: '"Spot = Save 90% but can lose it, Reserved = Save 72% with commitment, On-Demand = Full price no commitment". Think of it like hotel booking: advance = cheaper.',
       },
       {
         title: 'Storage Cost Optimization',
@@ -194,6 +220,8 @@ const CHAPTERS = [
           'S3 analytics: identify optimal lifecycle transition timing',
           'Compress and aggregate data before storing',
         ],
+        examTip: 'Unknown access patterns? S3 Intelligent-Tiering (no retrieval fees, small monitoring fee). Known patterns? Lifecycle rules. Archive rarely accessed: Glacier (minutes-hours retrieval). Never accessed: Deep Archive (12 hours, cheapest).',
+        heuristic: '"Standard > IA > One Zone-IA > Glacier Instant > Glacier Flexible > Deep Archive". Cost decreases, retrieval time increases going right. Intelligent-Tiering = "set and forget".',
       },
       {
         title: 'Database Cost Optimization',
@@ -205,6 +233,8 @@ const CHAPTERS = [
           'ElastiCache Reserved Nodes: lower long-term cost',
           'Use read replicas to offload reads instead of scaling up primary',
         ],
+        examTip: 'Dev/test environments with intermittent usage? Aurora Serverless. Unpredictable DynamoDB traffic? On-Demand mode. Predictable production? Reserved capacity. Always consider read replicas before scaling up the primary instance.',
+        heuristic: '"Serverless for spiky, Reserved for steady, On-Demand for unknown". Scale OUT (replicas) before scaling UP (bigger instance).',
       },
       {
         title: 'Architecture Cost Patterns',
@@ -217,6 +247,8 @@ const CHAPTERS = [
           'Consolidated billing: volume discounts across accounts',
           'AWS Cost Explorer, Budgets, and Trusted Advisor for monitoring',
         ],
+        examTip: 'Data transfer costs are a frequent exam topic. Inbound = free. Same AZ = free. Cross-AZ = small cost. Cross-Region = highest cost. VPC endpoints eliminate NAT Gateway charges for AWS service access. CloudFront reduces S3 transfer costs.',
+        heuristic: '"In = Free, Same AZ = Free, Cross-AZ = $, Cross-Region = $$$". Always pick VPC endpoints over NAT Gateway for AWS services. Use CloudFront to reduce S3 egress.',
       },
     ],
   },
@@ -338,6 +370,45 @@ const styles = {
     flexShrink: 0,
     marginTop: '0.15rem',
   }),
+  tipBox: (color) => ({
+    margin: '0.5rem 1.15rem 0.75rem',
+    padding: '0.75rem 1rem',
+    borderRadius: 10,
+    background: `${color}10`,
+    border: `1px solid ${color}33`,
+    fontSize: '0.85rem',
+    lineHeight: 1.6,
+    color: 'var(--text)',
+  }),
+  tipLabel: (color) => ({
+    display: 'inline-block',
+    fontSize: '0.7rem',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: color,
+    marginBottom: '0.3rem',
+  }),
+  heuristicBox: {
+    margin: '0 1.15rem 1rem',
+    padding: '0.65rem 1rem',
+    borderRadius: 10,
+    background: 'var(--code-bg)',
+    border: '1px dashed var(--border)',
+    fontSize: '0.83rem',
+    lineHeight: 1.6,
+    color: 'var(--text)',
+    fontFamily: 'var(--mono)',
+  },
+  heuristicLabel: {
+    display: 'inline-block',
+    fontSize: '0.7rem',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: 'var(--accent)',
+    marginBottom: '0.3rem',
+  },
   progressWrap: {
     display: 'flex',
     gap: '0.5rem',
@@ -510,6 +581,18 @@ export default function Chapters() {
                                     </motion.li>
                                   ))}
                                 </ul>
+                                {topic.examTip && (
+                                  <div style={styles.tipBox(chapter.color)}>
+                                    <div style={styles.tipLabel(chapter.color)}>&#128161; Exam Tip</div>
+                                    {topic.examTip}
+                                  </div>
+                                )}
+                                {topic.heuristic && (
+                                  <div style={styles.heuristicBox}>
+                                    <div style={styles.heuristicLabel}>&#9889; Quick Study Heuristic</div>
+                                    {topic.heuristic}
+                                  </div>
+                                )}
                               </motion.div>
                             )}
                           </AnimatePresence>
