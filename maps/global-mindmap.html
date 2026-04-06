@@ -1225,8 +1225,8 @@
         const minVelocity = 0.1;
         let currentFocusCategory = null;
 
-        const map = document.getElementById('map');
-        const container = document.getElementById('mapContainer');
+        // Deferred until DOM ready to avoid race condition on first load
+        let map, container;
         const mapWidth = 4000;
         const mapHeight = 3000;
 
@@ -1415,54 +1415,96 @@
             velocityY = 0;
         }
 
-        // Pan and zoom controls
-        container.addEventListener('mousedown', (e) => {
-            stopMomentum();
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            lastTranslateX = translateX;
-            lastTranslateY = translateY;
-            container.style.cursor = 'grabbing';
-            e.preventDefault();
-        });
+        // Pan and zoom controls - attached after DOM ready
+        function attachMapListeners() {
+            container.addEventListener('mousedown', (e) => {
+                stopMomentum();
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                lastTranslateX = translateX;
+                lastTranslateY = translateY;
+                container.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
 
-        container.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            velocityX = (lastTranslateX + dx - translateX) * 0.3;
-            velocityY = (lastTranslateY + dy - translateY) * 0.3;
-            translateX = lastTranslateX + dx;
-            translateY = lastTranslateY + dy;
-            updateTransform();
-        });
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                velocityX = (lastTranslateX + dx - translateX) * 0.3;
+                velocityY = (lastTranslateY + dy - translateY) * 0.3;
+                translateX = lastTranslateX + dx;
+                translateY = lastTranslateY + dy;
+                updateTransform();
+            });
 
-        container.addEventListener('mouseup', () => {
-            if (isDragging) {
+            container.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    container.style.cursor = 'grab';
+                    animateMomentum();
+                }
+            });
+
+            container.addEventListener('mouseleave', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    container.style.cursor = 'grab';
+                }
+            });
+
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                stopMomentum();
+                let delta = e.deltaY;
+                const isTrackpad = Math.abs(delta) < 50;
+                const sensitivity = isTrackpad ? 0.002 : 0.001;
+                const factor = 1 - delta * sensitivity;
+                const clampedFactor = Math.max(0.9, Math.min(1.1, factor));
+                zoomAtPoint(clampedFactor, e.clientX, e.clientY);
+            }, { passive: false });
+
+            // Touch support for mobile
+            let lastTouchDist = 0;
+            container.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    stopMomentum();
+                    isDragging = true;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    lastTranslateX = translateX;
+                    lastTranslateY = translateY;
+                } else if (e.touches.length === 2) {
+                    lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                }
+                e.preventDefault();
+            }, { passive: false });
+
+            container.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging) {
+                    const dx = e.touches[0].clientX - startX;
+                    const dy = e.touches[0].clientY - startY;
+                    translateX = lastTranslateX + dx;
+                    translateY = lastTranslateY + dy;
+                    updateTransform();
+                } else if (e.touches.length === 2) {
+                    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    if (lastTouchDist > 0) {
+                        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                        zoomAtPoint(dist / lastTouchDist, midX, midY);
+                    }
+                    lastTouchDist = dist;
+                }
+                e.preventDefault();
+            }, { passive: false });
+
+            container.addEventListener('touchend', () => {
                 isDragging = false;
-                container.style.cursor = 'grab';
-                animateMomentum();
-            }
-        });
-
-        container.addEventListener('mouseleave', () => {
-            if (isDragging) {
-                isDragging = false;
-                container.style.cursor = 'grab';
-            }
-        });
-
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            stopMomentum();
-            let delta = e.deltaY;
-            const isTrackpad = Math.abs(delta) < 50;
-            const sensitivity = isTrackpad ? 0.002 : 0.001;
-            const factor = 1 - delta * sensitivity;
-            const clampedFactor = Math.max(0.9, Math.min(1.1, factor));
-            zoomAtPoint(clampedFactor, e.clientX, e.clientY);
-        }, { passive: false });
+                lastTouchDist = 0;
+            });
+        }
 
         // Focus functionality
         function focusCategory(category) {
@@ -1570,11 +1612,25 @@
             }
         });
 
-        // Initialize
-        window.addEventListener('load', () => {
+        // Initialize - use DOMContentLoaded to avoid race condition on first navigation
+        function initMap() {
+            map = document.getElementById('map');
+            container = document.getElementById('mapContainer');
+            if (!map || !container) return; // guard
             createNodes();
             createConnections();
+            attachMapListeners();
             centerView();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMap);
+        } else {
+            initMap();
+        }
+        // Fallback: recenter after fonts/images load
+        window.addEventListener('load', () => {
+            if (map && container) centerView();
         });
     </script>
 </body>
