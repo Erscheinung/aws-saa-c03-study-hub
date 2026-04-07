@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Walker 3D | AWS Memory Palace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Space Grotesk',sans-serif; background:#0a0e17; color:#f8fafc; overflow:hidden; }
+        canvas { display:block; }
+
+        #loadingScreen {
+            position:fixed; inset:0; background:#0a0e17; z-index:9999;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+        }
+        #loadingScreen h1 { font-size:2rem; background:linear-gradient(135deg,#ff6b35,#4facfe);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:20px; }
+        .loader { width:60px; height:60px; border:4px solid #2d3748; border-top-color:#ff6b35;
+            border-radius:50%; animation:spin 0.8s linear infinite; }
+        @keyframes spin { to{transform:rotate(360deg);} }
+
+        #instructions {
+            position:fixed; inset:0; background:rgba(10,14,23,0.92); z-index:5000;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            cursor:pointer;
+        }
+        #instructions h2 { font-size:1.8rem; color:#ff6b35; margin-bottom:20px; }
+        #instructions p { color:#94a3b8; font-size:1.1rem; line-height:2; text-align:center; max-width:500px; }
+        .key-badge { display:inline-block; background:#1a2332; border:1px solid #ff6b35; color:#ff6b35;
+            padding:3px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:0.9rem; margin:0 2px; }
+        #instructions .start-hint { margin-top:30px; color:#ff6b35; font-size:1.2rem; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+        #crosshair {
+            position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100; pointer-events:none;
+        }
+        #crosshair::before, #crosshair::after {
+            content:''; position:absolute; background:rgba(255,255,255,0.5);
+        }
+        #crosshair::before { width:20px; height:2px; left:-10px; top:-1px; }
+        #crosshair::after { width:2px; height:20px; left:-1px; top:-10px; }
+
+        .back-link {
+            position:fixed; top:15px; left:15px; z-index:200; padding:8px 18px;
+            border-radius:25px; border:2px solid #4facfe; background:rgba(10,14,23,0.8);
+            color:#4facfe; text-decoration:none; font-size:0.85rem; transition:all 0.2s;
+        }
+        .back-link:hover { background:#4facfe; color:#0a0e17; }
+
+        .hud {
+            position:fixed; bottom:15px; left:50%; transform:translateX(-50%); z-index:200;
+            background:rgba(10,14,23,0.8); padding:8px 20px; border-radius:20px;
+            font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:#94a3b8;
+            border:1px solid #2d3748;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            position:fixed; right:-400px; top:0; width:400px; height:100vh;
+            background:#1a2332; border-left:2px solid #ff6b35; z-index:3000;
+            overflow-y:auto; padding:30px; transition:right 0.4s cubic-bezier(0.16,1,0.3,1);
+            box-shadow:-5px 0 30px rgba(0,0,0,0.6);
+        }
+        #sidebar.open { right:0; }
+        #sidebar h2 { font-size:1.5rem; color:#ff6b35; margin-bottom:8px; }
+        #sidebar .desc { color:#94a3b8; margin-bottom:18px; line-height:1.7; }
+        #sidebar h3 { color:#4facfe; font-size:0.95rem; margin:15px 0 8px; }
+        #sidebar ul { list-style:none; }
+        #sidebar li { color:#94a3b8; line-height:1.8; }
+        #sidebar li::before { content:"▸ "; color:#ff6b35; font-weight:bold; }
+        .sidebar-close {
+            position:absolute; top:15px; right:15px; background:transparent;
+            border:2px solid #ef4444; color:#ef4444; width:32px; height:32px;
+            border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex;
+            align-items:center; justify-content:center; transition:all 0.2s;
+        }
+        .sidebar-close:hover { background:#ef4444; color:#0a0e17; }
+
+        @media (max-width:768px) {
+            #sidebar { width:100vw; right:-100vw; }
+            #sidebar.open { right:0; }
+        }
+    </style>
+</head>
+<body>
+<div id="loadingScreen"><h1>Cloud Walker 3D</h1><div class="loader"></div><p style="color:#94a3b8;margin-top:20px;">Loading memory palace...</p></div>
+
+<div id="instructions" onclick="startGame()">
+    <h2>Cloud Walker 3D</h2>
+    <p>
+        <span class="key-badge">W</span><span class="key-badge">A</span><span class="key-badge">S</span><span class="key-badge">D</span> to move<br>
+        <span class="key-badge">Mouse</span> to look around<br>
+        <span class="key-badge">Click</span> buildings for service info<br>
+        <span class="key-badge">ESC</span> to release mouse
+    </p>
+    <div class="start-hint">Click anywhere to start</div>
+</div>
+
+<div id="crosshair" style="display:none;"></div>
+<a href="../index.html" class="back-link">&larr; Back to Hub</a>
+<div class="hud" id="hud" style="display:none;">WASD to move &bull; Click buildings for info &bull; ESC to exit</div>
+
+<div id="sidebar">
+    <button class="sidebar-close" onclick="closeSidebar()">&times;</button>
+    <div id="sidebarContent"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── Service Info Data ──
+const serviceInfo = {
+    s3: { name:'Amazon S3', desc:'Object storage for any amount of data.', facts:['5TB max per object','11 nines (99.999999999%) durability','6 storage classes with lifecycle policies','Multipart upload required for >5GB','Cross-region and same-region replication'] },
+    glacier: { name:'S3 Glacier', desc:'Low-cost archive storage for long-term data.', facts:['Retrieval: minutes (expedited) to 48 hours (deep)','Deep Archive is the cheapest AWS storage','90-180 day minimum storage duration','Vault Lock for compliance (WORM)','Restore to S3 for access'] },
+    ec2: { name:'Amazon EC2', desc:'Virtual servers in the cloud.', facts:['Instance types: T(burst), M(general), C(compute), R(memory)','On-Demand, Reserved (72% off), Spot (90% off)','Placement groups: Cluster, Spread, Partition','User data scripts run on first launch','AMIs for custom server images'] },
+    lambda: { name:'AWS Lambda', desc:'Run code without provisioning servers.', facts:['15 minute max timeout','128MB to 10GB memory','250MB unzipped package limit','1000 concurrent executions default','Pay per invocation + duration'] },
+    rds: { name:'Amazon RDS', desc:'Managed relational database service.', facts:['Engines: MySQL, PostgreSQL, MariaDB, Oracle, SQL Server','Up to 5 read replicas','Multi-AZ for automatic failover','Automated backups and snapshots','Storage auto-scaling'] },
+    aurora: { name:'Amazon Aurora', desc:'Cloud-native high-performance relational DB.', facts:['5x faster than MySQL, 3x faster than PostgreSQL','128TB auto-scaling storage','15 read replicas with <10ms lag','6 copies of data across 3 AZs','Global Database: <1 second cross-region replication'] },
+    cloudfront: { name:'Amazon CloudFront', desc:'Global content delivery network.', facts:['400+ edge locations worldwide','Origin Access Control (OAC) for S3 security','Integrates with WAF and Shield','Supports HTTP/HTTPS and WebSocket','Lambda@Edge for edge compute'] },
+    vpc: { name:'Amazon VPC', desc:'Isolated virtual network in the cloud.', facts:['CIDR range: /16 (65K IPs) to /28 (16 IPs)','Security Groups are stateful (auto-allow return)','NACLs are stateless (explicit in+out rules)','5 reserved IPs per subnet','VPC Peering, Transit Gateway, PrivateLink'] },
+    iam: { name:'AWS IAM', desc:'Identity and access management.', facts:['Users, Groups, Roles, Policies','MFA strongly recommended for root','Cross-account access via STS AssumeRole','Policy types: Identity, Resource, SCPs','5000 users per account (soft limit)'] },
+    route53: { name:'Amazon Route 53', desc:'Scalable DNS and domain registration.', facts:['Routing: Simple, Weighted, Latency, Failover, Geo, Multi-value','Health checks for automatic failover','Alias records for AWS resources (free queries)','Domain registration and transfer','100% availability SLA'] }
+};
+
+// ── Three.js Setup ──
+let camera, scene, renderer, clock;
+let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
+let isLocked=false;
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+const euler = new THREE.Euler(0,0,0,'YXZ');
+const PI_2 = Math.PI/2;
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const clickables = [];
+
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050810);
+    scene.fog = new THREE.FogExp2(0x050810, 0.008);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 500);
+    camera.position.set(0, 2, 0);
+
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.body.appendChild(renderer.domElement);
+
+    clock = new THREE.Clock();
+
+    // Lighting
+    const ambient = new THREE.AmbientLight(0x334466, 0.6);
+    scene.add(ambient);
+    const dirLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+    dirLight.position.set(50, 80, 30);
+    scene.add(dirLight);
+    // Subtle point light on player
+    const playerLight = new THREE.PointLight(0x4facfe, 0.3, 20);
+    playerLight.position.copy(camera.position);
+    scene.add(playerLight);
+
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(400, 400);
+    const groundMat = new THREE.MeshLambertMaterial({color:0x111820});
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI/2;
+    scene.add(ground);
+
+    // Grid lines on ground
+    const grid = new THREE.GridHelper(400, 80, 0x1a2a3a, 0x0d1520);
+    scene.add(grid);
+
+    // Stars
+    const starGeo = new THREE.BufferGeometry();
+    const starVerts = [];
+    for(let i=0;i<1000;i++){
+        starVerts.push((Math.random()-0.5)*400, Math.random()*100+20, (Math.random()-0.5)*400);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts,3));
+    const starMat = new THREE.PointsMaterial({color:0xffffff, size:0.3, transparent:true, opacity:0.7});
+    scene.add(new THREE.Points(starGeo, starMat));
+
+    // ── Build structures ──
+    createS3Warehouse(40, -30);
+    createIceCave(-40, -30);
+    createServerRoom(40, 30);
+    createFloatingLambda(0, -50);
+    createVault(-40, 30);
+    createAuroraSky();
+    createCloudFrontBeams(55, 0);
+    createVPCWalls(0, 40);
+    createIAMEntrance(-55, 0);
+    createSignpost(0, 0);
+
+    // ── Events ──
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+    renderer.domElement.addEventListener('click', onClick);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('pointerlockchange', onPointerLockChange);
+    window.addEventListener('resize', onResize);
+
+    // Hide loading
+    document.getElementById('loadingScreen').style.display = 'none';
+
+    animate();
+}
+
+// ── Geometry builders ──
+function makeMat(color) { return new THREE.MeshLambertMaterial({color}); }
+function makePhong(color, emissive) { return new THREE.MeshPhongMaterial({color, emissive: emissive||0x000000}); }
+
+function addClickable(mesh, serviceKey) {
+    mesh.userData.serviceKey = serviceKey;
+    clickables.push(mesh);
+}
+
+function createLabel(text, x, y, z) {
+    // Simple 3D text using a sprite with canvas texture
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ff6b35';
+    ctx.font = 'bold 28px Space Grotesk, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, 128, 40);
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({map:tex, transparent:true});
+    const sprite = new THREE.Sprite(mat);
+    sprite.position.set(x, y, z);
+    sprite.scale.set(8, 2, 1);
+    scene.add(sprite);
+}
+
+function createS3Warehouse(x, z) {
+    // Orange warehouse
+    const warehouse = new THREE.Mesh(new THREE.BoxGeometry(14,8,10), makeMat(0xff6b35));
+    warehouse.position.set(x, 4, z);
+    scene.add(warehouse);
+    addClickable(warehouse, 's3');
+
+    // Roof
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(15,1,11), makeMat(0xcc5528));
+    roof.position.set(x, 8.5, z);
+    scene.add(roof);
+
+    // Crates inside (visible from outside)
+    const crateColors = [0xffaa66, 0xff8844, 0xcc6622, 0x88aaff, 0x4488cc];
+    const labels = ['STD','IA','GLC','INT','DEEP'];
+    for(let i=0;i<5;i++){
+        const crate = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), makeMat(crateColors[i]));
+        crate.position.set(x-5+i*2.5, 1, z+3);
+        scene.add(crate);
+    }
+    // Orange glow
+    const light = new THREE.PointLight(0xff6b35, 0.5, 20);
+    light.position.set(x, 6, z);
+    scene.add(light);
+
+    createLabel('S3 Storage', x, 10.5, z);
+}
+
+function createIceCave(x, z) {
+    // Ice walls - blue tinted irregular shapes
+    const iceMat = makePhong(0x88ccff, 0x224466);
+    const walls = [
+        {s:[10,7,8], p:[x,3.5,z]},
+        {s:[3,5,3], p:[x-4,2.5,z-2], r:0.3},
+        {s:[3,6,3], p:[x+4,3,z+2], r:-0.2},
+        {s:[4,4,4], p:[x-2,2,z+3], r:0.5},
+    ];
+    walls.forEach(w => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(...w.s), iceMat);
+        m.position.set(...w.p);
+        if(w.r) m.rotation.y = w.r;
+        scene.add(m);
+        if(w === walls[0]) addClickable(m, 'glacier');
+    });
+    // Blue glow
+    const light = new THREE.PointLight(0x4488ff, 0.6, 20);
+    light.position.set(x, 4, z);
+    scene.add(light);
+
+    createLabel('Glacier Ice Cave', x, 9, z);
+}
+
+function createServerRoom(x, z) {
+    // Room shell
+    const room = new THREE.Mesh(new THREE.BoxGeometry(12,7,10), makeMat(0x333844));
+    room.position.set(x, 3.5, z);
+    scene.add(room);
+    addClickable(room, 'ec2');
+
+    // Server racks
+    for(let i=0;i<4;i++){
+        const rack = new THREE.Mesh(new THREE.BoxGeometry(1.5,5,2), makeMat(0x222830));
+        rack.position.set(x-4+i*2.5, 2.5, z);
+        scene.add(rack);
+    }
+
+    // Blinking LEDs
+    const ledColors = [0x00ff66, 0xff3333, 0x4488ff];
+    for(let i=0;i<6;i++){
+        const led = new THREE.PointLight(ledColors[i%3], 0.3, 5);
+        led.position.set(x-3+i*1.5, 4, z+2);
+        scene.add(led);
+        // Blink animation stored for update loop
+        led.userData.blinkRate = 0.5 + Math.random()*2;
+        led.userData.blinkPhase = Math.random()*Math.PI*2;
+        led.userData.isBlinker = true;
+    }
+    createLabel('EC2 Servers', x, 9, z);
+}
+
+function createFloatingLambda(x, z) {
+    // Floating emissive spheres
+    const lambdaMat = makePhong(0x8844ff, 0x6633cc);
+    for(let i=0;i<8;i++){
+        const s = 0.5 + Math.random()*1;
+        const sphere = new THREE.Mesh(new THREE.SphereGeometry(s, 8, 8), lambdaMat);
+        sphere.position.set(
+            x + (Math.random()-0.5)*12,
+            3 + Math.random()*8,
+            z + (Math.random()-0.5)*12
+        );
+        sphere.userData.floatPhase = Math.random()*Math.PI*2;
+        sphere.userData.floatSpeed = 0.3 + Math.random()*0.5;
+        sphere.userData.baseY = sphere.position.y;
+        sphere.userData.isFloater = true;
+        scene.add(sphere);
+        if(i===0) addClickable(sphere, 'lambda');
+    }
+    // Purple glow
+    const light = new THREE.PointLight(0x8844ff, 0.5, 25);
+    light.position.set(x, 6, z);
+    scene.add(light);
+
+    createLabel('Lambda Functions', x, 13, z);
+}
+
+function createVault(x, z) {
+    // Sunken area with cylinders
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(14,0.5,10), makeMat(0x1a1a2e));
+    floor.position.set(x, -0.5, z);
+    scene.add(floor);
+
+    const cylMat = makeMat(0x6644aa);
+    for(let i=0;i<3;i++){
+        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,4,8), cylMat);
+        cyl.position.set(x-3+i*3, 2, z);
+        scene.add(cyl);
+        if(i===0) addClickable(cyl, 'rds');
+    }
+    // Vault walls
+    const wallMat = makeMat(0x222244);
+    [[-7,0],[7,0],[0,-5],[0,5]].forEach(([dx,dz],i) => {
+        const w = new THREE.Mesh(new THREE.BoxGeometry(i<2?1:14, 5, i<2?10:1), wallMat);
+        w.position.set(x+dx, 2.5, z+dz);
+        scene.add(w);
+    });
+    createLabel('RDS Vault', x, 7, z);
+}
+
+function createAuroraSky() {
+    // Large plane above the world with aurora-like colors
+    const geo = new THREE.PlaneGeometry(400, 400, 32, 32);
+    const colors = [];
+    const pos = geo.attributes.position;
+    for(let i=0;i<pos.count;i++){
+        const x = pos.getX(i)/400, z = pos.getZ(i)/400;
+        const r = 0.05 + 0.15*Math.abs(Math.sin(x*5));
+        const g = 0.3 + 0.4*Math.abs(Math.sin(z*3+1));
+        const b = 0.2 + 0.3*Math.abs(Math.cos(x*4+z*2));
+        colors.push(r,g,b);
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    const mat = new THREE.MeshBasicMaterial({vertexColors:true, transparent:true, opacity:0.25, side:THREE.DoubleSide});
+    const aurora = new THREE.Mesh(geo, mat);
+    aurora.position.y = 60;
+    aurora.rotation.x = Math.PI/2;
+    aurora.userData.isAurora = true;
+    scene.add(aurora);
+
+    // Aurora label (add a clickable invisible box)
+    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(6,3,6), new THREE.MeshBasicMaterial({visible:false}));
+    hitbox.position.set(20, 2, -15);
+    scene.add(hitbox);
+    addClickable(hitbox, 'aurora');
+    createLabel('Aurora (look up!)', 20, 5, -15);
+}
+
+function createCloudFrontBeams(x, z) {
+    // Light beams going outward
+    const beamMat = makePhong(0xffaa33, 0xff6600);
+    for(let i=0;i<6;i++){
+        const angle = (i/6)*Math.PI*2;
+        const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,15,4), beamMat);
+        beam.position.set(x + Math.cos(angle)*8, 3, z + Math.sin(angle)*8);
+        beam.rotation.z = Math.PI/4 * Math.cos(angle);
+        beam.rotation.x = Math.PI/4 * Math.sin(angle);
+        scene.add(beam);
+    }
+    // Central tower
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.5,2,6,6), makeMat(0xff8833));
+    tower.position.set(x, 3, z);
+    scene.add(tower);
+    addClickable(tower, 'cloudfront');
+
+    const light = new THREE.PointLight(0xff8833, 0.5, 25);
+    light.position.set(x, 5, z);
+    scene.add(light);
+    createLabel('CloudFront CDN', x, 8, z);
+}
+
+function createVPCWalls(x, z) {
+    const wallMat = makeMat(0x10b981);
+    // Four walls with gate opening in front
+    const wallH = 5, wallT = 1;
+    // Back wall
+    const back = new THREE.Mesh(new THREE.BoxGeometry(20,wallH,wallT), wallMat);
+    back.position.set(x, wallH/2, z+10);
+    scene.add(back);
+    // Side walls
+    const left = new THREE.Mesh(new THREE.BoxGeometry(wallT,wallH,20), wallMat);
+    left.position.set(x-10, wallH/2, z);
+    scene.add(left);
+    const right = new THREE.Mesh(new THREE.BoxGeometry(wallT,wallH,20), wallMat);
+    right.position.set(x+10, wallH/2, z);
+    scene.add(right);
+    // Front wall with gate (two sections)
+    const fl = new THREE.Mesh(new THREE.BoxGeometry(7,wallH,wallT), wallMat);
+    fl.position.set(x-6.5, wallH/2, z-10);
+    scene.add(fl);
+    const fr = new THREE.Mesh(new THREE.BoxGeometry(7,wallH,wallT), wallMat);
+    fr.position.set(x+6.5, wallH/2, z-10);
+    scene.add(fr);
+    // Gate arch
+    const arch = new THREE.Mesh(new THREE.BoxGeometry(6,1.5,wallT), wallMat);
+    arch.position.set(x, wallH-0.25, z-10);
+    scene.add(arch);
+
+    addClickable(back, 'vpc');
+    createLabel('VPC Walled City', x, 7, z-12);
+}
+
+function createIAMEntrance(x, z) {
+    // Arch with key shapes
+    const archMat = makeMat(0xf59e0b);
+    // Pillars
+    const pl = new THREE.Mesh(new THREE.BoxGeometry(1.5,7,1.5), archMat);
+    pl.position.set(x-3, 3.5, z);
+    scene.add(pl);
+    const pr = new THREE.Mesh(new THREE.BoxGeometry(1.5,7,1.5), archMat);
+    pr.position.set(x+3, 3.5, z);
+    scene.add(pr);
+    // Top beam
+    const top = new THREE.Mesh(new THREE.BoxGeometry(7.5,1.5,1.5), archMat);
+    top.position.set(x, 7.5, z);
+    scene.add(top);
+    addClickable(top, 'iam');
+
+    // Key shape (circle + shaft)
+    const keyHead = new THREE.Mesh(new THREE.TorusGeometry(1, 0.3, 6, 8), makePhong(0xffd700, 0xaa8800));
+    keyHead.position.set(x, 5, z+1.5);
+    scene.add(keyHead);
+    const keyShaft = new THREE.Mesh(new THREE.BoxGeometry(0.3,2.5,0.3), makePhong(0xffd700, 0xaa8800));
+    keyShaft.position.set(x, 3.2, z+1.5);
+    scene.add(keyShaft);
+
+    const light = new THREE.PointLight(0xf59e0b, 0.4, 15);
+    light.position.set(x, 6, z);
+    scene.add(light);
+    createLabel('IAM Gateway', x, 10, z);
+}
+
+function createSignpost(x, z) {
+    // Tall post with directional signs
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,8,6), makeMat(0x8b7355));
+    post.position.set(x, 4, z);
+    scene.add(post);
+    addClickable(post, 'route53');
+
+    const signColors = [0x3b82f6, 0xef4444, 0x10b981, 0xf59e0b, 0x8b5cf6];
+    const signTexts = ['S3','EC2','VPC','IAM','RDS'];
+    for(let i=0;i<5;i++){
+        const sign = new THREE.Mesh(new THREE.BoxGeometry(3,0.8,0.2), makeMat(signColors[i]));
+        sign.position.set(x + 1.5, 6.5 - i*1.2, z);
+        sign.rotation.y = (i-2)*0.3;
+        scene.add(sign);
+    }
+    createLabel('Route 53', x, 9, z);
+}
+
+// ── Controls ──
+function onKeyDown(e) {
+    switch(e.code){
+        case 'KeyW': case 'ArrowUp': moveForward=true; break;
+        case 'KeyS': case 'ArrowDown': moveBackward=true; break;
+        case 'KeyA': case 'ArrowLeft': moveLeft=true; break;
+        case 'KeyD': case 'ArrowRight': moveRight=true; break;
+    }
+}
+function onKeyUp(e) {
+    switch(e.code){
+        case 'KeyW': case 'ArrowUp': moveForward=false; break;
+        case 'KeyS': case 'ArrowDown': moveBackward=false; break;
+        case 'KeyA': case 'ArrowLeft': moveLeft=false; break;
+        case 'KeyD': case 'ArrowRight': moveRight=false; break;
+    }
+}
+
+function onMouseMove(e) {
+    if(!isLocked) return;
+    const mx = e.movementX || 0;
+    const my = e.movementY || 0;
+    euler.setFromQuaternion(camera.quaternion);
+    euler.y -= mx * 0.002;
+    euler.x -= my * 0.002;
+    euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
+    camera.quaternion.setFromEuler(euler);
+}
+
+function onPointerLockChange() {
+    isLocked = document.pointerLockElement === renderer.domElement;
+    document.getElementById('crosshair').style.display = isLocked ? 'block' : 'none';
+    document.getElementById('hud').style.display = isLocked ? 'block' : 'none';
+}
+
+function onClick(e) {
+    if(!isLocked) {
+        renderer.domElement.requestPointerLock();
+        return;
+    }
+    // Raycast for clickable objects
+    raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+    const hits = raycaster.intersectObjects(clickables);
+    if(hits.length > 0 && hits[0].distance < 30) {
+        const key = hits[0].object.userData.serviceKey;
+        if(key) showSidebar(key);
+    }
+}
+
+function showSidebar(key) {
+    const info = serviceInfo[key];
+    if(!info) return;
+    document.getElementById('sidebarContent').innerHTML = `
+        <h2>${info.name}</h2>
+        <p class="desc">${info.desc}</p>
+        <h3>Key Facts</h3>
+        <ul>${info.facts.map(f=>`<li>${f}</li>`).join('')}</ul>
+    `;
+    document.getElementById('sidebar').classList.add('open');
+    document.exitPointerLock();
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+}
+
+function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function startGame() {
+    document.getElementById('instructions').style.display = 'none';
+    renderer.domElement.requestPointerLock();
+}
+
+// ── Animation loop ──
+function animate() {
+    requestAnimationFrame(animate);
+    const delta = Math.min(clock.getDelta(), 0.1);
+    const t = clock.elapsedTime;
+
+    if(isLocked) {
+        // Movement
+        velocity.x -= velocity.x * 8.0 * delta;
+        velocity.z -= velocity.z * 8.0 * delta;
+        direction.z = Number(moveForward) - Number(moveBackward);
+        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.normalize();
+
+        const speed = 18;
+        if(moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
+        if(moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
+
+        // Apply movement in camera direction
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0; forward.normalize();
+        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0,1,0));
+
+        camera.position.addScaledVector(forward, -velocity.z);
+        camera.position.addScaledVector(right, velocity.x);
+        camera.position.y = 2; // Lock height
+
+        // Update player light
+        scene.children.forEach(c => {
+            if(c.isPointLight && c.position.y === 2) c.position.copy(camera.position);
+        });
+    }
+
+    // Animate blinking LEDs
+    scene.traverse(obj => {
+        if(obj.isPointLight && obj.userData.isBlinker) {
+            obj.intensity = 0.15 + 0.35 * Math.abs(Math.sin(t * obj.userData.blinkRate + obj.userData.blinkPhase));
+        }
+        if(obj.userData.isFloater) {
+            obj.position.y = obj.userData.baseY + Math.sin(t * obj.userData.floatSpeed + obj.userData.floatPhase) * 1.5;
+        }
+    });
+
+    // Animate aurora colors
+    scene.traverse(obj => {
+        if(obj.userData.isAurora && obj.geometry) {
+            const colors = obj.geometry.attributes.color;
+            const pos = obj.geometry.attributes.position;
+            for(let i=0;i<pos.count;i++){
+                const x = pos.getX(i)/400, z = pos.getZ(i)/400;
+                colors.setXYZ(i,
+                    0.05 + 0.2*Math.abs(Math.sin(x*5+t*0.3)),
+                    0.3 + 0.4*Math.abs(Math.sin(z*3+t*0.2+1)),
+                    0.2 + 0.3*Math.abs(Math.cos(x*4+z*2+t*0.15))
+                );
+            }
+            colors.needsUpdate = true;
+        }
+    });
+
+    renderer.render(scene, camera);
+}
+
+// ── Keyboard shortcut for sidebar ──
+document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') closeSidebar();
+});
+
+// ── Start ──
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
