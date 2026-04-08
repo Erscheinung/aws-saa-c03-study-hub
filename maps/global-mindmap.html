@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>AWS SAA-C03 Enhanced Mind Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS SAA-C03 Orbital Mind Map</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -24,1558 +24,536 @@
             --ml: #f472b6;
             --iot: #0ea5e9;
         }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Space Grotesk',sans-serif; background:var(--bg-primary); color:var(--text-primary); overflow:hidden; height:100vh; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        #starCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
 
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            overflow: hidden;
-            height: 100vh;
+        #mapContainer { position:relative; width:100vw; height:100vh; overflow:hidden; cursor:grab; z-index:1; }
+        #mapContainer:active { cursor:grabbing; }
+        #map { position:absolute; width:4000px; height:3000px; transform-origin:center center; }
+
+        /* SVG orbital paths */
+        #orbitSvg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+        .orbit-path { fill:none; stroke-width:1.5; opacity:0.3; }
+        .orbit-path.glow { stroke-width:3; opacity:0.15; filter:blur(4px); }
+
+        @keyframes orbitDash { to { stroke-dashoffset: -1000; } }
+        .orbit-path.animated { stroke-dasharray:8 16; animation: orbitDash 40s linear infinite; }
+
+        /* Central hub */
+        .central-hub {
+            position:absolute; left:1935px; top:1435px; width:130px; height:130px;
+            background:linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
+            border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+            font-weight:700; text-align:center; z-index:50; cursor:pointer;
+            box-shadow: 0 0 60px rgba(255,107,53,0.5), 0 0 120px rgba(255,107,53,0.2);
+            transition: all 0.3s;
         }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            right: -420px;
-            top: 0;
-            width: 420px;
-            height: 100vh;
-            background: var(--bg-card);
-            border-left: 2px solid var(--accent-orange);
-            z-index: 2000;
-            transition: right 0.3s ease;
-            overflow-y: auto;
-            padding: 30px;
-            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
-        }
-
-        .sidebar.open {
-            right: 0;
-        }
-
-        .sidebar-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: transparent;
-            border: 2px solid var(--accent-red);
-            color: var(--accent-red);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .sidebar-close:hover {
-            background: var(--accent-red);
-            color: var(--bg-primary);
-            transform: rotate(90deg);
-        }
-
-        .sidebar-content h2 {
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .service-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .sidebar-section {
-            margin: 25px 0;
-        }
-
-        .sidebar-section h3 {
-            color: var(--accent-orange);
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-        }
-
-        .sidebar-section p, .sidebar-section li {
-            color: var(--text-secondary);
-            line-height: 1.8;
-            margin: 8px 0;
-        }
-
-        .sidebar-section ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .sidebar-section li::before {
-            content: "▸ ";
-            color: var(--accent-blue);
-            font-weight: bold;
-            margin-right: 8px;
-        }
-
-        .limit-badge {
-            display: inline-block;
-            background: rgba(255,107,53,0.2);
-            color: var(--accent-orange);
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            margin: 4px 4px 4px 0;
-        }
-
-        /* Controls */
-        .controls {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .control-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            border: 2px solid var(--accent-orange);
-            background: var(--bg-primary);
-            color: var(--accent-orange);
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .control-btn:hover {
-            background: var(--accent-orange);
-            color: var(--bg-primary);
-        }
-
-        .back-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            padding: 12px 24px;
-            border-radius: 30px;
-            border: 2px solid var(--accent-blue);
-            background: var(--bg-primary);
-            color: var(--accent-blue);
-            font-family: inherit;
-            font-size: 1rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .back-btn:hover {
-            background: var(--accent-blue);
-            color: var(--bg-primary);
-        }
-
-        .zoom-level {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: var(--bg-card);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            z-index: 1000;
-        }
-
-        .legend {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-            z-index: 1000;
-            background: rgba(10,14,23,0.95);
-            padding: 12px 24px;
-            border-radius: 30px;
-            border: 1px solid var(--accent-orange);
-            max-width: 90vw;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-        }
-
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        #mapContainer {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            cursor: grab;
-            position: relative;
-        }
-
-        #mapContainer:active {
-            cursor: grabbing;
-        }
-
-        #map {
-            position: absolute;
-            width: 4000px;
-            height: 3000px;
-            transform-origin: center center;
-        }
-
-        .connections {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .connection-line {
-            stroke-width: 2;
-            fill: none;
-            opacity: 0.4;
-            transition: opacity 0.3s, stroke-width 0.3s;
-        }
-
-        .connection-line.focused {
-            opacity: 0.8;
-            stroke-width: 3;
-        }
-
-        .connection-line.dimmed {
-            opacity: 0.1;
-        }
-
-        .connection-line.compute { stroke: var(--compute); }
-        .connection-line.storage { stroke: var(--storage); }
-        .connection-line.database { stroke: var(--database); }
-        .connection-line.network { stroke: var(--network); }
-        .connection-line.security { stroke: var(--security); }
-        .connection-line.integration { stroke: var(--integration); }
-        .connection-line.analytics { stroke: var(--analytics); }
-        .connection-line.management { stroke: var(--management); }
-        .connection-line.ml { stroke: var(--ml); }
-        .connection-line.iot { stroke: var(--iot); }
-        .connection-line.central { stroke: var(--accent-orange); stroke-width: 3; }
+        .central-hub:hover { transform:scale(1.1); box-shadow: 0 0 80px rgba(255,107,53,0.7); }
 
         /* Nodes */
         .node {
-            position: absolute;
-            background: var(--bg-card);
-            border-radius: 50%;
-            width: 90px;
-            height: 90px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-            opacity: 1;
+            position:absolute; border-radius:50%; display:flex; flex-direction:column;
+            align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s;
+            text-align:center; border:3px solid; background:var(--bg-card);
+            z-index:10;
+        }
+        .node.main { width:80px; height:80px; }
+        .node.sub { width:60px; height:60px; border-width:2px; background:rgba(26,35,50,0.8); }
+
+        .node:hover { transform:scale(1.2); z-index:100; }
+        .node.dimmed { opacity:0.15; filter:grayscale(0.8); }
+
+        .node-label { font-weight:600; font-size:0.65rem; line-height:1.2; pointer-events:none; }
+        .node.sub .node-label { font-size:0.55rem; }
+
+        /* Category colors */
+        .node.compute { border-color:var(--compute); }
+        .node.storage { border-color:var(--storage); }
+        .node.database { border-color:var(--database); }
+        .node.network { border-color:var(--network); }
+        .node.security { border-color:var(--security); }
+        .node.integration { border-color:var(--integration); }
+        .node.analytics { border-color:var(--analytics); }
+        .node.management { border-color:var(--management); }
+        .node.ml { border-color:var(--ml); }
+        .node.iot { border-color:var(--iot); }
+
+        .node.compute:hover { box-shadow:0 0 30px var(--compute); }
+        .node.storage:hover { box-shadow:0 0 30px var(--storage); }
+        .node.database:hover { box-shadow:0 0 30px var(--database); }
+        .node.network:hover { box-shadow:0 0 30px var(--network); }
+        .node.security:hover { box-shadow:0 0 30px var(--security); }
+        .node.integration:hover { box-shadow:0 0 30px var(--integration); }
+        .node.analytics:hover { box-shadow:0 0 30px var(--analytics); }
+        .node.management:hover { box-shadow:0 0 30px var(--management); }
+        .node.ml:hover { box-shadow:0 0 30px var(--ml); }
+        .node.iot:hover { box-shadow:0 0 30px var(--iot); }
+
+        /* Tooltip on hover */
+        .node-tooltip {
+            position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%);
+            background:rgba(10,14,23,0.95); border:1px solid var(--accent-orange);
+            padding:8px 14px; border-radius:10px; white-space:nowrap; font-size:0.75rem;
+            pointer-events:none; opacity:0; transition:opacity 0.2s; z-index:200;
+            max-width:220px; white-space:normal; text-align:center;
+        }
+        .node-tooltip .tt-name { color:var(--accent-orange); font-weight:600; }
+        .node-tooltip .tt-desc { color:var(--text-secondary); font-size:0.7rem; margin-top:3px; }
+        .node:hover .node-tooltip { opacity:1; }
+
+        /* Category labels */
+        .cat-label {
+            position:absolute; font-size:0.8rem; font-weight:700; padding:6px 14px;
+            border-radius:20px; background:var(--bg-card); border:2px solid; z-index:15;
+            cursor:pointer; transition:all 0.3s; letter-spacing:1px;
+        }
+        .cat-label:hover { transform:scale(1.05); }
+        .cat-label.dimmed { opacity:0.2; }
+        .cat-label.compute { border-color:var(--compute); color:var(--compute); }
+        .cat-label.storage { border-color:var(--storage); color:var(--storage); }
+        .cat-label.database { border-color:var(--database); color:var(--database); }
+        .cat-label.network { border-color:var(--network); color:var(--network); }
+        .cat-label.security { border-color:var(--security); color:var(--security); }
+        .cat-label.integration { border-color:var(--integration); color:var(--integration); }
+        .cat-label.analytics { border-color:var(--analytics); color:var(--analytics); }
+        .cat-label.management { border-color:var(--management); color:var(--management); }
+        .cat-label.ml { border-color:var(--ml); color:var(--ml); }
+        .cat-label.iot { border-color:var(--iot); color:var(--iot); }
+
+        /* Controls */
+        .controls { position:fixed; top:20px; left:20px; z-index:1000; display:flex; flex-direction:column; gap:8px; }
+        .ctrl-btn {
+            width:44px; height:44px; border-radius:10px; border:2px solid var(--accent-orange);
+            background:var(--bg-primary); color:var(--accent-orange); font-size:1.3rem;
+            cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;
+        }
+        .ctrl-btn:hover { background:var(--accent-orange); color:var(--bg-primary); }
+
+        .back-btn {
+            position:fixed; top:20px; right:20px; z-index:1000; padding:10px 22px;
+            border-radius:30px; border:2px solid var(--accent-blue); background:var(--bg-primary);
+            color:var(--accent-blue); font-family:inherit; font-size:0.9rem; cursor:pointer;
+            text-decoration:none; transition:all 0.2s;
+        }
+        .back-btn:hover { background:var(--accent-blue); color:var(--bg-primary); }
+
+        .zoom-level {
+            position:fixed; bottom:20px; left:20px; background:var(--bg-card);
+            padding:8px 16px; border-radius:20px; font-family:'JetBrains Mono',monospace;
+            font-size:0.8rem; z-index:1000;
         }
 
-        .node:hover {
-            transform: scale(1.15);
-            z-index: 100;
-            box-shadow: 0 0 30px rgba(255,255,255,0.3);
+        .legend {
+            position:fixed; top:20px; left:50%; transform:translateX(-50%); display:flex;
+            gap:10px; flex-wrap:wrap; justify-content:center; z-index:1000;
+            background:rgba(10,14,23,0.95); padding:10px 20px; border-radius:25px;
+            border:1px solid var(--accent-orange); max-width:90vw;
+        }
+        .legend-item { display:flex; align-items:center; gap:5px; font-size:0.7rem; }
+        .legend-dot { width:10px; height:10px; border-radius:50%; }
+
+        /* Sidebar */
+        .sidebar {
+            position:fixed; right:-440px; top:0; width:440px; height:100vh;
+            background:var(--bg-card); border-left:2px solid var(--accent-orange);
+            z-index:2000; overflow-y:auto; padding:30px;
+            box-shadow:-5px 0 30px rgba(0,0,0,0.6);
+            transition: right 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+        .sidebar.open { right:0; }
+        .sidebar-close {
+            position:absolute; top:18px; right:18px; background:transparent;
+            border:2px solid #ef4444; color:#ef4444; width:36px; height:36px;
+            border-radius:50%; font-size:1.3rem; cursor:pointer; display:flex;
+            align-items:center; justify-content:center; transition:all 0.2s;
+        }
+        .sidebar-close:hover { background:#ef4444; color:var(--bg-primary); transform:rotate(90deg); }
+        .sidebar-content h2 {
+            font-size:1.6rem; margin-bottom:12px;
+            background:linear-gradient(135deg,var(--accent-orange),var(--accent-blue));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .sidebar-section { margin:20px 0; }
+        .sidebar-section h3 { color:var(--accent-orange); font-size:1rem; margin-bottom:8px; }
+        .sidebar-section p,.sidebar-section li { color:var(--text-secondary); line-height:1.7; margin:6px 0; }
+        .sidebar-section ul { list-style:none; }
+        .sidebar-section li::before { content:"▸ "; color:var(--accent-blue); font-weight:bold; margin-right:6px; }
+        .limit-badge {
+            display:inline-block; background:rgba(255,107,53,0.2); color:var(--accent-orange);
+            padding:3px 10px; border-radius:12px; font-family:'JetBrains Mono',monospace;
+            font-size:0.8rem; margin:3px 3px 3px 0;
         }
 
-        .node.dimmed {
-            opacity: 0.2;
-            filter: grayscale(0.8);
-        }
-
-        .node.focused {
-            opacity: 1;
-            filter: grayscale(0);
-        }
-
-        /* Sub-nodes - smaller and lighter */
-        .node.sub-node {
-            width: 70px;
-            height: 70px;
-            border-width: 2px;
-            background: rgba(26,35,50,0.7);
-        }
-
-        .node.sub-sub-node {
-            width: 55px;
-            height: 55px;
-            border-width: 2px;
-            background: rgba(26,35,50,0.5);
-        }
-
-        .node-icon {
-            font-size: 1.8rem;
-        }
-
-        .sub-node .node-icon {
-            font-size: 1.3rem;
-        }
-
-        .sub-sub-node .node-icon {
-            font-size: 1rem;
-        }
-
-        .node-title {
-            font-weight: 600;
-            font-size: 0.7rem;
-            margin-top: 4px;
-            line-height: 1.2;
-        }
-
-        .sub-node .node-title {
-            font-size: 0.6rem;
-        }
-
-        .sub-sub-node .node-title {
-            font-size: 0.5rem;
-        }
-
-        /* Category Colors */
-        .node.compute { border-color: var(--compute); }
-        .node.storage { border-color: var(--storage); }
-        .node.database { border-color: var(--database); }
-        .node.network { border-color: var(--network); }
-        .node.security { border-color: var(--security); }
-        .node.integration { border-color: var(--integration); }
-        .node.analytics { border-color: var(--analytics); }
-        .node.management { border-color: var(--management); }
-        .node.ml { border-color: var(--ml); }
-        .node.iot { border-color: var(--iot); }
-
-        .node.compute:hover { box-shadow: 0 0 30px var(--compute); }
-        .node.storage:hover { box-shadow: 0 0 30px var(--storage); }
-        .node.database:hover { box-shadow: 0 0 30px var(--database); }
-        .node.network:hover { box-shadow: 0 0 30px var(--network); }
-        .node.security:hover { box-shadow: 0 0 30px var(--security); }
-        .node.integration:hover { box-shadow: 0 0 30px var(--integration); }
-        .node.analytics:hover { box-shadow: 0 0 30px var(--analytics); }
-        .node.management:hover { box-shadow: 0 0 30px var(--management); }
-        .node.ml:hover { box-shadow: 0 0 30px var(--ml); }
-        .node.iot:hover { box-shadow: 0 0 30px var(--iot); }
-
-        .central-hub {
-            position: absolute;
-            left: 1955px;
-            top: 1455px;
-            width: 130px;
-            height: 130px;
-            background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            font-weight: 700;
-            text-align: center;
-            box-shadow: 0 0 60px rgba(255,107,53,0.5);
-            z-index: 50;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .central-hub:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 80px rgba(255,107,53,0.7);
-        }
-
-        .category-label {
-            position: absolute;
-            font-size: 1rem;
-            font-weight: 700;
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: var(--bg-card);
-            border: 2px solid;
-            z-index: 10;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .category-label:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px currentColor;
-        }
-
-        .category-label.dimmed {
-            opacity: 0.3;
-            filter: grayscale(0.8);
-        }
-
-        .category-label.focused {
-            opacity: 1;
-            filter: grayscale(0);
-            box-shadow: 0 0 30px currentColor;
-        }
-
-        .category-label.compute { border-color: var(--compute); color: var(--compute); }
-        .category-label.storage { border-color: var(--storage); color: var(--storage); }
-        .category-label.database { border-color: var(--database); color: var(--database); }
-        .category-label.network { border-color: var(--network); color: var(--network); }
-        .category-label.security { border-color: var(--security); color: var(--security); }
-        .category-label.integration { border-color: var(--integration); color: var(--integration); }
-        .category-label.analytics { border-color: var(--analytics); color: var(--analytics); }
-        .category-label.management { border-color: var(--management); color: var(--management); }
-        .category-label.ml { border-color: var(--ml); color: var(--ml); }
-        .category-label.iot { border-color: var(--iot); color: var(--iot); }
-
-        @media (max-width: 768px) {
-            .legend { display: none; }
-            .sidebar { width: 100vw; right: -100vw; }
-            .sidebar.open { right: 0; }
-            .controls {
-                top: auto;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                flex-direction: row;
-            }
-            .control-btn {
-                width: 45px;
-                height: 45px;
-            }
-            .zoom-level { display: none; }
+        @media (max-width:768px) {
+            .legend { display:none; }
+            .sidebar { width:100vw; right:-100vw; }
+            .sidebar.open { right:0; }
+            .controls { top:auto; bottom:20px; left:50%; transform:translateX(-50%); flex-direction:row; }
+            .zoom-level { display:none; }
         }
     </style>
 </head>
 <body>
-    <div class="controls">
-        <button class="control-btn" onclick="zoomIn()" title="Zoom In">+</button>
-        <button class="control-btn" onclick="zoomOut()" title="Zoom Out">-</button>
-        <button class="control-btn" onclick="centerView()" title="Center View">⌂</button>
-        <button class="control-btn" onclick="resetFocus()" title="Reset Focus">⦿</button>
-    </div>
+<canvas id="starCanvas"></canvas>
 
-    <a href="../index.html" class="back-btn">← Back to Hub</a>
+<div class="controls">
+    <button class="ctrl-btn" onclick="zoomIn()" title="Zoom In">+</button>
+    <button class="ctrl-btn" onclick="zoomOut()" title="Zoom Out">-</button>
+    <button class="ctrl-btn" onclick="centerView()" title="Center">&#8962;</button>
+    <button class="ctrl-btn" onclick="resetFocus()" title="Reset">&#9673;</button>
+</div>
 
-    <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background: var(--compute)"></div> Compute</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--storage)"></div> Storage</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--database)"></div> Database</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--network)"></div> Network</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--security)"></div> Security</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--integration)"></div> Integration</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--analytics)"></div> Analytics</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--management)"></div> Management</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--ml)"></div> ML & AI</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--iot)"></div> IoT</div>
-    </div>
+<a href="../index.html" class="back-btn">&larr; Back to Hub</a>
 
-    <div class="zoom-level" id="zoomLevel">Zoom: 100%</div>
+<div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--compute)"></div>Compute</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--storage)"></div>Storage</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--database)"></div>Database</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--network)"></div>Network</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--security)"></div>Security</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--integration)"></div>Integration</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--analytics)"></div>Analytics</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--management)"></div>Management</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--ml)"></div>ML &amp; AI</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--iot)"></div>IoT</div>
+</div>
 
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-close" onclick="closeSidebar()">×</button>
-        <div class="sidebar-content" id="sidebarContent"></div>
-    </div>
+<div class="zoom-level" id="zoomLevel">Zoom: 100%</div>
 
-    <div id="mapContainer">
-        <div id="map">
-            <svg class="connections" id="connections" viewBox="0 0 4000 3000"></svg>
+<div class="sidebar" id="sidebar">
+    <button class="sidebar-close" onclick="closeSidebar()">&times;</button>
+    <div class="sidebar-content" id="sidebarContent"></div>
+</div>
 
-            <!-- Central Hub -->
-            <div class="central-hub">
-                <div style="font-size: 2rem;">☁</div>
-                <div>AWS</div>
-                <div style="font-size: 0.8rem; font-weight: 400;">SAA-C03</div>
-            </div>
-
-            <!-- Category Labels - Clickable for focus -->
-            <div class="category-label compute" style="left: 1350px; top: 850px;" onclick="focusCategory('compute')">COMPUTE</div>
-            <div class="category-label storage" style="left: 2550px; top: 850px;" onclick="focusCategory('storage')">STORAGE</div>
-            <div class="category-label database" style="left: 2550px; top: 1850px;" onclick="focusCategory('database')">DATABASE</div>
-            <div class="category-label network" style="left: 1350px; top: 1850px;" onclick="focusCategory('network')">NETWORK</div>
-            <div class="category-label security" style="left: 750px; top: 1200px;" onclick="focusCategory('security')">SECURITY</div>
-            <div class="category-label integration" style="left: 3100px; top: 1200px;" onclick="focusCategory('integration')">INTEGRATION</div>
-            <div class="category-label analytics" style="left: 1950px; top: 2450px;" onclick="focusCategory('analytics')">ANALYTICS</div>
-            <div class="category-label management" style="left: 1950px; top: 550px;" onclick="focusCategory('management')">MANAGEMENT</div>
-            <div class="category-label ml" style="left: 3100px; top: 550px;" onclick="focusCategory('ml')">ML & AI</div>
-            <div class="category-label iot" style="left: 750px; top: 550px;" onclick="focusCategory('iot')">IoT</div>
-
-            <!-- NODES WILL BE INSERTED HERE BY JAVASCRIPT -->
+<div id="mapContainer">
+    <div id="map">
+        <svg id="orbitSvg" viewBox="0 0 4000 3000" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="central-hub" onclick="resetFocus()">
+            <div style="font-size:1.8rem;">&#9729;</div>
+            <div style="font-size:1.1rem;">AWS</div>
+            <div style="font-size:0.7rem;font-weight:400;">SAA-C03</div>
         </div>
     </div>
+</div>
 
-    <script>
-        // Service data with detailed information
-        const serviceData = {
-            // COMPUTE
-            'ec2': {
-                name: 'EC2',
-                icon: '🖥️',
-                category: 'compute',
-                description: 'Elastic Compute Cloud - Virtual servers in the cloud',
-                details: [
-                    'Instance families: T (burstable), M (general), C (compute), R (memory), X (memory optimized)',
-                    'Purchasing options: On-Demand, Reserved (up to 72% savings), Spot (up to 90% savings)',
-                    'Placement groups: Cluster (low latency), Spread (HA), Partition (big data)'
-                ],
-                limits: ['Soft limit varies by region and instance type', 'Request limit increases via support'],
-                useCase: 'General-purpose computing, web servers, batch processing, enterprise applications'
-            },
-            'lambda': {
-                name: 'Lambda',
-                icon: 'λ',
-                category: 'compute',
-                description: 'Serverless compute - Run code without servers',
-                details: [
-                    'Timeout: 15 minutes maximum',
-                    'Memory: 128MB to 10GB',
-                    'Package size: 50MB zipped, 250MB unzipped',
-                    'Concurrent executions: 1000 (soft limit)',
-                    '/tmp storage: 512MB to 10GB'
-                ],
-                limits: ['15 min timeout', '10GB memory max', '250MB package unzipped', '1000 concurrent default'],
-                useCase: 'Event-driven processing, microservices, real-time file/data processing, APIs'
-            },
-            'ecs': {
-                name: 'ECS',
-                icon: '🐳',
-                category: 'compute',
-                description: 'Elastic Container Service - Docker container orchestration',
-                details: [
-                    'Launch types: EC2 (you manage instances), Fargate (serverless)',
-                    'Task definitions specify container configuration',
-                    'Service for long-running tasks, Task for batch jobs'
-                ],
-                limits: [],
-                useCase: 'Microservices, batch processing, containerized applications'
-            },
-            'fargate': {
-                name: 'Fargate',
-                icon: '🚀',
-                category: 'compute',
-                description: 'Serverless compute for containers',
-                details: [
-                    'No EC2 instance management required',
-                    'Pay only for resources used by containers',
-                    'Works with both ECS and EKS'
-                ],
-                limits: [],
-                useCase: 'Serverless containers, microservices without infrastructure management'
-            },
-            'batch': {
-                name: 'Batch',
-                icon: '📦',
-                category: 'compute',
-                description: 'Fully managed batch processing at any scale',
-                details: [
-                    'Dynamically provisions compute resources',
-                    'Supports EC2 and Spot instances',
-                    'Job queues and compute environments'
-                ],
-                limits: [],
-                useCase: 'Batch jobs, video transcoding, financial modeling, data analysis'
-            },
+<script>
+// ── Service Data ──
+const serviceData = {
+    ec2:{name:'EC2',cat:'compute',desc:'Elastic Compute Cloud - Virtual servers',details:['Instance families: T(burstable), M(general), C(compute), R(memory)','Purchasing: On-Demand, Reserved(72% off), Spot(90% off)','Placement groups: Cluster, Spread, Partition'],limits:['Soft limit varies by region'],useCase:'Web servers, batch processing, enterprise apps'},
+    lambda:{name:'Lambda',cat:'compute',desc:'Serverless compute - Run code without servers',details:['Timeout: 15 min max','Memory: 128MB-10GB','Package: 50MB zip, 250MB unzipped','1000 concurrent executions default'],limits:['15 min timeout','10GB memory','250MB unzipped'],useCase:'Event-driven processing, microservices, APIs'},
+    ecs:{name:'ECS',cat:'compute',desc:'Elastic Container Service - Docker orchestration',details:['Launch types: EC2 or Fargate','Task definitions for config','Services for long-running, Tasks for batch'],limits:[],useCase:'Microservices, containerized apps'},
+    fargate:{name:'Fargate',cat:'compute',desc:'Serverless compute for containers',details:['No EC2 management','Pay for container resources only','Works with ECS and EKS'],limits:[],useCase:'Serverless containers'},
+    batch:{name:'Batch',cat:'compute',desc:'Fully managed batch processing',details:['Dynamic resource provisioning','Supports EC2 and Spot','Job queues and compute environments'],limits:[],useCase:'Batch jobs, transcoding, data analysis'},
+    s3:{name:'S3',cat:'storage',desc:'Simple Storage Service - Object storage',details:['Object: 0B-5TB','Multipart upload >5GB','Versioning, lifecycle policies','CRR and SRR replication'],limits:['5TB max object','Unlimited buckets'],useCase:'Data lakes, backups, static hosting'},
+    's3-standard':{name:'Standard',cat:'storage',desc:'S3 Standard - Frequently accessed',details:['99.99% availability','11 nines durability','No retrieval fees'],limits:[],useCase:'Active data',sub:true},
+    's3-ia':{name:'IA',cat:'storage',desc:'Infrequent Access - Lower cost',details:['Lower storage cost','Retrieval fees apply','30 day min, 128KB min size'],limits:['30 day min'],useCase:'Backups, DR',sub:true},
+    's3-glacier':{name:'Glacier',cat:'storage',desc:'Long-term archive storage',details:['Flexible: 1-5min to 5-12hrs retrieval','Deep Archive: 12-48hrs','90-180 day minimum'],limits:['12-48hrs Deep Archive'],useCase:'Compliance archives',sub:true},
+    's3-intelligent':{name:'Intelligent',cat:'storage',desc:'Auto cost optimization tiering',details:['Auto-moves between tiers','Monitoring fee per object','No retrieval fees'],limits:[],useCase:'Unknown access patterns',sub:true},
+    ebs:{name:'EBS',cat:'storage',desc:'Elastic Block Store - Block storage for EC2',details:['Single EC2 attachment','Persistent, snapshots to S3','Max 64TB volume'],limits:['64TB max','16K IOPS gp3','64K IOPS io2'],useCase:'Databases, boot volumes'},
+    'ebs-gp3':{name:'gp3',cat:'storage',desc:'General Purpose SSD',details:['3000 IOPS baseline','Up to 16K IOPS','125-1000 MB/s throughput'],limits:['16K IOPS'],useCase:'Boot volumes, dev/test',sub:true},
+    'ebs-io2':{name:'io2',cat:'storage',desc:'Provisioned IOPS SSD',details:['Up to 64K IOPS','Sub-ms latency','Block Express on Nitro'],limits:['64K IOPS'],useCase:'Critical databases',sub:true},
+    efs:{name:'EFS',cat:'storage',desc:'Elastic File System - Managed NFS',details:['NFS v4.1, Linux only','Multi-EC2 mount','Auto-scales, multi-AZ'],limits:[],useCase:'Shared file storage, CMS'},
+    rds:{name:'RDS',cat:'database',desc:'Relational Database Service',details:['MySQL, PostgreSQL, MariaDB, Oracle, SQL Server','5 read replicas','Multi-AZ automatic failover','Automated backups'],limits:['5 read replicas'],useCase:'OLTP, transactional apps'},
+    aurora:{name:'Aurora',cat:'database',desc:'Cloud-native relational database',details:['MySQL/PostgreSQL compatible','5x MySQL speed','128TB storage auto-scale','15 read replicas, 6 copies/3 AZs','Global DB <1s replication'],limits:['128TB storage','15 replicas'],useCase:'Enterprise apps, SaaS, gaming'},
+    'aurora-serverless':{name:'Serverless',cat:'database',desc:'Auto-scaling Aurora',details:['Scales capacity on demand','Pay per second','Good for intermittent loads'],limits:[],useCase:'Dev/test, unpredictable loads',sub:true},
+    dynamodb:{name:'DynamoDB',cat:'database',desc:'Fully managed NoSQL database',details:['Single-digit ms latency','400KB item max','Auto-scaling capacity','Global Tables, DynamoDB Streams'],limits:['400KB/item'],useCase:'Mobile, gaming, IoT, real-time'},
+    'dynamodb-dax':{name:'DAX',cat:'database',desc:'DynamoDB Accelerator - In-memory cache',details:['Microsecond read latency','Fully managed','DynamoDB API compatible'],limits:[],useCase:'Read-heavy microsecond workloads',sub:true},
+    elasticache:{name:'ElastiCache',cat:'database',desc:'In-memory caching service',details:['Redis: persistence, replication, complex types','Memcached: simple, multi-threaded','Sub-millisecond latency'],limits:[],useCase:'Session mgmt, caching, leaderboards'},
+    vpc:{name:'VPC',cat:'network',desc:'Virtual Private Cloud - Isolated network',details:['CIDR /16 to /28','Subnets, route tables, IGW','SGs (stateful), NACLs (stateless)','Peering, Transit GW, PrivateLink'],limits:['/16-/28 CIDR','5 VPCs/region'],useCase:'Isolated cloud network, hybrid'},
+    elb:{name:'ELB',cat:'network',desc:'Elastic Load Balancing',details:['ALB: Layer 7, path/host routing','NLB: Layer 4, ultra-low latency, static IP','GWLB: Layer 3/4, appliances'],limits:[],useCase:'HA, traffic distribution'},
+    cloudfront:{name:'CloudFront',cat:'network',desc:'Content Delivery Network',details:['400+ edge locations','OAC for S3','HTTP/HTTPS support','WAF + Shield integration'],limits:[],useCase:'Static/dynamic delivery, streaming'},
+    apigateway:{name:'API GW',cat:'network',desc:'API Gateway - Create/manage APIs',details:['REST, WebSocket, HTTP APIs','29s timeout','Throttling, caching, auth','Lambda + HTTP integration'],limits:['29s timeout','10MB payload'],useCase:'RESTful APIs, microservices gateway'},
+    iam:{name:'IAM',cat:'security',desc:'Identity and Access Management',details:['Users, Groups, Roles, Policies','MFA support','SAML/OAuth federation','SCPs with Organizations'],limits:['5000 users/account'],useCase:'Access control, auth, compliance'},
+    kms:{name:'KMS',cat:'security',desc:'Key Management Service',details:['Create/manage encryption keys','Auto key rotation','4KB direct encrypt max','Envelope encryption for larger data'],limits:['4KB direct max'],useCase:'Data encryption, compliance'},
+    waf:{name:'WAF',cat:'security',desc:'Web Application Firewall',details:['SQL injection, XSS protection','Rate limiting, geo-blocking','Managed Rules','Works with CF, ALB, APIGW'],limits:[],useCase:'Web protection, DDoS mitigation'},
+    cognito:{name:'Cognito',cat:'security',desc:'User authentication service',details:['User Pools: sign-up/sign-in, MFA','Identity Pools: AWS credentials','Social IdPs (Google, Facebook)','SAML 2.0 federation'],limits:[],useCase:'Mobile/web auth, user mgmt'},
+    sqs:{name:'SQS',cat:'integration',desc:'Simple Queue Service',details:['Standard: unlimited throughput, at-least-once','FIFO: 300 msg/s, exactly-once','256KB message, 14 day retention'],limits:['256KB/msg','14 day retention','FIFO: 300 msg/s'],useCase:'Decouple apps, buffer, async processing'},
+    sns:{name:'SNS',cat:'integration',desc:'Simple Notification Service - Pub/Sub',details:['Topics with multiple subscribers','HTTP/S, Email, SMS, SQS, Lambda','256KB message','Fan-out with SQS'],limits:['256KB/msg'],useCase:'Notifications, fan-out, alerts'},
+    eventbridge:{name:'EventBridge',cat:'integration',desc:'Serverless event bus',details:['Event patterns and rules','Schema registry','SaaS integrations','256KB per event'],limits:['256KB/event'],useCase:'Event-driven, SaaS integration'},
+    kinesis:{name:'Kinesis',cat:'integration',desc:'Real-time data streaming',details:['Data Streams: 1-365 day retention','Firehose: load to S3/Redshift','Analytics: real-time SQL','Video Streams'],limits:['1MB/s per shard','365 day max'],useCase:'Real-time analytics, log aggregation'},
+    athena:{name:'Athena',cat:'analytics',desc:'Serverless SQL queries on S3',details:['Presto-based standard SQL','Query S3 directly','$5/TB scanned','Parquet, ORC, JSON, CSV support'],limits:[],useCase:'Ad-hoc queries, log analysis'},
+    glue:{name:'Glue',cat:'analytics',desc:'Serverless ETL service',details:['Data Catalog: metadata repo','Crawlers discover schema','Spark-based ETL jobs','Job bookmarks for incremental'],limits:[],useCase:'ETL, data prep, data catalog'},
+    emr:{name:'EMR',cat:'analytics',desc:'Elastic MapReduce - Big data',details:['Managed Hadoop, Spark, Hive, Presto','Spot instances for savings','S3 storage integration'],limits:[],useCase:'Big data analytics, ML, transforms'},
+    cloudwatch:{name:'CloudWatch',cat:'management',desc:'Monitoring and observability',details:['Metrics, Logs, Alarms','Events for state changes','Dashboards'],limits:[],useCase:'Monitoring, logging, alerting'},
+    cloudtrail:{name:'CloudTrail',cat:'management',desc:'API activity logging',details:['Records all API calls','90 day console default','Trail for S3 long-term','CloudWatch Logs integration'],limits:['90 day default'],useCase:'Audit, compliance, security analysis'},
+    cloudformation:{name:'CloudFormation',cat:'management',desc:'Infrastructure as Code',details:['JSON/YAML templates','Stacks create/update/delete','StackSets: multi-account/region','Drift detection, change sets'],limits:[],useCase:'Infra automation, repeatable deploys'},
+    sagemaker:{name:'SageMaker',cat:'ml',desc:'Build, train, deploy ML models',details:['Managed notebooks','Built-in algorithms','Distributed GPU training','One-click deploy, AutoML'],limits:[],useCase:'ML development, training, MLOps'},
+    rekognition:{name:'Rekognition',cat:'ml',desc:'Image and video analysis',details:['Object/scene detection','Facial analysis','Content moderation','Text detection'],limits:[],useCase:'Content moderation, facial recognition'},
+    polly:{name:'Polly',cat:'ml',desc:'Text-to-speech service',details:['60+ voices, 29 languages','Neural TTS','SSML pronunciation control'],limits:[],useCase:'Voice apps, accessibility'},
+    transcribe:{name:'Transcribe',cat:'ml',desc:'Speech-to-text service',details:['Auto speech recognition','Speaker identification','Custom vocabularies','Real-time and batch'],limits:[],useCase:'Call analytics, subtitles'},
+    comprehend:{name:'Comprehend',cat:'ml',desc:'Natural language processing',details:['Sentiment analysis','Entity recognition','Topic modeling','Language detection'],limits:[],useCase:'Feedback analysis, document processing'},
+    'iot-core':{name:'IoT Core',cat:'iot',desc:'Connect IoT devices to cloud',details:['MQTT, HTTP, WebSockets','Device shadows','Rules engine','Device registry and auth'],limits:[],useCase:'IoT connectivity, industrial IoT'},
+    'iot-greengrass':{name:'Greengrass',cat:'iot',desc:'Local compute and messaging for IoT',details:['Lambda at edge','Local device messaging','ML inference at edge','Offline sync'],limits:[],useCase:'Edge computing, offline IoT'}
+};
 
-            // STORAGE - With dense sub-trees
-            's3': {
-                name: 'S3',
-                icon: '🪣',
-                category: 'storage',
-                description: 'Simple Storage Service - Object storage',
-                details: [
-                    'Object size: 0 bytes to 5TB',
-                    'Multipart upload: Required for >5GB, recommended for >100MB',
-                    'Versioning: Keep multiple versions of objects',
-                    'Lifecycle policies: Automate transitions and deletions',
-                    'Replication: Cross-region (CRR) and Same-region (SRR)'
-                ],
-                limits: ['5TB max per object', '100MB multipart recommended', 'Unlimited buckets per account'],
-                useCase: 'Data lakes, backups, static website hosting, big data analytics'
-            },
-            's3-standard': {
-                name: 'Standard',
-                icon: '📁',
-                category: 'storage',
-                description: 'S3 Standard - Frequently accessed data',
-                details: [
-                    'Availability: 99.99%',
-                    'Durability: 11 nines (99.999999999%)',
-                    'Use for frequently accessed data',
-                    'No retrieval fees'
-                ],
-                limits: [],
-                useCase: 'Active data, frequently accessed content'
-            },
-            's3-ia': {
-                name: 'IA',
-                icon: '📂',
-                category: 'storage',
-                description: 'S3 Infrequent Access - Lower cost for infrequent access',
-                details: [
-                    'Lower storage cost than Standard',
-                    'Retrieval fees apply',
-                    'Minimum storage duration: 30 days',
-                    'Minimum object size: 128KB'
-                ],
-                limits: ['30 day minimum', '128KB minimum object size'],
-                useCase: 'Backups, disaster recovery, long-term storage accessed monthly'
-            },
-            's3-glacier': {
-                name: 'Glacier',
-                icon: '🧊',
-                category: 'storage',
-                description: 'S3 Glacier - Long-term archive',
-                details: [
-                    'Flexible Retrieval: 1-5 min (expedited), 3-5 hrs (standard), 5-12 hrs (bulk)',
-                    'Deep Archive: 12-48 hours retrieval',
-                    'Minimum storage duration: 90-180 days',
-                    'Cheapest storage option'
-                ],
-                limits: ['12-48 hrs Deep Archive retrieval', '90-180 day minimum storage'],
-                useCase: 'Compliance archives, long-term backups, rarely accessed data'
-            },
-            's3-intelligent': {
-                name: 'Intelligent',
-                icon: '🧠',
-                category: 'storage',
-                description: 'S3 Intelligent-Tiering - Automatic cost optimization',
-                details: [
-                    'Automatically moves objects between access tiers',
-                    'Monitoring and automation fee per object',
-                    'No retrieval fees',
-                    'No minimum storage duration'
-                ],
-                limits: [],
-                useCase: 'Unknown or changing access patterns'
-            },
-            'ebs': {
-                name: 'EBS',
-                icon: '💾',
-                category: 'storage',
-                description: 'Elastic Block Store - Block storage for EC2',
-                details: [
-                    'Attached to single EC2 instance',
-                    'Persistent storage survives instance termination',
-                    'Snapshots stored in S3',
-                    'Max volume size: 64TB'
-                ],
-                limits: ['64TB max volume size', '16,000 IOPS for gp3', '64,000 IOPS for io2'],
-                useCase: 'Database storage, boot volumes, enterprise applications'
-            },
-            'ebs-gp3': {
-                name: 'gp3',
-                icon: '⚡',
-                category: 'storage',
-                description: 'General Purpose SSD (gp3)',
-                details: [
-                    'Baseline: 3000 IOPS',
-                    'Up to 16,000 IOPS',
-                    'Throughput: 125 MB/s baseline, up to 1000 MB/s',
-                    'Latest generation general purpose'
-                ],
-                limits: ['16,000 IOPS max'],
-                useCase: 'Boot volumes, development environments, low-latency apps'
-            },
-            'ebs-io2': {
-                name: 'io2',
-                icon: '⚡',
-                category: 'storage',
-                description: 'Provisioned IOPS SSD (io2)',
-                details: [
-                    'Up to 64,000 IOPS (io2 Block Express on Nitro)',
-                    'Sub-millisecond latency',
-                    'Highest performance EBS'
-                ],
-                limits: ['64,000 IOPS max'],
-                useCase: 'Mission-critical databases, high-performance applications'
-            },
-            'efs': {
-                name: 'EFS',
-                icon: '📂',
-                category: 'storage',
-                description: 'Elastic File System - Managed NFS file system',
-                details: [
-                    'NFS v4.1 protocol',
-                    'Linux only (POSIX compliant)',
-                    'Can be mounted to multiple EC2 instances',
-                    'Automatically scales, pay for what you use',
-                    'Multi-AZ by default'
-                ],
-                limits: [],
-                useCase: 'Shared file storage, content management, web serving, data analytics'
-            },
-            'efs-standard': {
-                name: 'Standard',
-                icon: '🏃',
-                category: 'storage',
-                description: 'EFS Standard - Frequently accessed files',
-                details: [
-                    'Standard storage class for active data',
-                    'Performance modes: General Purpose, Max I/O'
-                ],
-                limits: [],
-                useCase: 'Active file sharing, web content'
-            },
-            'efs-ia': {
-                name: 'IA',
-                icon: '💤',
-                category: 'storage',
-                description: 'EFS Infrequent Access - Cost-optimized for less active files',
-                details: [
-                    'Lower cost storage',
-                    'Lifecycle management auto-moves files',
-                    'Retrieval fees apply'
-                ],
-                limits: [],
-                useCase: 'Archives, backups, infrequently accessed shared files'
-            },
+// ── Category config with orbital parameters ──
+const CX = 2000, CY = 1500; // Center of 4000x3000 map
+const categories = {
+    compute:     {color:'#ef4444', angle:0,   rx:450, ry:350, label:'COMPUTE'},
+    storage:     {color:'#3b82f6', angle:36,  rx:500, ry:380, label:'STORAGE'},
+    database:    {color:'#8b5cf6', angle:72,  rx:450, ry:350, label:'DATABASE'},
+    network:     {color:'#10b981', angle:108, rx:480, ry:360, label:'NETWORK'},
+    security:    {color:'#f59e0b', angle:144, rx:420, ry:330, label:'SECURITY'},
+    integration: {color:'#ec4899', angle:180, rx:470, ry:370, label:'INTEGRATION'},
+    analytics:   {color:'#06b6d4', angle:216, rx:400, ry:310, label:'ANALYTICS'},
+    management:  {color:'#84cc16', angle:252, rx:430, ry:340, label:'MANAGEMENT'},
+    ml:          {color:'#f472b6', angle:288, rx:460, ry:350, label:'ML & AI'},
+    iot:         {color:'#0ea5e9', angle:324, rx:380, ry:300, label:'IoT'}
+};
 
-            // DATABASE - With dense sub-trees
-            'rds': {
-                name: 'RDS',
-                icon: '🗄️',
-                category: 'database',
-                description: 'Relational Database Service - Managed SQL databases',
-                details: [
-                    'Engines: MySQL, PostgreSQL, MariaDB, Oracle, SQL Server',
-                    'Read replicas: Up to 5',
-                    'Multi-AZ: Automatic failover',
-                    'Automated backups and snapshots'
-                ],
-                limits: ['5 read replicas', 'Multi-AZ for HA'],
-                useCase: 'Transactional applications, OLTP workloads, traditional databases'
-            },
-            'aurora': {
-                name: 'Aurora',
-                icon: '✨',
-                category: 'database',
-                description: 'Aurora - Cloud-native relational database',
-                details: [
-                    'MySQL and PostgreSQL compatible',
-                    '5x faster than MySQL, 3x faster than PostgreSQL',
-                    'Storage auto-scales in 10GB increments up to 128TB',
-                    '6 copies across 3 AZs',
-                    'Up to 15 read replicas',
-                    'Global Database: <1s replication to 5 regions'
-                ],
-                limits: ['128TB storage', '15 read replicas'],
-                useCase: 'Enterprise applications, SaaS, gaming, web applications'
-            },
-            'aurora-serverless': {
-                name: 'Serverless',
-                icon: '🔋',
-                category: 'database',
-                description: 'Aurora Serverless - Auto-scaling database',
-                details: [
-                    'Automatically scales capacity based on demand',
-                    'Pay per second when database is active',
-                    'Good for intermittent workloads'
-                ],
-                limits: [],
-                useCase: 'Dev/test, unpredictable workloads, infrequent usage'
-            },
-            'dynamodb': {
-                name: 'DynamoDB',
-                icon: '⚡',
-                category: 'database',
-                description: 'DynamoDB - Fully managed NoSQL database',
-                details: [
-                    'Single-digit millisecond latency',
-                    'Item size: 400KB maximum',
-                    'Auto-scaling read/write capacity',
-                    'Global Tables: Multi-region, active-active',
-                    'DynamoDB Streams: Change data capture'
-                ],
-                limits: ['400KB per item', 'Partition key 2KB max', 'Sort key 1KB max'],
-                useCase: 'Mobile apps, gaming, IoT, real-time applications'
-            },
-            'dynamodb-dax': {
-                name: 'DAX',
-                icon: '🚀',
-                category: 'database',
-                description: 'DynamoDB Accelerator - In-memory cache',
-                details: [
-                    'Microsecond read latency',
-                    'Fully managed, in-memory cache',
-                    'Compatible with DynamoDB API'
-                ],
-                limits: [],
-                useCase: 'Read-heavy workloads requiring microsecond latency'
-            },
-            'elasticache': {
-                name: 'ElastiCache',
-                icon: '⚡',
-                category: 'database',
-                description: 'ElastiCache - In-memory caching',
-                details: [
-                    'Redis: Persistence, replication, complex data structures',
-                    'Memcached: Simple, multi-threaded',
-                    'Sub-millisecond latency'
-                ],
-                limits: [],
-                useCase: 'Session management, caching, real-time analytics, leaderboards'
-            },
+// ── Map state ──
+let scale=1, translateX=0, translateY=0, isDragging=false, startX, startY, lastTX, lastTY;
+let velX=0, velY=0, animFrame=null, focusCat=null;
+let map, container;
 
-            // NETWORK
-            'vpc': {
-                name: 'VPC',
-                icon: '🌐',
-                category: 'network',
-                description: 'Virtual Private Cloud - Isolated network',
-                details: [
-                    'CIDR: /16 to /28',
-                    'Subnets, route tables, internet gateway',
-                    'Security Groups (stateful), NACLs (stateless)',
-                    'VPC Peering, Transit Gateway, PrivateLink'
-                ],
-                limits: ['/16 to /28 CIDR', '5 VPCs per region (soft limit)', '5 IP addresses reserved per subnet'],
-                useCase: 'Isolated cloud network, hybrid cloud, multi-tier applications'
-            },
-            'elb': {
-                name: 'ELB',
-                icon: '⚖',
-                category: 'network',
-                description: 'Elastic Load Balancing',
-                details: [
-                    'ALB: Layer 7 (HTTP/HTTPS), path/host-based routing',
-                    'NLB: Layer 4 (TCP/UDP), ultra-low latency, static IP',
-                    'GWLB: Layer 3/4, third-party appliances'
-                ],
-                limits: [],
-                useCase: 'High availability, distribute traffic, auto-scaling integration'
-            },
-            'cloudfront': {
-                name: 'CloudFront',
-                icon: '🌍',
-                category: 'network',
-                description: 'CloudFront - Content Delivery Network (CDN)',
-                details: [
-                    '400+ edge locations globally',
-                    'Caches content at edge for low latency',
-                    'Origin Access Control (OAC) for S3',
-                    'Supports HTTP/HTTPS, RTMP (legacy)',
-                    'Integration with WAF, Shield'
-                ],
-                limits: [],
-                useCase: 'Static/dynamic content delivery, video streaming, API acceleration'
-            },
-            'apigateway': {
-                name: 'API GW',
-                icon: '🚪',
-                category: 'network',
-                description: 'API Gateway - Create and manage APIs',
-                details: [
-                    'REST APIs, WebSocket APIs, HTTP APIs',
-                    'Timeout: 29 seconds maximum',
-                    'Throttling, caching, authorization',
-                    'Integration with Lambda, HTTP endpoints, AWS services'
-                ],
-                limits: ['29 second timeout', '10MB payload limit'],
-                useCase: 'RESTful APIs, WebSocket real-time, microservices gateway'
-            },
+// ── Star field ──
+function initStars() {
+    const c = document.getElementById('starCanvas');
+    const ctx = c.getContext('2d');
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    const stars = Array.from({length:200}, () => ({
+        x: Math.random()*c.width, y: Math.random()*c.height,
+        r: Math.random()*1.5+0.3, phase: Math.random()*Math.PI*2, speed: Math.random()*0.02+0.005
+    }));
+    function draw(t) {
+        ctx.clearRect(0,0,c.width,c.height);
+        stars.forEach(s => {
+            const a = 0.3 + 0.7 * Math.abs(Math.sin(s.phase + t * s.speed));
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+            ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fill();
+        });
+        requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+    window.addEventListener('resize', () => { c.width = window.innerWidth; c.height = window.innerHeight; });
+}
 
-            // ML & AI
-            'sagemaker': {
-                name: 'SageMaker',
-                icon: '🤖',
-                category: 'ml',
-                description: 'SageMaker - Build, train, and deploy ML models',
-                details: [
-                    'Managed Jupyter notebooks',
-                    'Built-in algorithms and frameworks',
-                    'Distributed training with GPU support',
-                    'One-click deployment to endpoints',
-                    'AutoML with Autopilot'
-                ],
-                limits: [],
-                useCase: 'ML model development, training, deployment, MLOps'
-            },
-            'rekognition': {
-                name: 'Rekognition',
-                icon: '👁️',
-                category: 'ml',
-                description: 'Rekognition - Image and video analysis',
-                details: [
-                    'Object and scene detection',
-                    'Facial analysis and recognition',
-                    'Celebrity recognition',
-                    'Content moderation',
-                    'Text detection in images'
-                ],
-                limits: [],
-                useCase: 'Content moderation, facial recognition, image search'
-            },
-            'polly': {
-                name: 'Polly',
-                icon: '🗣️',
-                category: 'ml',
-                description: 'Polly - Text-to-speech service',
-                details: [
-                    'Lifelike speech synthesis',
-                    '60+ voices in 29 languages',
-                    'Neural TTS for most natural speech',
-                    'SSML support for pronunciation control'
-                ],
-                limits: [],
-                useCase: 'Voice applications, accessibility, content narration'
-            },
-            'transcribe': {
-                name: 'Transcribe',
-                icon: '🎤',
-                category: 'ml',
-                description: 'Transcribe - Speech-to-text service',
-                details: [
-                    'Automatic speech recognition',
-                    'Speaker identification',
-                    'Custom vocabularies',
-                    'Real-time and batch transcription'
-                ],
-                limits: [],
-                useCase: 'Call center analytics, subtitles, meeting transcription'
-            },
-            'comprehend': {
-                name: 'Comprehend',
-                icon: '📖',
-                category: 'ml',
-                description: 'Comprehend - Natural language processing',
-                details: [
-                    'Sentiment analysis',
-                    'Entity recognition',
-                    'Topic modeling',
-                    'Language detection',
-                    'Custom entity recognition'
-                ],
-                limits: [],
-                useCase: 'Customer feedback analysis, document processing, social media monitoring'
-            },
+// ── Compute node positions using polar coordinates ──
+function computePositions() {
+    const positions = {};
+    Object.keys(categories).forEach(catKey => {
+        const cat = categories[catKey];
+        const baseAngle = cat.angle * Math.PI / 180;
+        // Get main services in this category
+        const mainSvcs = Object.entries(serviceData).filter(([k,v]) => v.cat === catKey && !v.sub);
+        const subSvcs = Object.entries(serviceData).filter(([k,v]) => v.cat === catKey && v.sub);
 
-            // IoT
-            'iot-core': {
-                name: 'IoT Core',
-                icon: '📡',
-                category: 'iot',
-                description: 'IoT Core - Connect IoT devices to the cloud',
-                details: [
-                    'MQTT, HTTP, WebSockets protocols',
-                    'Device shadows for state management',
-                    'Rules engine for data processing',
-                    'Integration with AWS services',
-                    'Device registry and authentication'
-                ],
-                limits: [],
-                useCase: 'IoT device connectivity, industrial IoT, smart home'
-            },
-            'iot-greengrass': {
-                name: 'Greengrass',
-                icon: '🌿',
-                category: 'iot',
-                description: 'IoT Greengrass - Local compute and messaging',
-                details: [
-                    'Run Lambda functions locally on devices',
-                    'Local messaging between devices',
-                    'ML inference at the edge',
-                    'Works offline, syncs when connected'
-                ],
-                limits: [],
-                useCase: 'Edge computing, offline IoT, local processing'
-            },
-
-            // SECURITY
-            'iam': {
-                name: 'IAM',
-                icon: '🔑',
-                category: 'security',
-                description: 'Identity and Access Management',
-                details: [
-                    'Users, Groups, Roles, Policies',
-                    'MFA support',
-                    'Identity federation (SAML, OAuth)',
-                    'Fine-grained permissions',
-                    'Service Control Policies (SCPs) with Organizations'
-                ],
-                limits: ['5000 users per account (soft limit)'],
-                useCase: 'Access control, authentication, authorization, compliance'
-            },
-            'kms': {
-                name: 'KMS',
-                icon: '🔐',
-                category: 'security',
-                description: 'Key Management Service - Encryption keys',
-                details: [
-                    'Create and manage encryption keys',
-                    'Automatic key rotation',
-                    'Direct encryption: 4KB maximum',
-                    'Envelope encryption for larger data',
-                    'Integration with most AWS services'
-                ],
-                limits: ['4KB direct encryption max'],
-                useCase: 'Data encryption, compliance, key management'
-            },
-            'waf': {
-                name: 'WAF',
-                icon: '🛡️',
-                category: 'security',
-                description: 'Web Application Firewall',
-                details: [
-                    'Protect against SQL injection, XSS',
-                    'Rate limiting',
-                    'Geo-blocking',
-                    'AWS Managed Rules available',
-                    'Works with CloudFront, ALB, API Gateway'
-                ],
-                limits: [],
-                useCase: 'Web application protection, DDoS mitigation, bot management'
-            },
-            'cognito': {
-                name: 'Cognito',
-                icon: '👤',
-                category: 'security',
-                description: 'Cognito - User authentication and authorization',
-                details: [
-                    'User Pools: Sign-up/sign-in, MFA',
-                    'Identity Pools: AWS credentials for users',
-                    'Social identity providers (Google, Facebook, etc.)',
-                    'SAML 2.0 federation'
-                ],
-                limits: [],
-                useCase: 'Mobile/web app authentication, user management'
-            },
-
-            // INTEGRATION
-            'sqs': {
-                name: 'SQS',
-                icon: '📬',
-                category: 'integration',
-                description: 'Simple Queue Service - Message queue',
-                details: [
-                    'Standard: Unlimited throughput, at-least-once delivery',
-                    'FIFO: 300 msg/s (3000 with batching), exactly-once',
-                    'Message size: 256KB',
-                    'Retention: 1 min to 14 days'
-                ],
-                limits: ['256KB per message', '14 days retention max', 'FIFO: 300 msg/s default'],
-                useCase: 'Decouple applications, buffer requests, asynchronous processing'
-            },
-            'sns': {
-                name: 'SNS',
-                icon: '📢',
-                category: 'integration',
-                description: 'Simple Notification Service - Pub/Sub messaging',
-                details: [
-                    'Publish to topics, multiple subscribers',
-                    'Protocols: HTTP/S, Email, SMS, SQS, Lambda',
-                    'Message size: 256KB',
-                    'Fan-out pattern with SQS'
-                ],
-                limits: ['256KB per message'],
-                useCase: 'Notifications, fan-out messaging, alerts'
-            },
-            'eventbridge': {
-                name: 'EventBridge',
-                icon: '🚌',
-                category: 'integration',
-                description: 'EventBridge - Serverless event bus',
-                details: [
-                    'Connect applications with events',
-                    'Event patterns and rules',
-                    'Schema registry',
-                    'SaaS integrations'
-                ],
-                limits: ['256KB per event'],
-                useCase: 'Event-driven architectures, SaaS integration, event routing'
-            },
-            'kinesis': {
-                name: 'Kinesis',
-                icon: '📡',
-                category: 'integration',
-                description: 'Kinesis - Real-time data streaming',
-                details: [
-                    'Data Streams: Real-time data streaming, 1-365 day retention',
-                    'Firehose: Load streams into S3, Redshift, etc.',
-                    'Analytics: Real-time SQL on streams',
-                    'Video Streams: Video ingestion and processing'
-                ],
-                limits: ['1MB/s per shard', '365 days max retention'],
-                useCase: 'Real-time analytics, log aggregation, clickstream analysis'
-            },
-
-            // ANALYTICS
-            'athena': {
-                name: 'Athena',
-                icon: '🔎',
-                category: 'analytics',
-                description: 'Athena - Serverless SQL queries on S3',
-                details: [
-                    'Standard SQL (Presto based)',
-                    'Query data directly in S3',
-                    'Pay per TB scanned ($5/TB)',
-                    'Supports Parquet, ORC, Avro, JSON, CSV',
-                    'Partition data to reduce cost'
-                ],
-                limits: [],
-                useCase: 'Ad-hoc queries, log analysis, data lake analytics'
-            },
-            'glue': {
-                name: 'Glue',
-                icon: '🧪',
-                category: 'analytics',
-                description: 'Glue - Serverless ETL service',
-                details: [
-                    'Data Catalog: Central metadata repository',
-                    'Crawlers: Discover data schema',
-                    'ETL Jobs: Apache Spark based',
-                    'Job bookmarks: Process new data only'
-                ],
-                limits: [],
-                useCase: 'ETL, data preparation, data catalog'
-            },
-            'emr': {
-                name: 'EMR',
-                icon: '🔥',
-                category: 'analytics',
-                description: 'Elastic MapReduce - Big data processing',
-                details: [
-                    'Managed Hadoop, Spark, Hive, Presto',
-                    'Process vast amounts of data',
-                    'Spot instances for cost savings',
-                    'Integrates with S3 for storage'
-                ],
-                limits: [],
-                useCase: 'Big data analytics, machine learning, data transformation'
-            },
-
-            // MANAGEMENT
-            'cloudwatch': {
-                name: 'CloudWatch',
-                icon: '📊',
-                category: 'management',
-                description: 'CloudWatch - Monitoring and observability',
-                details: [
-                    'Metrics: Monitor AWS resources',
-                    'Logs: Collect and analyze logs',
-                    'Alarms: Trigger actions based on metrics',
-                    'Events: Respond to state changes',
-                    'Dashboards: Visualize metrics'
-                ],
-                limits: [],
-                useCase: 'Monitoring, logging, alerting, troubleshooting'
-            },
-            'cloudtrail': {
-                name: 'CloudTrail',
-                icon: '📝',
-                category: 'management',
-                description: 'CloudTrail - API activity logging',
-                details: [
-                    'Records all API calls',
-                    '90 days in console (default)',
-                    'Create trail for S3 storage (long-term)',
-                    'Integration with CloudWatch Logs'
-                ],
-                limits: ['90 days default retention'],
-                useCase: 'Audit trails, compliance, security analysis, troubleshooting'
-            },
-            'cloudformation': {
-                name: 'CloudFormation',
-                icon: '🏗️',
-                category: 'management',
-                description: 'CloudFormation - Infrastructure as Code',
-                details: [
-                    'JSON or YAML templates',
-                    'Create, update, delete stacks',
-                    'StackSets: Multi-account/region',
-                    'Drift detection',
-                    'Change sets: Preview changes'
-                ],
-                limits: [],
-                useCase: 'Infrastructure automation, repeatable deployments, disaster recovery'
-            }
-        };
-
-        // Map state
-        let scale = 1;
-        let translateX = 0;
-        let translateY = 0;
-        let isDragging = false;
-        let startX, startY;
-        let lastTranslateX, lastTranslateY;
-        let velocityX = 0;
-        let velocityY = 0;
-        let animationFrame = null;
-        const friction = 0.92;
-        const minVelocity = 0.1;
-        let currentFocusCategory = null;
-
-        const map = document.getElementById('map');
-        const container = document.getElementById('mapContainer');
-        const mapWidth = 4000;
-        const mapHeight = 3000;
-
-        // Node positions - organized by category with sub-nodes
-        const nodePositions = {
-            // COMPUTE
-            'ec2': { x: 1555, y: 955 },
-            'lambda': { x: 1555, y: 855 },
-            'ecs': { x: 1555, y: 1055 },
-            'fargate': { x: 1305, y: 1055 },
-            'batch': { x: 1455, y: 1155 },
-
-            // STORAGE with sub-nodes
-            's3': { x: 2705, y: 955 },
-            's3-standard': { x: 2605, y: 855, sub: true },
-            's3-ia': { x: 2805, y: 855, sub: true },
-            's3-glacier': { x: 2605, y: 1055, sub: true },
-            's3-intelligent': { x: 2805, y: 1055, sub: true },
-            'ebs': { x: 2705, y: 755 },
-            'ebs-gp3': { x: 2855, y: 685, sub: true },
-            'ebs-io2': { x: 2855, y: 825, sub: true },
-            'efs': { x: 2405, y: 955 },
-            'efs-standard': { x: 2555, y: 885, sub: true },
-            'efs-ia': { x: 2555, y: 1025, sub: true },
-
-            // DATABASE with sub-nodes
-            'rds': { x: 2705, y: 1655 },
-            'aurora': { x: 2705, y: 1555 },
-            'aurora-serverless': { x: 2855, y: 1605, sub: true },
-            'dynamodb': { x: 2705, y: 1755 },
-            'dynamodb-dax': { x: 2555, y: 1805, sub: true },
-            'elasticache': { x: 2405, y: 1655 },
-
-            // NETWORK
-            'vpc': { x: 1555, y: 1655 },
-            'elb': { x: 1555, y: 1555 },
-            'cloudfront': { x: 1305, y: 1555 },
-            'apigateway': { x: 1305, y: 1755 },
-
-            // ML & AI
-            'sagemaker': { x: 2955, y: 655 },
-            'rekognition': { x: 3155, y: 655 },
-            'polly': { x: 2955, y: 805 },
-            'transcribe': { x: 3155, y: 805 },
-            'comprehend': { x: 3055, y: 730 },
-
-            // IoT
-            'iot-core': { x: 805, y: 655 },
-            'iot-greengrass': { x: 655, y: 730 },
-
-            // SECURITY
-            'iam': { x: 1055, y: 1375 },
-            'kms': { x: 905, y: 1275 },
-            'waf': { x: 755, y: 1205 },
-            'cognito': { x: 755, y: 1405 },
-
-            // INTEGRATION
-            'sqs': { x: 2705, y: 1375 },
-            'sns': { x: 2855, y: 1275 },
-            'eventbridge': { x: 3005, y: 1205 },
-            'kinesis': { x: 3005, y: 1445 },
-
-            // ANALYTICS
-            'athena': { x: 1855, y: 1955 },
-            'glue': { x: 1755, y: 2055 },
-            'emr': { x: 2095, y: 1955 },
-
-            // MANAGEMENT
-            'cloudwatch': { x: 1855, y: 805 },
-            'cloudtrail': { x: 2095, y: 805 },
-            'cloudformation': { x: 1975, y: 905 }
-        };
-
-        function createNodes() {
-            const mapEl = document.getElementById('map');
-
-            Object.keys(nodePositions).forEach(serviceId => {
-                const pos = nodePositions[serviceId];
-                const data = serviceData[serviceId];
-
-                if (!data) return;
-
-                const node = document.createElement('div');
-                node.className = `node ${data.category}${pos.sub ? ' sub-node' : ''}`;
-                node.style.left = `${pos.x}px`;
-                node.style.top = `${pos.y}px`;
-                node.setAttribute('data-category', data.category);
-                node.setAttribute('data-service', serviceId);
-                node.onclick = () => showServiceDetails(serviceId);
-
-                node.innerHTML = `
-                    <div class="node-icon">${data.icon}</div>
-                    <div class="node-title">${data.name}</div>
-                `;
-
-                mapEl.appendChild(node);
-            });
-        }
-
-        function createConnections() {
-            const svg = document.getElementById('connections');
-            const centerX = 2020;
-            const centerY = 1520;
-
-            // Draw connections from center to main category nodes
-            const mainNodes = {
-                'ec2': 'compute',
-                's3': 'storage',
-                'rds': 'database',
-                'vpc': 'network',
-                'iam': 'security',
-                'sqs': 'integration',
-                'athena': 'analytics',
-                'cloudwatch': 'management',
-                'sagemaker': 'ml',
-                'iot-core': 'iot'
+        // Spread main services along the orbital arc (±18 degrees around category angle)
+        const spread = 16 * Math.PI / 180;
+        mainSvcs.forEach(([key, svc], i) => {
+            const count = mainSvcs.length;
+            const offset = count === 1 ? 0 : (i / (count-1) - 0.5) * 2 * spread;
+            const a = baseAngle + offset;
+            positions[key] = {
+                x: CX + cat.rx * Math.cos(a) - 40,
+                y: CY + cat.ry * Math.sin(a) - 40,
+                main: true
             };
-
-            Object.keys(mainNodes).forEach(serviceId => {
-                const pos = nodePositions[serviceId];
-                const category = mainNodes[serviceId];
-
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const d = `M${centerX},${centerY} Q${(centerX + pos.x) / 2},${(centerY + pos.y) / 2} ${pos.x + 45},${pos.y + 45}`;
-                path.setAttribute('d', d);
-                path.setAttribute('class', `connection-line central ${category}`);
-                path.setAttribute('data-category', category);
-
-                svg.appendChild(path);
-            });
-        }
-
-        function updateTransform() {
-            map.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-            document.getElementById('zoomLevel').textContent = `Zoom: ${Math.round(scale * 100)}%`;
-        }
-
-        function centerView() {
-            const containerRect = container.getBoundingClientRect();
-            scale = 0.5;
-            translateX = (containerRect.width - mapWidth * scale) / 2;
-            translateY = (containerRect.height - mapHeight * scale) / 2;
-            updateTransform();
-        }
-
-        function zoomIn() {
-            const containerRect = container.getBoundingClientRect();
-            const centerX = containerRect.width / 2;
-            const centerY = containerRect.height / 2;
-            zoomAtPoint(1.25, centerX, centerY);
-        }
-
-        function zoomOut() {
-            const containerRect = container.getBoundingClientRect();
-            const centerX = containerRect.width / 2;
-            const centerY = containerRect.height / 2;
-            zoomAtPoint(0.8, centerX, centerY);
-        }
-
-        function zoomAtPoint(factor, pointX, pointY) {
-            const newScale = Math.max(0.25, Math.min(2.5, scale * factor));
-            const scaleChange = newScale / scale;
-            translateX = pointX - (pointX - translateX) * scaleChange;
-            translateY = pointY - (pointY - translateY) * scaleChange;
-            scale = newScale;
-            updateTransform();
-        }
-
-        function animateMomentum() {
-            if (Math.abs(velocityX) > minVelocity || Math.abs(velocityY) > minVelocity) {
-                translateX += velocityX;
-                translateY += velocityY;
-                velocityX *= friction;
-                velocityY *= friction;
-                updateTransform();
-                animationFrame = requestAnimationFrame(animateMomentum);
-            }
-        }
-
-        function stopMomentum() {
-            if (animationFrame) {
-                cancelAnimationFrame(animationFrame);
-                animationFrame = null;
-            }
-            velocityX = 0;
-            velocityY = 0;
-        }
-
-        // Pan and zoom controls
-        container.addEventListener('mousedown', (e) => {
-            stopMomentum();
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            lastTranslateX = translateX;
-            lastTranslateY = translateY;
-            container.style.cursor = 'grabbing';
-            e.preventDefault();
         });
 
-        container.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            velocityX = (lastTranslateX + dx - translateX) * 0.3;
-            velocityY = (lastTranslateY + dy - translateY) * 0.3;
-            translateX = lastTranslateX + dx;
-            translateY = lastTranslateY + dy;
-            updateTransform();
+        // Sub-services placed in outer ring
+        subSvcs.forEach(([key, svc], i) => {
+            const count = subSvcs.length;
+            const subSpread = 20 * Math.PI / 180;
+            const offset = count === 1 ? 0 : (i / (count-1) - 0.5) * 2 * subSpread;
+            const a = baseAngle + offset;
+            const outerRx = cat.rx + 120;
+            const outerRy = cat.ry + 100;
+            positions[key] = {
+                x: CX + outerRx * Math.cos(a) - 30,
+                y: CY + outerRy * Math.sin(a) - 30,
+                main: false
+            };
         });
 
-        container.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                container.style.cursor = 'grab';
-                animateMomentum();
-            }
-        });
+        // Category label position
+        const labelRx = cat.rx - 80;
+        const labelRy = cat.ry - 60;
+        positions['__label_'+catKey] = {
+            x: CX + labelRx * Math.cos(baseAngle) - 40,
+            y: CY + labelRy * Math.sin(baseAngle) - 15
+        };
+    });
+    return positions;
+}
 
-        container.addEventListener('mouseleave', () => {
-            if (isDragging) {
-                isDragging = false;
-                container.style.cursor = 'grab';
-            }
-        });
-
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            stopMomentum();
-            let delta = e.deltaY;
-            const isTrackpad = Math.abs(delta) < 50;
-            const sensitivity = isTrackpad ? 0.002 : 0.001;
-            const factor = 1 - delta * sensitivity;
-            const clampedFactor = Math.max(0.9, Math.min(1.1, factor));
-            zoomAtPoint(clampedFactor, e.clientX, e.clientY);
-        }, { passive: false });
-
-        // Focus functionality
-        function focusCategory(category) {
-            if (currentFocusCategory === category) {
-                resetFocus();
-                return;
-            }
-
-            currentFocusCategory = category;
-
-            // Dim/focus nodes
-            document.querySelectorAll('.node').forEach(node => {
-                if (node.getAttribute('data-category') === category) {
-                    node.classList.add('focused');
-                    node.classList.remove('dimmed');
-                } else {
-                    node.classList.add('dimmed');
-                    node.classList.remove('focused');
-                }
-            });
-
-            // Dim/focus category labels
-            document.querySelectorAll('.category-label').forEach(label => {
-                if (label.classList.contains(category)) {
-                    label.classList.add('focused');
-                    label.classList.remove('dimmed');
-                } else {
-                    label.classList.add('dimmed');
-                    label.classList.remove('focused');
-                }
-            });
-
-            // Dim/focus connection lines
-            document.querySelectorAll('.connection-line').forEach(line => {
-                if (line.getAttribute('data-category') === category || line.classList.contains('central')) {
-                    line.classList.add('focused');
-                    line.classList.remove('dimmed');
-                } else {
-                    line.classList.add('dimmed');
-                    line.classList.remove('focused');
-                }
-            });
+// ── Create orbital SVG paths ──
+function createOrbits() {
+    const svg = document.getElementById('orbitSvg');
+    Object.entries(categories).forEach(([catKey, cat]) => {
+        // Main orbit ellipse
+        const el = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+        el.setAttribute('cx', CX); el.setAttribute('cy', CY);
+        el.setAttribute('rx', cat.rx); el.setAttribute('ry', cat.ry);
+        el.setAttribute('class','orbit-path animated');
+        el.setAttribute('stroke', cat.color);
+        el.setAttribute('data-cat', catKey);
+        svg.appendChild(el);
+        // Glow copy
+        const gl = el.cloneNode(); gl.setAttribute('class','orbit-path glow');
+        gl.setAttribute('stroke', cat.color);
+        gl.setAttribute('data-cat', catKey);
+        svg.appendChild(gl);
+        // Outer orbit for sub-nodes
+        const hasSubNodes = Object.values(serviceData).some(s => s.cat === catKey && s.sub);
+        if (hasSubNodes) {
+            const outer = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+            outer.setAttribute('cx', CX); outer.setAttribute('cy', CY);
+            outer.setAttribute('rx', cat.rx + 120); outer.setAttribute('ry', cat.ry + 100);
+            outer.setAttribute('class','orbit-path animated');
+            outer.setAttribute('stroke', cat.color); outer.style.opacity = '0.15';
+            outer.setAttribute('data-cat', catKey);
+            svg.appendChild(outer);
         }
+    });
+}
 
-        function resetFocus() {
-            currentFocusCategory = null;
+// ── Create nodes ──
+function createNodes(positions) {
+    const mapEl = document.getElementById('map');
+    Object.entries(serviceData).forEach(([key, svc]) => {
+        const pos = positions[key];
+        if (!pos) return;
+        const node = document.createElement('div');
+        node.className = `node ${pos.main ? 'main' : 'sub'} ${svc.cat}`;
+        node.style.left = pos.x + 'px'; node.style.top = pos.y + 'px';
+        node.dataset.cat = svc.cat; node.dataset.svc = key;
+        node.onclick = (e) => { e.stopPropagation(); showServiceDetails(key); };
+        node.innerHTML = `<div class="node-label">${svc.name}</div>
+            <div class="node-tooltip"><div class="tt-name">${svc.name}</div><div class="tt-desc">${svc.desc}</div></div>`;
+        mapEl.appendChild(node);
+    });
+    // Category labels
+    Object.entries(categories).forEach(([catKey, cat]) => {
+        const pos = positions['__label_'+catKey];
+        if (!pos) return;
+        const lbl = document.createElement('div');
+        lbl.className = `cat-label ${catKey}`;
+        lbl.style.left = pos.x + 'px'; lbl.style.top = pos.y + 'px';
+        lbl.textContent = cat.label;
+        lbl.onclick = () => focusCategory(catKey);
+        document.getElementById('map').appendChild(lbl);
+    });
+}
 
-            document.querySelectorAll('.node, .category-label, .connection-line').forEach(el => {
-                el.classList.remove('focused', 'dimmed');
-            });
-        }
+// ── Transform / Pan / Zoom ──
+function updateTransform() {
+    map.style.transform = `translate(${translateX}px,${translateY}px) scale(${scale})`;
+    document.getElementById('zoomLevel').textContent = `Zoom: ${Math.round(scale*100)}%`;
+}
+function centerView() {
+    const r = container.getBoundingClientRect();
+    scale = 0.55;
+    translateX = (r.width - 4000*scale) / 2;
+    translateY = (r.height - 3000*scale) / 2;
+    updateTransform();
+}
+function zoomAtPoint(f, px, py) {
+    const ns = Math.max(0.2, Math.min(2.5, scale*f));
+    const c = ns/scale;
+    translateX = px - (px-translateX)*c;
+    translateY = py - (py-translateY)*c;
+    scale = ns; updateTransform();
+}
+function zoomIn() { const r=container.getBoundingClientRect(); zoomAtPoint(1.25,r.width/2,r.height/2); }
+function zoomOut() { const r=container.getBoundingClientRect(); zoomAtPoint(0.8,r.width/2,r.height/2); }
 
-        // Sidebar functionality
-        function showServiceDetails(serviceId) {
-            const data = serviceData[serviceId];
-            if (!data) return;
+function animMomentum() {
+    if (Math.abs(velX)>0.1||Math.abs(velY)>0.1) {
+        translateX+=velX; translateY+=velY; velX*=0.92; velY*=0.92;
+        updateTransform(); animFrame=requestAnimationFrame(animMomentum);
+    }
+}
+function stopMomentum() { if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;} velX=velY=0; }
 
-            const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('sidebarContent');
+function attachListeners() {
+    container.addEventListener('mousedown', e => {
+        stopMomentum(); isDragging=true; startX=e.clientX; startY=e.clientY;
+        lastTX=translateX; lastTY=translateY; container.style.cursor='grabbing'; e.preventDefault();
+    });
+    container.addEventListener('mousemove', e => {
+        if(!isDragging) return;
+        const dx=e.clientX-startX, dy=e.clientY-startY;
+        velX=(lastTX+dx-translateX)*0.3; velY=(lastTY+dy-translateY)*0.3;
+        translateX=lastTX+dx; translateY=lastTY+dy; updateTransform();
+    });
+    container.addEventListener('mouseup', () => { if(isDragging){isDragging=false;container.style.cursor='grab';animMomentum();} });
+    container.addEventListener('mouseleave', () => { if(isDragging){isDragging=false;container.style.cursor='grab';} });
+    container.addEventListener('wheel', e => {
+        e.preventDefault(); stopMomentum();
+        const s = Math.abs(e.deltaY)<50?0.002:0.001;
+        zoomAtPoint(Math.max(0.9,Math.min(1.1,1-e.deltaY*s)), e.clientX, e.clientY);
+    }, {passive:false});
+    // Touch
+    let lastDist=0;
+    container.addEventListener('touchstart', e => {
+        if(e.touches.length===1){stopMomentum();isDragging=true;startX=e.touches[0].clientX;startY=e.touches[0].clientY;lastTX=translateX;lastTY=translateY;}
+        else if(e.touches.length===2){lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+        e.preventDefault();
+    },{passive:false});
+    container.addEventListener('touchmove', e => {
+        if(e.touches.length===1&&isDragging){translateX=lastTX+(e.touches[0].clientX-startX);translateY=lastTY+(e.touches[0].clientY-startY);updateTransform();}
+        else if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(lastDist>0){const mx=(e.touches[0].clientX+e.touches[1].clientX)/2,my=(e.touches[0].clientY+e.touches[1].clientY)/2;zoomAtPoint(d/lastDist,mx,my);}lastDist=d;}
+        e.preventDefault();
+    },{passive:false});
+    container.addEventListener('touchend',()=>{isDragging=false;lastDist=0;});
+}
 
-            content.innerHTML = `
-                <div class="service-icon">${data.icon}</div>
-                <h2>${data.name}</h2>
-                <p style="color: var(--text-secondary); margin-bottom: 20px;">${data.description}</p>
+// ── Focus ──
+function focusCategory(cat) {
+    if(focusCat===cat){resetFocus();return;}
+    focusCat=cat;
+    document.querySelectorAll('.node').forEach(n=>{n.classList.toggle('dimmed',n.dataset.cat!==cat);});
+    document.querySelectorAll('.cat-label').forEach(l=>{l.classList.toggle('dimmed',!l.classList.contains(cat));});
+    document.querySelectorAll('.orbit-path').forEach(p=>{p.style.opacity=p.getAttribute('data-cat')===cat?'0.6':'0.05';});
+}
+function resetFocus() {
+    focusCat=null;
+    document.querySelectorAll('.node').forEach(n=>n.classList.remove('dimmed'));
+    document.querySelectorAll('.cat-label').forEach(l=>l.classList.remove('dimmed'));
+    document.querySelectorAll('.orbit-path').forEach(p=>{p.style.opacity='';});
+}
 
-                ${data.details.length > 0 ? `
-                    <div class="sidebar-section">
-                        <h3>Key Features</h3>
-                        <ul>
-                            ${data.details.map(d => `<li>${d}</li>`).join('')}
-                        </ul>
-                    </div>
-                ` : ''}
+// ── Sidebar ──
+function showServiceDetails(id) {
+    const d = serviceData[id]; if(!d) return;
+    const sb = document.getElementById('sidebar');
+    document.getElementById('sidebarContent').innerHTML = `
+        <h2>${d.name}</h2>
+        <p style="color:var(--text-secondary);margin-bottom:18px;">${d.desc}</p>
+        ${d.details.length?`<div class="sidebar-section"><h3>Key Features</h3><ul>${d.details.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:''}
+        ${d.limits.length?`<div class="sidebar-section"><h3>Important Limits</h3>${d.limits.map(l=>`<span class="limit-badge">${l}</span>`).join('')}</div>`:''}
+        ${d.useCase?`<div class="sidebar-section"><h3>Use Cases</h3><p>${d.useCase}</p></div>`:''}
+    `;
+    sb.classList.add('open');
+}
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
 
-                ${data.limits.length > 0 ? `
-                    <div class="sidebar-section">
-                        <h3>Important Limits</h3>
-                        ${data.limits.map(l => `<span class="limit-badge">${l}</span>`).join('')}
-                    </div>
-                ` : ''}
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+    if(e.key==='+'||e.key==='=') zoomIn();
+    if(e.key==='-') zoomOut();
+    if(e.key==='0') centerView();
+    if(e.key==='Escape'){closeSidebar();resetFocus();}
+});
 
-                ${data.useCase ? `
-                    <div class="sidebar-section">
-                        <h3>Common Use Cases</h3>
-                        <p>${data.useCase}</p>
-                    </div>
-                ` : ''}
-            `;
-
-            sidebar.classList.add('open');
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === '+' || e.key === '=') zoomIn();
-            if (e.key === '-') zoomOut();
-            if (e.key === '0') centerView();
-            if (e.key === 'Escape') {
-                closeSidebar();
-                resetFocus();
-            }
-        });
-
-        // Initialize
-        window.addEventListener('load', () => {
-            createNodes();
-            createConnections();
-            centerView();
-        });
-    </script>
+// ── Init ──
+function initMap() {
+    map = document.getElementById('map');
+    container = document.getElementById('mapContainer');
+    if(!map||!container) return;
+    initStars();
+    createOrbits();
+    const pos = computePositions();
+    createNodes(pos);
+    attachListeners();
+    centerView();
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initMap);
+else initMap();
+window.addEventListener('load',()=>{if(map&&container)centerView();});
+</script>
 </body>
 </html>

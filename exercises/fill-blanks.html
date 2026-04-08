@@ -1241,9 +1241,16 @@
             }
         });
         
-        // Initialize
-        currentQuestions = shuffleArray([...questions]);
-        loadQuestion();
+        // Initialize - guard against DOM not ready on first navigation
+        function init() {
+            currentQuestions = shuffleArray([...questions]);
+            loadQuestion();
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 </body>
 </html>

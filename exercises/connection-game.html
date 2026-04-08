@@ -982,9 +982,16 @@
             }, 1200);
         }
         
-        // Initialize
-        resetGame();
-        loadGame();
+        // Initialize - guard against DOM not ready on first navigation
+        function init() {
+            resetGame();
+            loadGame();
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 </body>
 </html>

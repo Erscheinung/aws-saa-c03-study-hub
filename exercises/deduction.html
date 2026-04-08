@@ -1099,8 +1099,13 @@
             document.getElementById('progressText').textContent = `${questions.length}/${questions.length}`;
         }
         
-        // Initialize
-        loadQuestion();
+        // Initialize - guard against DOM not ready on first navigation
+        function init() { loadQuestion(); }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 </body>
 </html>
