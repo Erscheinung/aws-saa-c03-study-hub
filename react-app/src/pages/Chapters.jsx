@@ -1,68 +1,163 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAA-C03 Study Chapters — Domain → Topic → Sub-topic tree.
+//
+// Each domain mirrors one of the four exam weights. Topics cover the high
+// level areas; each topic carries key bullets, an exam tip, a mnemonic, a
+// pill list of the services it touches, and a nested set of deep-dive
+// subtopics (mirroring the "sub-topic" sections from the earlier static
+// HTML version of this page plus extra content drawn from the cheat sheet).
+// ─────────────────────────────────────────────────────────────────────────────
 
 const CHAPTERS = [
   {
     id: 1,
     domain: 'Design Secure Architectures',
     weight: '30%',
+    questions: '~20 questions',
     color: '#ef4444',
     icon: '🔒',
     topics: [
       {
-        title: 'IAM (Identity & Access Management)',
+        title: 'IAM & Identity Management',
+        icon: '🔑',
+        services: ['IAM Users', 'IAM Groups', 'IAM Roles', 'Policies', 'STS', 'Cognito', 'AWS SSO'],
         points: [
-          'Users, Groups, Roles, and Policies form the core of IAM',
-          'Always follow the principle of least privilege',
-          'Use IAM Roles for EC2 instances and Lambda functions instead of access keys',
-          'Cross-account access: use AssumeRole via STS',
-          'Permission boundaries set the maximum permissions a user/role can have',
-          'Policy evaluation: explicit Deny > explicit Allow > implicit Deny',
-          'MFA should be enabled for root and privileged users',
+          'Policies attach to principals (users, roles, groups); resource policies attach to resources',
+          'Policy evaluation: Explicit Deny > Explicit Allow > Implicit Deny',
+          'Cross-account access: use IAM Roles with AssumeRole — never long-lived IAM users',
+          'Cognito User Pools = authentication, Identity Pools = temporary AWS credentials',
+          'Permission boundaries limit the *maximum* permissions a user/role can have',
+          'Enable MFA for root and privileged users; never use root for daily work',
         ],
-        examTip: 'If the question mentions "cross-account access" the answer almost always involves IAM Roles + STS AssumeRole. If it mentions "temporary credentials", think STS. Never pick access keys for service-to-service communication.',
-        heuristic: 'D-A-I: Deny beats Allow beats Implicit deny. Remember "DAI" for policy evaluation order.',
+        examTip:
+          'If a question mentions "federated users" or "SAML", think IAM Roles + STS AssumeRoleWithSAML. For mobile/web sign-in, Cognito is almost always the answer. "Cross-account access" → IAM Role. "Temporary credentials" → STS.',
+        heuristic: 'D-A-I: Deny beats Allow beats Implicit deny.',
+        subtopics: [
+          {
+            title: 'IAM Roles vs Users Deep Dive',
+            points: [
+              'IAM Users: long-term credentials (password/access keys). Max 5000 users per account',
+              'IAM Roles: temporary credentials from STS. No hard limit, preferred for services + cross-account',
+              'EC2 instance = always use an instance profile (IAM Role), never store credentials on the box',
+              'Trust Policy: who can assume the role. Permission Policy: what the role can do',
+              'AssumeRole returns session tokens valid 15 min – 12 h (default 1 h)',
+            ],
+          },
+          {
+            title: 'Cognito User Pools vs Identity Pools',
+            points: [
+              'User Pools: authentication. Sign-up/sign-in, JWT tokens, social + SAML IdPs',
+              'Identity Pools: authorization. Exchange JWTs for temporary AWS credentials via STS',
+              'Typical flow: User Pool → JWT → Identity Pool → AWS creds → direct S3/DynamoDB access',
+              'User Pools can work standalone for app auth without Identity Pools',
+            ],
+          },
+          {
+            title: 'Policy Types & Evaluation Logic',
+            points: [
+              'Identity-based: attached to users/groups/roles (managed AWS/Customer or inline)',
+              'Resource-based: attached to resources (S3 bucket policy, Lambda policy) and can specify principals',
+              'SCPs: apply to OUs/accounts in Organizations. Do NOT grant — they only restrict',
+              'Session policies: passed in AssumeRole; further restrict the assumed role',
+              'Final evaluation: (identity ∩ resource ∩ SCP ∩ boundary) with explicit-deny wins',
+            ],
+          },
+        ],
       },
       {
         title: 'Encryption & Key Management',
+        icon: '🔐',
+        services: ['KMS', 'CloudHSM', 'Secrets Manager', 'Parameter Store', 'ACM'],
         points: [
-          'KMS: managed encryption keys, integrates with most AWS services',
-          'SSE-S3: S3-managed keys, simplest option',
-          'SSE-KMS: customer-managed keys, audit trail via CloudTrail',
-          'SSE-C: customer-provided keys, you manage everything',
-          'Client-side encryption: encrypt before sending to AWS',
-          'Envelope encryption: data key encrypts data, KMS key encrypts data key',
-          'CloudHSM: dedicated hardware security module for regulatory compliance',
+          'KMS: 4 KB direct encryption limit — use envelope encryption (data keys) for larger data',
+          'Secrets Manager: automatic rotation, native RDS/Redshift/DocumentDB integration',
+          'Parameter Store: free tier, no auto-rotation, good for config + non-secret values',
+          'CloudHSM: FIPS 140-2 Level 3, you control the keys. KMS is Level 2 (AWS-managed HSM)',
+          'S3 encryption: SSE-S3 (AWS keys), SSE-KMS (your CMK + audit), SSE-C (you supply key)',
+          'Client-side encryption: encrypt before upload; AWS never sees plaintext key',
         ],
-        examTip: 'If the question asks about "audit trail for encryption" or "who used the key", the answer is SSE-KMS (logs to CloudTrail). If it mentions "regulatory compliance" or "FIPS 140-2 Level 3", choose CloudHSM.',
-        heuristic: 'S-K-C = Simple, Key-managed, Customer-managed. Complexity increases left to right: SSE-S3 < SSE-KMS < SSE-C.',
+        examTip:
+          '"Manage your own keys with minimal effort" → SSE-KMS CMK. "Regulatory requirement for key control / FIPS 140-2 L3" → CloudHSM. "Rotate database credentials automatically" → Secrets Manager. "Audit who used the key" → SSE-KMS (CloudTrail).',
+        heuristic: 'S-K-C: Simple (SSE-S3) → Key-managed (SSE-KMS) → Customer-managed (SSE-C).',
+        subtopics: [
+          {
+            title: 'Envelope Encryption Explained',
+            points: [
+              'Generate a Data Encryption Key (DEK) via KMS GenerateDataKey',
+              'Encrypt the bulk data locally with the plaintext DEK',
+              'Store the encrypted DEK alongside the ciphertext; discard the plaintext DEK',
+              'To decrypt: call KMS Decrypt on the wrapped DEK, then decrypt the data locally',
+              'Avoids hitting KMS\'s 4 KB ciphertext limit and reduces KMS API cost',
+            ],
+          },
+          {
+            title: 'KMS Key Types',
+            points: [
+              'AWS-owned keys: invisible, free, used by default for many services',
+              'AWS-managed keys: one per service per account, e.g. aws/s3, rotation on by AWS',
+              'Customer-managed keys (CMK): you control policies, rotation, deletion',
+              'Symmetric (AES-256) vs Asymmetric (RSA / ECC) for sign/verify or encrypt',
+              'Multi-Region keys: same key material across regions for global decryption',
+            ],
+          },
+        ],
       },
       {
         title: 'Network Security',
+        icon: '🛡',
+        services: ['Security Groups', 'NACLs', 'WAF', 'Shield', 'Network Firewall', 'VPC Endpoints'],
         points: [
-          'Security Groups: stateful, allow rules only, instance-level',
-          'NACLs: stateless, allow + deny rules, subnet-level',
-          'WAF: protects against SQL injection, XSS (deployed on ALB/CloudFront/API Gateway)',
-          'Shield Standard: free DDoS protection (L3/L4)',
-          'Shield Advanced: $3,000/mo, L7 protection, DDoS response team',
-          'VPC Flow Logs: capture IP traffic information',
-          'AWS Network Firewall: managed firewall for VPC',
+          'Security Groups: stateful (return traffic auto-allowed), allow rules only, instance-level',
+          'NACLs: stateless (must allow both directions), numbered rules, first match wins, subnet-level',
+          'WAF: Layer 7 protection (SQLi, XSS, rate limiting). Deployed on ALB / API GW / CloudFront / AppSync',
+          'Shield Standard: free, auto L3/L4 DDoS. Shield Advanced: $3,000/mo, 24/7 DRT, L7 + cost protection',
+          'VPC Flow Logs: capture IP-level traffic metadata for the VPC, subnet, or ENI',
+          'VPC Endpoints: private connectivity to AWS services without traversing the internet',
         ],
-        examTip: 'Security Groups = stateFUL (remember: "Groups are Full of state"). NACLs = stateLESS. If the question says "block a specific IP", you need a NACL (SGs cannot deny). WAF = Layer 7 web attacks; Shield = DDoS.',
-        heuristic: 'SG vs NACL: "SG = allow only, instance | NACL = allow+deny, subnet". Think: SG is like a bouncer (only lets people in), NACL is a gate (blocks and allows).',
+        examTip:
+          '"Block a specific IP" → NACL deny rule (SGs cannot deny). "Protect from SQLi/XSS" → WAF. "Private access to S3" → Gateway VPC Endpoint (free). "DDoS response team" → Shield Advanced.',
+        heuristic: 'SG = bouncer (allow only); NACL = gate (allow + deny).',
+        subtopics: [
+          {
+            title: 'Security Groups vs NACLs',
+            points: [
+              'SG: stateful, evaluates ALL rules, allow only, attached to ENIs',
+              'NACL: stateless, evaluates in order, allow + deny, attached to subnets',
+              'SG referenced by ID inside rules (e.g., allow SG-web → SG-db on 5432)',
+              'NACL ephemeral ports: remember to allow 1024–65535 for return traffic',
+              'If both block, the more restrictive wins; NACL is evaluated first at the subnet boundary',
+            ],
+          },
+          {
+            title: 'VPC Endpoints: Gateway vs Interface',
+            points: [
+              'Gateway Endpoint: free; only for S3 and DynamoDB; route-table entry',
+              'Interface Endpoint (PrivateLink): hourly + data fee; ENI in your subnet; nearly any AWS service',
+              'Gateway Load Balancer Endpoint: insert third-party appliances (firewalls, IDS)',
+              'Endpoint policies restrict which principals/resources can be called via the endpoint',
+            ],
+          },
+        ],
       },
       {
-        title: 'Logging & Monitoring',
+        title: 'Logging, Monitoring & Threat Detection',
+        icon: '📡',
+        services: ['CloudTrail', 'CloudWatch', 'GuardDuty', 'AWS Config', 'Macie', 'Inspector', 'Security Hub'],
         points: [
-          'CloudTrail: records all API calls (who did what, when)',
-          'CloudWatch: metrics, logs, alarms, dashboards',
-          'GuardDuty: ML-based threat detection (analyzes CloudTrail, VPC Flow Logs, DNS)',
-          'AWS Config: tracks resource configuration changes, compliance rules',
-          'Macie: ML to discover and protect sensitive data in S3',
-          'Inspector: automated vulnerability scanning for EC2 and containers',
+          'CloudTrail: records API calls (who did what, when). Management events on by default, data events opt-in',
+          'CloudWatch: metrics, logs, alarms, dashboards — observability, not audit',
+          'GuardDuty: ML threat detection on CloudTrail, VPC Flow Logs, DNS logs. 30-day free trial',
+          'AWS Config: tracks resource configuration changes over time; Config Rules enforce compliance',
+          'Macie: ML-based discovery + classification of sensitive data (PII) in S3',
+          'Inspector: automated vulnerability scanning for EC2, ECR images, Lambda functions',
+          'Security Hub: central dashboard aggregating findings from GuardDuty, Inspector, Macie, and more',
         ],
-        examTip: 'CloudTrail = WHO did WHAT (API audit). CloudWatch = HOW things are performing (metrics). GuardDuty = threat detection (malicious activity). Config = WHAT changed (compliance). Don\'t confuse them!',
-        heuristic: '"Trail = Trail of actions, Watch = Watch metrics, Guard = Guard against threats, Config = Configuration changes".',
+        examTip:
+          'Map the question stem to the tool: WHO did WHAT → CloudTrail · HOW is it performing → CloudWatch · MALICIOUS activity → GuardDuty · WHAT changed → Config · PII in S3 → Macie · CVE scanning → Inspector.',
+        heuristic: '"Trail audits, Watch measures, Guards threats, Config changes."',
       },
     ],
   },
@@ -70,62 +165,144 @@ const CHAPTERS = [
     id: 2,
     domain: 'Design Resilient Architectures',
     weight: '26%',
+    questions: '~17 questions',
     color: '#3b82f6',
-    icon: '🏗️',
+    icon: '🏗',
     topics: [
       {
-        title: 'High Availability & Fault Tolerance',
+        title: 'High Availability & Load Balancing',
+        icon: '⚖',
+        services: ['ALB', 'NLB', 'GWLB', 'Route 53', 'Global Accelerator'],
         points: [
-          'Multi-AZ: resources across Availability Zones for HA',
-          'Multi-Region: resources across regions for DR',
-          'ELB: distributes traffic across healthy targets',
-          'Auto Scaling: automatically adjust capacity based on demand',
-          'RDS Multi-AZ: synchronous standby, automatic failover',
-          'Aurora: 6 copies across 3 AZs, self-healing storage',
-          'S3: 11 nines durability, cross-region replication for DR',
+          'ALB: Layer 7 (HTTP/HTTPS), path/host routing, sticky sessions, WebSocket support',
+          'NLB: Layer 4 (TCP/UDP), ultra-low latency, static IP per AZ, preserves source IP',
+          'GWLB: Layer 3 (GENEVE), inserts third-party network appliances inline',
+          'Route 53 routing: Simple, Weighted, Latency, Failover, Geolocation, Geoproximity, Multi-Value',
+          'Global Accelerator: static anycast IPs + AWS backbone, TCP/UDP optimization, non-HTTP traffic',
+          'Multi-AZ = HA inside a region; Multi-Region = disaster recovery across regions',
         ],
-        examTip: 'Multi-AZ = High Availability (same region, automatic failover). Multi-Region = Disaster Recovery (different regions). If the question says "survive an AZ failure", Multi-AZ is enough. If it says "survive a region failure", you need Multi-Region.',
-        heuristic: '"AZ = Availability, Region = Recovery". Multi-AZ handles zone failures; Multi-Region handles regional disasters.',
+        examTip:
+          '"Static IP required" → NLB or Global Accelerator. "Lowest latency, L4" → NLB. "Path/host-based routing" → ALB. "Non-HTTP global failover" → Global Accelerator. "DNS failover" → Route 53 health checks.',
+        heuristic: '"AZ = Availability, Region = Recovery."',
+        subtopics: [
+          {
+            title: 'ALB vs NLB vs GWLB',
+            points: [
+              'ALB: HTTP/HTTPS/gRPC/WebSocket; content-based routing; supports Lambda + containers',
+              'NLB: raw TCP/UDP; millions of req/s; static IP per AZ; zonal health checks',
+              'GWLB: L3 traffic inspection; GENEVE tunnel; virtual appliance insertion',
+              'Cross-zone load balancing: ALB on by default, NLB off by default (enable for even spread)',
+            ],
+          },
+          {
+            title: 'Route 53 Routing Policies',
+            points: [
+              'Simple: single resource or multi-value without health checks',
+              'Weighted: split traffic by % (A/B tests, blue-green deploys)',
+              'Latency: route to the region with lowest measured latency to the user',
+              'Failover: active-passive with health checks (primary → secondary)',
+              'Geolocation: fixed routing by user country/continent',
+              'Geoproximity: route by geographic distance with bias adjustments (via Traffic Flow)',
+              'Multi-Value Answer: up to 8 healthy records with client-side selection',
+            ],
+          },
+        ],
       },
       {
-        title: 'Decoupled Architectures',
+        title: 'Auto Scaling & Elasticity',
+        icon: '📈',
+        services: ['EC2 Auto Scaling', 'Application Auto Scaling', 'Launch Templates'],
         points: [
-          'SQS: message queue for async processing, buffering',
-          'SNS: pub/sub for event-driven fan-out',
-          'SNS + SQS fan-out: one event triggers multiple independent processes',
-          'EventBridge: serverless event bus, pattern matching',
-          'Step Functions: orchestrate multi-step workflows',
-          'Loose coupling = independent scaling, failure isolation',
+          'Scaling policies: Target Tracking (simplest), Step, Scheduled, Predictive',
+          'Cooldown period prevents churn during stabilization (default 300s)',
+          'Launch Templates supersede Launch Configurations — always pick Templates',
+          'Application Auto Scaling covers DynamoDB, ECS, Spot Fleets, Lambda provisioned concurrency',
+          'Lifecycle hooks: run custom logic on instance launch/terminate',
+          'Warm pools: pre-initialized instances that start faster on scale-out',
         ],
-        examTip: 'SQS = pull-based (consumers poll). SNS = push-based (subscribers get notified). If you need "fan-out" to multiple targets, use SNS + SQS pattern. If you need "ordering", use SQS FIFO. EventBridge is for event-driven with filtering/routing.',
-        heuristic: '"SQS = Queue (pull), SNS = Notify (push), EventBridge = smart router". For ordering: FIFO. For fan-out: SNS->SQS.',
+        examTip:
+          '"Keep CPU around 50%" → Target Tracking. "Known traffic patterns at 9am" → Scheduled. "Gradual response to alarm severity" → Step Scaling. "ML-based forecast" → Predictive Scaling.',
+        heuristic: '"Target is lazy, Step is picky, Scheduled is punctual, Predictive is clever."',
+      },
+      {
+        title: 'Decoupling & Async Patterns',
+        icon: '📦',
+        services: ['SQS', 'SNS', 'EventBridge', 'Step Functions'],
+        points: [
+          'SQS: 256 KB max payload; Standard (unlimited TPS) vs FIFO (300 msg/s, 3000 batched)',
+          'SQS retention: default 4 days, max 14 days. Visibility timeout default 30s, max 12h',
+          'SNS + SQS fan-out: one topic → many queues, independent consumers',
+          'EventBridge: serverless bus, pattern-matching rules, partner SaaS integrations, schedules',
+          'Step Functions: Standard (1 yr, exactly-once) vs Express (5 min, high-volume, at-least-once)',
+          'Loose coupling = independent scaling + failure isolation',
+        ],
+        examTip:
+          '"Decouple + async" → SQS. "Multiple subscribers" → SNS. "Guaranteed order + no duplicates" → SQS FIFO. "Event-driven with filtering" → EventBridge. "Workflow orchestration" → Step Functions.',
+        heuristic: '"SQS pulls, SNS pushes, EventBridge routes."',
+        subtopics: [
+          {
+            title: 'SQS Standard vs FIFO',
+            points: [
+              'Standard: unlimited throughput, at-least-once delivery, best-effort ordering',
+              'FIFO: 300 msg/s (3000 with batching), exactly-once delivery, strict ordering',
+              'Message group ID controls ordering scope in FIFO queues',
+              'Dead Letter Queue: isolate messages after maxReceiveCount failed attempts',
+              'Visibility Timeout: how long a message is invisible during processing',
+              'Long Polling (1–20 s) cuts empty receives and reduces cost',
+            ],
+          },
+          {
+            title: 'SNS vs SQS vs EventBridge',
+            points: [
+              'SNS: pub/sub push — SQS, Lambda, HTTP, email, SMS, Kinesis Firehose subscribers',
+              'SQS: queue pull — buffering, decoupling, async processing',
+              'EventBridge: 100+ AWS service integrations + SaaS partners + schedules + schema registry',
+              'Fan-out pattern: SNS topic → many SQS queues; each consumer processes independently',
+              'EventBridge replay/archive: re-run past events against new targets',
+            ],
+          },
+          {
+            title: 'Step Functions Workflows',
+            points: [
+              'Standard: long-running (1 yr), exactly-once, full execution history retained',
+              'Express: 5 min cap, 100K/s, at-least-once, cheaper per execution',
+              'Integrates with 200+ AWS services via optimized connectors',
+              'Error handling: Retry + Catch blocks; Parallel / Map states for fan-out',
+              'Use cases: order processing, ETL pipelines, ML training workflows, human approval',
+            ],
+          },
+        ],
       },
       {
         title: 'Disaster Recovery Strategies',
+        icon: '🛠',
+        services: ['AWS Backup', 'Route 53', 'CloudEndure', 'Cross-Region Replication'],
         points: [
-          'Backup & Restore: lowest cost, highest RTO/RPO',
-          'Pilot Light: minimal version running (DB replication), scale up on disaster',
-          'Warm Standby: scaled-down but fully functional copy',
-          'Multi-Site Active-Active: lowest RTO/RPO, highest cost',
-          'RPO: how much data you can afford to lose',
-          'RTO: how quickly you need to recover',
-          'Route 53 failover routing for DNS-level failover',
+          'Backup & Restore: cheapest, highest RTO/RPO (hours to days)',
+          'Pilot Light: core systems (DB) replicated; scale up app tier on disaster',
+          'Warm Standby: scaled-down but functional copy running in the DR region',
+          'Multi-Site Active-Active: full capacity in both regions; lowest RTO/RPO, highest cost',
+          'RPO = data loss tolerance; RTO = downtime tolerance',
+          'AWS Backup: centralized, policy-driven backups across RDS, DynamoDB, EFS, EBS, S3, etc.',
         ],
-        examTip: 'DR strategies from cheapest to most expensive: Backup & Restore < Pilot Light < Warm Standby < Active-Active. RTO/RPO decrease as cost increases. If budget is tight, Backup & Restore. If near-zero downtime, Active-Active.',
-        heuristic: '"B-P-W-A" (Backup, Pilot, Warm, Active) = cost goes UP, RTO/RPO go DOWN. Think of it as a dimmer switch: more money = faster recovery.',
+        examTip:
+          'DR cost order (cheap → expensive): Backup & Restore < Pilot Light < Warm Standby < Active-Active. Same order, RTO/RPO decrease. Budget-tight → Backup & Restore. Near-zero downtime → Active-Active.',
+        heuristic: '"B-P-W-A": Backup, Pilot, Warm, Active. Cost up, RTO/RPO down.',
       },
       {
         title: 'Data Resilience',
+        icon: '💾',
+        services: ['S3 Versioning', 'S3 Object Lock', 'EBS Snapshots', 'RDS Backups', 'DynamoDB PITR'],
         points: [
-          'S3 versioning: protect against accidental deletes',
-          'S3 Object Lock: WORM compliance (Governance/Compliance mode)',
-          'EBS snapshots: point-in-time, stored in S3, incremental',
-          'RDS automated backups: 1-35 day retention',
-          'DynamoDB point-in-time recovery: 35-day continuous backups',
-          'AWS Backup: centralized backup across services',
+          'S3 Versioning: undo accidental overwrites/deletes; pair with MFA Delete for safety',
+          'S3 Object Lock: WORM compliance — Governance (admin override) vs Compliance (nobody, not even root)',
+          'EBS Snapshots: point-in-time, incremental, stored in S3, region-scoped',
+          'RDS automated backups: 1–35 day retention; manual snapshots live until you delete them',
+          'DynamoDB Point-In-Time Recovery: continuous backups up to 35 days prior',
+          'Cross-Region Replication requires versioning enabled on source + destination',
         ],
-        examTip: 'If the question mentions "prevent accidental deletion": S3 Versioning + MFA Delete. "WORM/compliance": S3 Object Lock in Compliance mode (nobody can delete, not even root). "Centralized backup management": AWS Backup.',
-        heuristic: '"Versioning = Undo, Object Lock = Cannot touch, Backup = Centralized". Governance mode = admin can override. Compliance mode = nobody can override.',
+        examTip:
+          '"Prevent accidental deletion" → S3 Versioning + MFA Delete. "Immutable for 7 years" → Object Lock Compliance mode. "Centralized backup across services" → AWS Backup.',
       },
     ],
   },
@@ -133,60 +310,138 @@ const CHAPTERS = [
     id: 3,
     domain: 'Design High-Performing Architectures',
     weight: '24%',
+    questions: '~16 questions',
     color: '#a855f7',
     icon: '⚡',
     topics: [
       {
-        title: 'Compute Optimization',
-        points: [
-          'Choose the right instance type for your workload',
-          'Placement groups: Cluster (low latency), Spread (HA), Partition (big data)',
-          'Lambda: serverless, event-driven, auto-scales, 15 min max',
-          'Fargate: serverless containers, no instance management',
-          'Auto Scaling target tracking: maintain metric at target value',
-          'Enhanced networking: higher PPS, lower latency (ENA, EFA)',
-        ],
-        examTip: 'Placement groups: "Cluster" = low latency HPC (same rack). "Spread" = max 7 instances/AZ, critical instances. "Partition" = big data (Hadoop/Kafka). If the question mentions "HPC" or "low latency between instances", choose Cluster.',
-        heuristic: '"C-S-P: Cluster = Close together, Spread = Separate, Partition = Parallel big data". ENA = Enhanced Network Adapter, EFA = Elastic Fabric Adapter (HPC).',
-      },
-      {
         title: 'Storage Performance',
+        icon: '💽',
+        services: ['S3', 'EBS', 'EFS', 'FSx', 'Instance Store'],
         points: [
-          'EBS io2: up to 64,000 IOPS (Block Express: 256,000)',
-          'EBS gp3: 3,000 IOPS baseline, decouple IOPS from size',
-          'Instance store: highest I/O, ephemeral (lost on stop)',
-          'S3 Transfer Acceleration: fast uploads via CloudFront edges',
-          'S3 multipart upload: parallel uploads for large files (>100MB)',
-          'EFS: scales automatically, choose burst vs provisioned throughput',
+          'S3: 5 TB max object size; 3,500 PUT/s and 5,500 GET/s per prefix',
+          'EBS gp3: 3,000 IOPS baseline (up to 16,000); decouples IOPS from volume size',
+          'EBS io2 Block Express: up to 256,000 IOPS, sub-ms latency — databases',
+          'Instance Store: highest IOPS, ephemeral (lost on stop/terminate) — caches, buffers',
+          'EFS: Linux NFS, multi-AZ, scales to petabytes, performance modes: General vs Max I/O',
+          'FSx for Windows (SMB/AD), FSx for Lustre (HPC/ML), FSx for NetApp ONTAP (multi-protocol)',
         ],
-        examTip: 'For maximum IOPS: io2 Block Express (256K IOPS). For cost-effective general purpose: gp3. If "ephemeral" or "temporary high I/O": instance store. For large file uploads: S3 multipart (>100MB) + Transfer Acceleration (geographic distance).',
-        heuristic: '"gp3 = General, io2 = Intense, Instance Store = Insanely fast but lost on stop". Remember: gp3 lets you set IOPS independently of size (unlike gp2).',
+        examTip:
+          '"Highest IOPS, OK to lose data" → Instance Store. "Shared Linux file system" → EFS. "Shared Windows file system" → FSx for Windows. "HPC scratch" → FSx for Lustre. "Sub-ms DB storage" → io2 Block Express.',
+        heuristic: '"gp3 = General, io2 = Intense, Instance Store = Instant-but-disposable."',
+        subtopics: [
+          {
+            title: 'S3 Storage Classes',
+            points: [
+              'S3 Standard: frequent access, 99.99% availability, 11 9s durability',
+              'S3 Standard-IA: infrequent access, retrieval fee, 30-day minimum',
+              'S3 One Zone-IA: single AZ, 20% cheaper than Standard-IA, 99.5% availability',
+              'Glacier Instant Retrieval: ms retrieval, 90-day minimum, 128 KB min charge',
+              'Glacier Flexible: Expedited (1–5 min), Standard (3–5 h), Bulk (5–12 h); 90-day min',
+              'Glacier Deep Archive: Standard (12 h), Bulk (48 h); 180-day min; cheapest',
+              'S3 Intelligent-Tiering: auto-move between tiers, no retrieval fees, small monitoring cost',
+            ],
+          },
+          {
+            title: 'EBS Volume Types',
+            points: [
+              'gp3: 3,000 IOPS baseline → 16,000 max, 125–1000 MB/s; cost-effective default',
+              'gp2: legacy, 3 IOPS/GB, max 16,000; performance tied to volume size',
+              'io2 Block Express: 256,000 IOPS max, sub-ms latency, 99.999% durability',
+              'st1 (Throughput HDD): 500 MB/s, streaming/big data, cannot be boot volume',
+              'sc1 (Cold HDD): 250 MB/s, cheapest block, infrequent access, cannot be boot volume',
+              'EBS volumes are AZ-locked; snapshots are region-scoped and can be copied cross-region',
+            ],
+          },
+          {
+            title: 'EFS vs FSx',
+            points: [
+              'EFS: Linux NFS v4.1, multi-AZ by default, lifecycle to EFS-IA for cost savings',
+              'FSx for Windows: SMB, NTFS, AD integration, DFS namespaces',
+              'FSx for Lustre: sub-ms latency, 100s of GB/s, tight S3 integration for HPC/ML',
+              'FSx for NetApp ONTAP: multi-protocol (NFS/SMB/iSCSI), snapshots, SnapMirror replication',
+            ],
+          },
+        ],
       },
       {
         title: 'Database Performance',
+        icon: '🗄',
+        services: ['RDS', 'Aurora', 'DynamoDB', 'ElastiCache', 'DAX'],
         points: [
-          'RDS Read Replicas: scale read-heavy workloads',
-          'Aurora: auto-scaling readers, Global Database for cross-region',
-          'DynamoDB: provision WCU/RCU or use on-demand, DAX for caching',
-          'ElastiCache Redis: session store, leaderboards, caching',
-          'Redshift: columnar storage, MPP for analytics',
-          'Choose the right DB: relational vs NoSQL vs in-memory vs graph',
+          'RDS Read Replicas: async, up to 5 per source (15 for Aurora)',
+          'Aurora: 5× MySQL / 3× PostgreSQL; 128 TB storage; 6 copies across 3 AZs; Global DB <1 s lag',
+          'DynamoDB: single-digit ms at any scale; 400 KB item limit; DAX for μs cached reads',
+          'ElastiCache Redis: persistence, replication, pub/sub, sorted sets, geospatial',
+          'ElastiCache Memcached: simple multi-threaded cache, horizontal sharding, no persistence',
+          'Redshift: columnar MPP data warehouse; Spectrum queries S3 in-place',
         ],
-        examTip: 'Read-heavy workload? Read Replicas. Sub-millisecond reads on DynamoDB? DAX. Session management? ElastiCache Redis. Analytics/BI? Redshift. If "cross-region low-latency reads": Aurora Global Database.',
-        heuristic: '"Read Replicas for reads, DAX for DynamoDB speed, Redis for sessions, Redshift for reports". Think: Read/DAX/Redis/Redshift = the 4 R\'s of database performance.',
+        examTip:
+          '"Read-heavy RDBMS" → Read Replicas. "μs DynamoDB reads" → DAX. "Session store / leaderboard" → ElastiCache Redis. "Analytics on petabytes" → Redshift. "Multi-region low-latency reads" → Aurora Global DB.',
+        heuristic: 'The 4 Rs of DB performance: Read Replicas, DAX, Redis, Redshift.',
+        subtopics: [
+          {
+            title: 'RDS vs Aurora',
+            points: [
+              'RDS engines: MySQL, PostgreSQL, MariaDB, Oracle, SQL Server; 64 TB max; 5 read replicas',
+              'Aurora: MySQL/PostgreSQL-compatible; 128 TB; 15 read replicas; 6 copies × 3 AZs',
+              'Aurora Serverless v2: auto-scales to zero, billed per ACU-second',
+              'Aurora Global DB: cross-region replicas with <1 s lag; write forwarding from secondary',
+              'Cannot SSH into RDS/Aurora — use Performance Insights, Enhanced Monitoring, Proxy',
+            ],
+          },
+          {
+            title: 'DynamoDB Deep Dive',
+            points: [
+              'Capacity: On-Demand (per-request) vs Provisioned (RCU/WCU + auto-scaling)',
+              'DAX: in-memory cache, μs latency, 10× read throughput, no app code changes',
+              'Global Tables: multi-region active-active, eventual consistency, conflict resolution by timestamp',
+              'DynamoDB Streams: change data capture, 24 h retention, Lambda triggers',
+              'TTL: automatic item expiration, no WCU charge — perfect for sessions',
+              'Global Secondary Index = different partition key; Local SI = same PK, different SK',
+            ],
+          },
+          {
+            title: 'Redis vs Memcached',
+            points: [
+              'Redis: persistence (RDB, AOF), replication, Multi-AZ, complex data types',
+              'Memcached: simple, multi-threaded, horizontal sharding, no persistence',
+              'Use Redis for: HA, pub/sub, leaderboards, geospatial, session store',
+              'Use Memcached for: simple cache on multi-core boxes, no HA needs',
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Caching & Content Delivery',
+        icon: '🌍',
+        services: ['CloudFront', 'ElastiCache', 'Global Accelerator', 'S3 Transfer Acceleration'],
+        points: [
+          'CloudFront: 400+ edge locations; cache static/dynamic; OAC restricts S3 to CF only',
+          'Lambda@Edge: full Node.js/Python at edge (viewer/origin req/res)',
+          'CloudFront Functions: lightweight JS for URL rewrites + header manipulation (cheaper, faster)',
+          'Global Accelerator: TCP/UDP optimization via the AWS backbone with static anycast IPs',
+          'S3 Transfer Acceleration: upload via the nearest edge, then AWS backbone to the bucket',
+          'API Gateway caching: reduce backend invocations and response latency',
+        ],
+        examTip:
+          'CloudFront caches CONTENT at the edge. Global Accelerator routes CONNECTIONS over the backbone. "Static IP" or "non-HTTP" → Global Accelerator. "Cache HTML/images globally" → CloudFront.',
+        heuristic: '"CF = Content caching, GA = Connection routing."',
       },
       {
         title: 'Network Performance',
+        icon: '📶',
+        services: ['CloudFront', 'Global Accelerator', 'VPC Endpoints', 'Direct Connect', 'NLB'],
         points: [
-          'CloudFront: cache at 400+ edge locations globally',
-          'Global Accelerator: route to optimal endpoint via AWS backbone',
-          'VPC endpoints: private connectivity to AWS services (no internet)',
-          'Direct Connect: dedicated 1/10 Gbps connection to AWS',
-          'NLB: millions of requests/sec, ultra-low latency (Layer 4)',
-          'API caching in API Gateway: reduce backend calls',
+          'VPC Endpoints keep traffic inside the AWS network (avoid internet + NAT charges)',
+          'Direct Connect: dedicated 1/10/100 Gbps link; consistent latency; pair with VPN for encryption',
+          'NLB: millions of requests/sec, ultra-low latency, preserves source IP at Layer 4',
+          'Placement Groups: Cluster (low latency, same rack), Spread (max 7/AZ), Partition (Hadoop/Kafka)',
+          'Enhanced networking: ENA (up to 100 Gbps), EFA (HPC bypass kernel)',
+          'Transit Gateway: hub-and-spoke for many VPCs + on-prem; replaces VPC peering mesh',
         ],
-        examTip: 'CloudFront = cache static/dynamic content at edge. Global Accelerator = static IP + AWS backbone for non-HTTP (TCP/UDP) or multi-region failover. CloudFront caches; Global Accelerator routes. If "static IP" or "gaming/IoT": Global Accelerator.',
-        heuristic: '"CloudFront = Content caching, Global Accelerator = Connection routing". CF = HTTP content at edge. GA = TCP/UDP via backbone. Both reduce latency, different mechanisms.',
+        examTip:
+          '"HPC tight latency" → Cluster placement group + EFA. "Highly available instances separated" → Spread. "Big data partition isolation" → Partition. "Many VPCs meshed together" → Transit Gateway.',
       },
     ],
   },
@@ -194,269 +449,417 @@ const CHAPTERS = [
     id: 4,
     domain: 'Design Cost-Optimized Architectures',
     weight: '20%',
+    questions: '~13 questions',
     color: '#22c55e',
     icon: '💰',
     topics: [
       {
         title: 'Compute Cost Optimization',
+        icon: '💻',
+        services: ['On-Demand', 'Reserved', 'Spot', 'Savings Plans', 'Lambda', 'Fargate Spot'],
         points: [
-          'Reserved Instances: up to 72% discount (1 or 3 year)',
-          'Savings Plans: flexible discount (Compute or EC2)',
-          'Spot Instances: up to 90% discount, interruptible workloads',
-          'Lambda: pay per request + compute time, no idle cost',
-          'Right-sizing: match instance type to actual usage',
-          'Auto Scaling: scale down during low demand',
+          'On-Demand: most flexible, highest cost; good for unpredictable workloads',
+          'Reserved (1–3 yr): up to 72% off; best for steady-state production',
+          'Spot: up to 90% off; for fault-tolerant, interruptible workloads (batch, CI/CD, big data)',
+          'Savings Plans: flexible commitment (Compute or EC2); works across families/regions',
+          'Lambda: pay per request + compute time; no idle cost; scales to zero',
+          'Right-sizing: match instance family + size to actual CPU/RAM usage',
         ],
-        examTip: 'Predictable steady-state = Reserved Instances or Savings Plans. Interruptible/fault-tolerant = Spot (batch processing, CI/CD, big data). Short unpredictable bursts = On-Demand. Savings Plans are more flexible than RIs.',
-        heuristic: '"Spot = Save 90% but can lose it, Reserved = Save 72% with commitment, On-Demand = Full price no commitment". Think of it like hotel booking: advance = cheaper.',
+        examTip:
+          '"Batch processing, can restart" → Spot. "Steady baseline 24/7" → Reserved or Savings Plan. "Flexible across families and regions" → Compute Savings Plan. "Bursty unpredictable" → On-Demand or Lambda.',
+        heuristic: '"Spot = risk, Reserved = commitment, Savings = flexible commitment."',
       },
       {
         title: 'Storage Cost Optimization',
+        icon: '🪣',
+        services: ['S3 Lifecycle', 'S3 Intelligent-Tiering', 'Glacier', 'Deep Archive', 'EBS gp3'],
         points: [
-          'S3 Lifecycle rules: transition to cheaper storage classes over time',
-          'S3 Intelligent-Tiering: auto-moves between tiers based on access',
-          'Glacier/Deep Archive: lowest cost for archival data',
-          'EBS: delete unused volumes, use gp3 over gp2 for cost savings',
-          'S3 analytics: identify optimal lifecycle transition timing',
-          'Compress and aggregate data before storing',
+          'S3 tiers (cheap → expensive retrieval): Standard > Standard-IA > One Zone-IA > Glacier Instant > Glacier Flexible > Deep Archive',
+          'Intelligent-Tiering: auto moves objects between tiers, no retrieval fees, small monitoring charge',
+          'Lifecycle rules: automate transitions and expirations for known patterns',
+          'EBS: prefer gp3 over gp2 for cost savings; delete unattached volumes; snapshot archive tier',
+          'S3 Storage Lens: org-wide visibility + recommendations',
+          'Compress + columnar formats (Parquet/ORC) cut Athena/Redshift scan costs',
         ],
-        examTip: 'Unknown access patterns? S3 Intelligent-Tiering (no retrieval fees, small monitoring fee). Known patterns? Lifecycle rules. Archive rarely accessed: Glacier (minutes-hours retrieval). Never accessed: Deep Archive (12 hours, cheapest).',
-        heuristic: '"Standard > IA > One Zone-IA > Glacier Instant > Glacier Flexible > Deep Archive". Cost decreases, retrieval time increases going right. Intelligent-Tiering = "set and forget".',
+        examTip:
+          '"Unknown access pattern" → Intelligent-Tiering. "Must keep 7 years, rarely read" → Glacier Deep Archive. "Infrequent with quick retrieval" → Standard-IA or Glacier Instant.',
       },
       {
         title: 'Database Cost Optimization',
+        icon: '💲',
+        services: ['Aurora Serverless', 'DynamoDB On-Demand', 'RDS Reserved', 'ElastiCache Reserved'],
         points: [
-          'Aurora Serverless v2: scales to zero for dev/test',
-          'DynamoDB On-Demand: pay per request for unpredictable workloads',
-          'DynamoDB Reserved Capacity: predictable workloads',
-          'RDS Reserved Instances: up to 69% discount',
-          'ElastiCache Reserved Nodes: lower long-term cost',
-          'Use read replicas to offload reads instead of scaling up primary',
+          'Aurora Serverless v2: scales to zero for dev/test or spiky workloads',
+          'DynamoDB On-Demand: pay per request; perfect for unpredictable traffic',
+          'DynamoDB Reserved Capacity: commit to baseline WCU/RCU for predictable savings',
+          'RDS Reserved Instances: up to 69% off over 1–3 year terms',
+          'Scale OUT with read replicas before scaling UP to a bigger instance class',
+          'Use ElastiCache to offload repeated reads and shrink the primary DB tier',
         ],
-        examTip: 'Dev/test environments with intermittent usage? Aurora Serverless. Unpredictable DynamoDB traffic? On-Demand mode. Predictable production? Reserved capacity. Always consider read replicas before scaling up the primary instance.',
-        heuristic: '"Serverless for spiky, Reserved for steady, On-Demand for unknown". Scale OUT (replicas) before scaling UP (bigger instance).',
+        examTip:
+          '"Dev/test, intermittent use" → Aurora Serverless v2. "Traffic unpredictable" → DynamoDB On-Demand. "Steady production DynamoDB" → Reserved Capacity. Always consider read replicas before upsizing.',
       },
       {
-        title: 'Architecture Cost Patterns',
+        title: 'Network Cost Optimization',
+        icon: '🌐',
+        services: ['VPC Endpoints', 'CloudFront', 'NAT Gateway', 'Direct Connect'],
         points: [
-          'Serverless: pay only for what you use (Lambda, Fargate, S3, DynamoDB)',
-          'Use managed services to reduce operational overhead',
-          'Data transfer: minimize cross-AZ and cross-region transfers',
-          'VPC endpoints: avoid NAT Gateway data processing charges',
-          'CloudFront: reduce origin load and data transfer costs',
-          'Consolidated billing: volume discounts across accounts',
-          'AWS Cost Explorer, Budgets, and Trusted Advisor for monitoring',
+          'Inbound data transfer: free. Cross-AZ: small charge. Cross-Region: highest charge',
+          'VPC Endpoints eliminate NAT Gateway charges for AWS service access',
+          'CloudFront reduces origin data transfer (and shields S3 from egress fees)',
+          'NAT Gateway has per-GB processing fees — consolidate to fewer gateways when possible',
+          'Direct Connect: lower egress rates vs public internet for sustained transfer',
+          'Consolidated billing in Organizations unlocks volume discounts across accounts',
         ],
-        examTip: 'Data transfer costs are a frequent exam topic. Inbound = free. Same AZ = free. Cross-AZ = small cost. Cross-Region = highest cost. VPC endpoints eliminate NAT Gateway charges for AWS service access. CloudFront reduces S3 transfer costs.',
-        heuristic: '"In = Free, Same AZ = Free, Cross-AZ = $, Cross-Region = $$$". Always pick VPC endpoints over NAT Gateway for AWS services. Use CloudFront to reduce S3 egress.',
+        examTip:
+          'Transfer-cost hierarchy: IN=free → same AZ=free → cross-AZ=$ → cross-Region=$$$. VPC Endpoint > NAT Gateway for AWS service calls. CloudFront > direct S3 egress for public content.',
+        heuristic: '"In = Free, Same-AZ = Free, Cross-AZ = $, Cross-Region = $$$."',
+      },
+      {
+        title: 'Cost Management Tools',
+        icon: '📊',
+        services: ['Cost Explorer', 'Budgets', 'Trusted Advisor', 'Compute Optimizer'],
+        points: [
+          'Cost Explorer: visualize, analyze, and forecast spend across services and tags',
+          'AWS Budgets: alert on cost, usage, RI coverage, or Savings Plan utilization thresholds',
+          'Trusted Advisor: best-practice checks — idle resources, security groups, RI coverage',
+          'Compute Optimizer: right-sizing recommendations for EC2, Lambda, EBS, Auto Scaling Groups',
+          'Tagging strategy drives chargeback/showback and granular cost allocation reports',
+        ],
+        examTip:
+          '"Find idle EC2 / oversized volumes" → Trusted Advisor or Compute Optimizer. "Alert when spend > $X" → AWS Budgets. "Where did the money go last month?" → Cost Explorer.',
       },
     ],
   },
 ];
 
+// ─── Styling helpers ───────────────────────────────────────────────────────
 const styles = {
   page: {
-    maxWidth: 960,
+    maxWidth: 1040,
     margin: '0 auto',
-    padding: '2rem 1rem',
-    fontFamily: 'var(--sans)',
+    padding: '2rem 1rem 3rem',
+    fontFamily: 'var(--sans, system-ui)',
     color: 'var(--text)',
   },
   header: {
     textAlign: 'center',
-    marginBottom: '2.5rem',
+    marginBottom: '1.25rem',
   },
   title: {
-    fontSize: '2rem',
-    fontWeight: 700,
-    color: 'var(--text-h)',
+    fontSize: '2.1rem',
+    fontWeight: 800,
     margin: 0,
+    background: 'linear-gradient(135deg, #f97316, #a855f7)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
   },
   subtitle: {
     color: 'var(--text)',
-    marginTop: '0.5rem',
-    fontSize: '1rem',
+    opacity: 0.75,
+    marginTop: '0.4rem',
+    fontSize: '0.95rem',
   },
-  domainCard: {
+  intro: (accent) => ({
+    background: `linear-gradient(135deg, ${accent}11, rgba(168,85,247,0.08))`,
+    border: `1px solid ${accent}33`,
+    borderRadius: 14,
+    padding: '0.9rem 1.1rem',
+    marginBottom: '1.25rem',
+    fontSize: '0.9rem',
+    lineHeight: 1.55,
+    color: 'var(--text)',
+  }),
+  controlsRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    marginBottom: '1.5rem',
+  },
+  chip: (color, filled) => ({
+    padding: '0.45rem 0.95rem',
+    borderRadius: 999,
+    border: `1.5px solid ${color}`,
+    background: filled ? color : 'transparent',
+    color: filled ? '#fff' : color,
+    fontWeight: 700,
+    fontSize: '0.78rem',
+    cursor: 'pointer',
+    transition: 'all 0.18s',
+    letterSpacing: 0.3,
+  }),
+  progressWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.8rem 1rem',
+    background: 'var(--code-bg)',
+    border: '1px solid var(--border)',
+    borderRadius: 12,
+    marginBottom: '2rem',
+    fontSize: '0.82rem',
+  },
+  progressBarOuter: {
+    flex: 1,
+    height: 8,
+    background: 'rgba(148,163,184,0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarInner: (color, pct) => ({
+    height: '100%',
+    width: `${pct}%`,
+    background: `linear-gradient(90deg, ${color}, #a855f7)`,
+    transition: 'width 0.4s ease',
+  }),
+  progressLabel: {
+    fontFamily: 'var(--mono, monospace)',
+    color: 'var(--text)',
+    opacity: 0.75,
+    minWidth: 80,
+    textAlign: 'right',
+  },
+  domainCard: (color) => ({
     marginBottom: '1.5rem',
     borderRadius: 16,
     border: '1px solid var(--border)',
     background: 'var(--bg)',
     overflow: 'hidden',
-  },
+    boxShadow: `0 12px 32px ${color}10`,
+  }),
   domainHeader: (color) => ({
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    padding: '1.25rem 1.5rem',
+    padding: '1.15rem 1.4rem',
     cursor: 'pointer',
-    background: 'var(--code-bg)',
-    borderLeft: `5px solid ${color}`,
+    background: `linear-gradient(135deg, ${color}18, transparent 70%)`,
+    borderLeft: `4px solid ${color}`,
     userSelect: 'none',
   }),
-  domainIcon: {
-    fontSize: '2rem',
-    flexShrink: 0,
-  },
-  domainInfo: {
-    flex: 1,
-  },
+  domainIcon: { fontSize: '1.7rem', flexShrink: 0 },
+  domainInfo: { flex: 1 },
   domainTitle: {
-    fontSize: '1.15rem',
+    fontSize: '1.1rem',
     fontWeight: 700,
     color: 'var(--text-h)',
     margin: 0,
   },
-  domainWeight: (color) => ({
-    fontSize: '0.85rem',
-    fontWeight: 700,
+  domainMeta: (color) => ({
+    fontFamily: 'var(--mono, monospace)',
+    fontSize: '0.78rem',
     color,
-    marginTop: '0.25rem',
+    marginTop: '0.2rem',
+    letterSpacing: 0.3,
   }),
   chevron: (expanded) => ({
-    fontSize: '1.2rem',
+    fontSize: '1rem',
     color: 'var(--text)',
     transition: 'transform 0.25s',
     transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
     flexShrink: 0,
   }),
-  domainBody: {
-    padding: '1rem 1.5rem 1.5rem',
+  domainBody: { padding: '0.5rem 1rem 1.25rem 1.25rem' },
+  // Tree branch with L-shaped connector
+  topicBranch: {
+    position: 'relative',
+    paddingLeft: 26,
+    marginTop: '0.75rem',
   },
-  topicCard: {
-    marginBottom: '1rem',
+  branchLine: (color) => ({
+    position: 'absolute',
+    left: 8,
+    top: 0,
+    bottom: 0,
+    width: 2,
+    background: `${color}33`,
+  }),
+  branchNub: (color) => ({
+    position: 'absolute',
+    left: 8,
+    top: 22,
+    width: 16,
+    height: 2,
+    background: `${color}55`,
+  }),
+  topicCard: (color, expanded) => ({
     borderRadius: 12,
-    border: '1px solid var(--border)',
+    border: `1px solid ${expanded ? color : 'var(--border)'}`,
     background: 'var(--code-bg)',
     overflow: 'hidden',
-  },
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    boxShadow: expanded ? `0 0 0 1px ${color}33, 0 8px 24px ${color}14` : 'none',
+  }),
   topicHeader: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0.85rem 1.15rem',
+    gap: '0.65rem',
+    padding: '0.85rem 1.1rem',
     cursor: 'pointer',
     userSelect: 'none',
   },
+  topicIcon: { fontSize: '1.05rem', flexShrink: 0 },
   topicTitle: {
-    fontSize: '1rem',
+    flex: 1,
+    fontSize: '0.98rem',
     fontWeight: 600,
     color: 'var(--text-h)',
     margin: 0,
   },
-  topicChevron: (expanded) => ({
-    fontSize: '0.9rem',
-    color: 'var(--text)',
-    transition: 'transform 0.25s',
-    transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-  }),
-  pointsList: {
-    listStyle: 'none',
-    padding: '0 1.15rem 1rem',
-    margin: 0,
+  topicBody: { padding: '0 1.1rem 1rem' },
+  serviceTags: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: '0.85rem',
   },
-  point: (color) => ({
+  serviceTag: (color) => ({
+    padding: '3px 10px',
+    borderRadius: 999,
+    fontSize: '0.72rem',
+    fontFamily: 'var(--mono, monospace)',
+    color,
+    background: `${color}12`,
+    border: `1px solid ${color}44`,
+  }),
+  sectionLabel: (color) => ({
+    fontSize: '0.66rem',
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    color,
+    marginBottom: 4,
+    marginTop: '0.35rem',
+  }),
+  pointList: { margin: 0, padding: 0, listStyle: 'none' },
+  pointItem: {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: '0.6rem',
-    padding: '0.4rem 0',
-    fontSize: '0.9rem',
+    gap: 8,
+    padding: '4px 0',
+    fontSize: '0.86rem',
+    lineHeight: 1.55,
     color: 'var(--text)',
-    lineHeight: 1.6,
-  }),
-  bullet: (color) => ({
+  },
+  pointBullet: (color) => ({
     color,
     fontWeight: 700,
     flexShrink: 0,
-    marginTop: '0.15rem',
+    marginTop: 2,
   }),
   tipBox: (color) => ({
-    margin: '0.5rem 1.15rem 0.75rem',
-    padding: '0.75rem 1rem',
+    margin: '0.75rem 0 0',
+    padding: '0.75rem 0.9rem',
     borderRadius: 10,
     background: `${color}10`,
-    border: `1px solid ${color}33`,
-    fontSize: '0.85rem',
-    lineHeight: 1.6,
+    border: `1px solid ${color}44`,
+    fontSize: '0.82rem',
+    lineHeight: 1.55,
     color: 'var(--text)',
-  }),
-  tipLabel: (color) => ({
-    display: 'inline-block',
-    fontSize: '0.7rem',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    color: color,
-    marginBottom: '0.3rem',
   }),
   heuristicBox: {
-    margin: '0 1.15rem 1rem',
-    padding: '0.65rem 1rem',
+    margin: '0.5rem 0 0',
+    padding: '0.55rem 0.85rem',
     borderRadius: 10,
-    background: 'var(--code-bg)',
+    background: 'rgba(148,163,184,0.08)',
     border: '1px dashed var(--border)',
-    fontSize: '0.83rem',
-    lineHeight: 1.6,
+    fontSize: '0.8rem',
+    lineHeight: 1.55,
     color: 'var(--text)',
-    fontFamily: 'var(--mono)',
+    fontFamily: 'var(--mono, monospace)',
   },
-  heuristicLabel: {
+  boxLabel: (color) => ({
     display: 'inline-block',
-    fontSize: '0.7rem',
-    fontWeight: 700,
+    fontSize: '0.66rem',
+    fontWeight: 800,
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    color: 'var(--accent)',
-    marginBottom: '0.3rem',
-  },
-  progressWrap: {
-    display: 'flex',
-    gap: '0.5rem',
-    marginBottom: '2rem',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  progressChip: (color, active) => ({
-    padding: '0.5rem 1rem',
-    borderRadius: 12,
-    border: `2px solid ${color}`,
-    background: active ? color : 'transparent',
-    color: active ? '#fff' : color,
-    fontWeight: 600,
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
+    letterSpacing: 0.8,
+    color,
+    marginBottom: 3,
   }),
+  subBranchWrap: {
+    position: 'relative',
+    marginTop: '0.9rem',
+    paddingLeft: 22,
+  },
+  subBranchLine: (color) => ({
+    position: 'absolute',
+    left: 6,
+    top: 0,
+    bottom: 0,
+    width: 2,
+    background: `${color}22`,
+  }),
+  subCard: (color, expanded) => ({
+    marginTop: '0.55rem',
+    borderRadius: 10,
+    border: `1px solid ${expanded ? color : 'var(--border)'}`,
+    background: 'var(--bg)',
+    overflow: 'hidden',
+  }),
+  subHeader: (color) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '0.55rem 0.85rem',
+    cursor: 'pointer',
+    userSelect: 'none',
+    color,
+    fontWeight: 600,
+    fontSize: '0.85rem',
+  }),
+  subHeaderArrow: '➤',
+  subBody: {
+    padding: '0.1rem 0.95rem 0.75rem 1.6rem',
+    borderTop: '1px solid var(--border)',
+  },
 };
 
+// ─── Component ─────────────────────────────────────────────────────────────
 export default function Chapters() {
   const [expandedDomains, setExpandedDomains] = useState({ 0: true });
   const [expandedTopics, setExpandedTopics] = useState({});
+  const [expandedSubs, setExpandedSubs] = useState({});
 
-  const toggleDomain = (idx) => {
-    setExpandedDomains((prev) => ({ ...prev, [idx]: !prev[idx] }));
-  };
+  const totalTopics = useMemo(
+    () => CHAPTERS.reduce((a, c) => a + c.topics.length, 0),
+    [],
+  );
+  const openedTopicCount = Object.values(expandedTopics).filter(Boolean).length;
+  const progressPct = Math.round((openedTopicCount / totalTopics) * 100);
 
-  const toggleTopic = (key) => {
-    setExpandedTopics((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+  const toggleDomain = (idx) =>
+    setExpandedDomains((p) => ({ ...p, [idx]: !p[idx] }));
+
+  const toggleTopic = (key) =>
+    setExpandedTopics((p) => ({ ...p, [key]: !p[key] }));
+
+  const toggleSub = (key) =>
+    setExpandedSubs((p) => ({ ...p, [key]: !p[key] }));
 
   const expandAll = () => {
-    const domains = {};
-    const topics = {};
+    const d = {};
+    const t = {};
+    const s = {};
     CHAPTERS.forEach((ch, di) => {
-      domains[di] = true;
-      ch.topics.forEach((_, ti) => {
-        topics[`${di}-${ti}`] = true;
+      d[di] = true;
+      ch.topics.forEach((tp, ti) => {
+        t[`${di}-${ti}`] = true;
+        (tp.subtopics || []).forEach((_, si) => {
+          s[`${di}-${ti}-${si}`] = true;
+        });
       });
     });
-    setExpandedDomains(domains);
-    setExpandedTopics(topics);
+    setExpandedDomains(d);
+    setExpandedTopics(t);
+    setExpandedSubs(s);
   };
-
   const collapseAll = () => {
     setExpandedDomains({});
     setExpandedTopics({});
+    setExpandedSubs({});
   };
 
   return (
@@ -464,54 +867,52 @@ export default function Chapters() {
       <header style={styles.header}>
         <h1 style={styles.title}>SAA-C03 Study Chapters</h1>
         <p style={styles.subtitle}>
-          Domain-by-domain deep dive into exam topics
+          Domain-by-domain deep dive with exam tips and mnemonics. Study in
+          weight order: Security 30% → Resilient 26% → Performance 24% → Cost 20%.
         </p>
       </header>
 
-      <div style={styles.progressWrap}>
+      <div style={styles.controlsRow}>
         {CHAPTERS.map((ch) => (
-          <span
+          <button
             key={ch.id}
-            style={styles.progressChip(ch.color, false)}
+            style={styles.chip(ch.color, false)}
             onClick={() => {
               const el = document.getElementById(`domain-${ch.id}`);
               el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
           >
             {ch.icon} {ch.weight}
-          </span>
+          </button>
         ))}
-        <button
-          style={{
-            ...styles.progressChip('var(--accent, #a855f7)', false),
-            borderStyle: 'dashed',
-          }}
-          onClick={expandAll}
-        >
+        <button style={{ ...styles.chip('#a855f7', false), borderStyle: 'dashed' }} onClick={expandAll}>
           Expand All
         </button>
-        <button
-          style={{
-            ...styles.progressChip('var(--accent, #a855f7)', false),
-            borderStyle: 'dashed',
-          }}
-          onClick={collapseAll}
-        >
+        <button style={{ ...styles.chip('#94a3b8', false), borderStyle: 'dashed' }} onClick={collapseAll}>
           Collapse All
         </button>
       </div>
 
-      {CHAPTERS.map((chapter, dIdx) => {
-        const domainExpanded = expandedDomains[dIdx] === true;
+      <div style={styles.progressWrap}>
+        <span style={{ fontWeight: 700, color: 'var(--text-h)' }}>Progress</span>
+        <div style={styles.progressBarOuter}>
+          <div style={styles.progressBarInner('#f97316', progressPct)} />
+        </div>
+        <span style={styles.progressLabel}>
+          {openedTopicCount} / {totalTopics} topics
+        </span>
+      </div>
 
+      {CHAPTERS.map((chapter, dIdx) => {
+        const domainOpen = expandedDomains[dIdx] === true;
         return (
           <motion.div
             key={chapter.id}
             id={`domain-${chapter.id}`}
-            style={styles.domainCard}
-            initial={{ opacity: 0, y: 20 }}
+            style={styles.domainCard(chapter.color)}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: dIdx * 0.08 }}
+            transition={{ duration: 0.3, delay: dIdx * 0.05 }}
           >
             <div
               style={styles.domainHeader(chapter.color)}
@@ -519,17 +920,20 @@ export default function Chapters() {
             >
               <span style={styles.domainIcon}>{chapter.icon}</span>
               <div style={styles.domainInfo}>
-                <h2 style={styles.domainTitle}>{chapter.domain}</h2>
-                <div style={styles.domainWeight(chapter.color)}>
-                  Exam Weight: {chapter.weight} &middot; {chapter.topics.length} topics
+                <h2 style={styles.domainTitle}>
+                  Domain {chapter.id}: {chapter.domain}
+                </h2>
+                <div style={styles.domainMeta(chapter.color)}>
+                  {chapter.weight} of exam · {chapter.questions} · {chapter.topics.length} topics
                 </div>
               </div>
-              <span style={styles.chevron(domainExpanded)}>&#9662;</span>
+              <span style={styles.chevron(domainOpen)}>▾</span>
             </div>
 
             <AnimatePresence initial={false}>
-              {domainExpanded && (
+              {domainOpen && (
                 <motion.div
+                  key="domain-body"
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -539,63 +943,124 @@ export default function Chapters() {
                   <div style={styles.domainBody}>
                     {chapter.topics.map((topic, tIdx) => {
                       const topicKey = `${dIdx}-${tIdx}`;
-                      const topicExpanded = expandedTopics[topicKey] !== false;
-
+                      const topicOpen = expandedTopics[topicKey] === true;
                       return (
-                        <div key={tIdx} style={styles.topicCard}>
-                          <div
-                            style={styles.topicHeader}
-                            onClick={() => toggleTopic(topicKey)}
-                          >
-                            <h3 style={styles.topicTitle}>{topic.title}</h3>
-                            <span style={styles.topicChevron(topicExpanded)}>
-                              &#9662;
-                            </span>
-                          </div>
+                        <div key={tIdx} style={styles.topicBranch}>
+                          <span style={styles.branchLine(chapter.color)} />
+                          <span style={styles.branchNub(chapter.color)} />
+                          <div style={styles.topicCard(chapter.color, topicOpen)}>
+                            <div
+                              style={styles.topicHeader}
+                              onClick={() => toggleTopic(topicKey)}
+                            >
+                              <span style={styles.topicIcon}>{topic.icon || '◆'}</span>
+                              <h3 style={styles.topicTitle}>{topic.title}</h3>
+                              <span style={styles.chevron(topicOpen)}>▾</span>
+                            </div>
 
-                          <AnimatePresence initial={false}>
-                            {topicExpanded && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                style={{ overflow: 'hidden' }}
-                              >
-                                <ul style={styles.pointsList}>
-                                  {topic.points.map((point, pIdx) => (
-                                    <motion.li
-                                      key={pIdx}
-                                      style={styles.point(chapter.color)}
-                                      initial={{ opacity: 0, x: -10 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      transition={{
-                                        duration: 0.2,
-                                        delay: pIdx * 0.03,
-                                      }}
-                                    >
-                                      <span style={styles.bullet(chapter.color)}>
-                                        &#9656;
-                                      </span>
-                                      <span>{point}</span>
-                                    </motion.li>
-                                  ))}
-                                </ul>
-                                {topic.examTip && (
-                                  <div style={styles.tipBox(chapter.color)}>
-                                    <div style={styles.tipLabel(chapter.color)}>&#128161; Exam Tip</div>
-                                    {topic.examTip}
+                            <AnimatePresence initial={false}>
+                              {topicOpen && (
+                                <motion.div
+                                  key="topic-body"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  style={{ overflow: 'hidden' }}
+                                >
+                                  <div style={styles.topicBody}>
+                                    {topic.services && topic.services.length > 0 && (
+                                      <div style={styles.serviceTags}>
+                                        {topic.services.map((s) => (
+                                          <span key={s} style={styles.serviceTag(chapter.color)}>
+                                            {s}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    <div style={styles.sectionLabel(chapter.color)}>
+                                      Key Points
+                                    </div>
+                                    <ul style={styles.pointList}>
+                                      {topic.points.map((p, pi) => (
+                                        <li key={pi} style={styles.pointItem}>
+                                          <span style={styles.pointBullet(chapter.color)}>▸</span>
+                                          <span>{p}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+
+                                    {topic.examTip && (
+                                      <div style={styles.tipBox(chapter.color)}>
+                                        <div style={styles.boxLabel(chapter.color)}>💡 Exam Tip</div>
+                                        {topic.examTip}
+                                      </div>
+                                    )}
+                                    {topic.heuristic && (
+                                      <div style={styles.heuristicBox}>
+                                        <div style={styles.boxLabel('#a855f7')}>⚡ Mnemonic</div>
+                                        {topic.heuristic}
+                                      </div>
+                                    )}
+
+                                    {topic.subtopics && topic.subtopics.length > 0 && (
+                                      <div style={styles.subBranchWrap}>
+                                        <span style={styles.subBranchLine(chapter.color)} />
+                                        <div style={styles.sectionLabel(chapter.color)}>
+                                          Deep Dives
+                                        </div>
+                                        {topic.subtopics.map((sub, si) => {
+                                          const subKey = `${dIdx}-${tIdx}-${si}`;
+                                          const subOpen = expandedSubs[subKey] === true;
+                                          return (
+                                            <div
+                                              key={si}
+                                              style={styles.subCard(chapter.color, subOpen)}
+                                            >
+                                              <div
+                                                style={styles.subHeader(chapter.color)}
+                                                onClick={() => toggleSub(subKey)}
+                                              >
+                                                <span>➤</span>
+                                                <span style={{ flex: 1 }}>{sub.title}</span>
+                                                <span style={styles.chevron(subOpen)}>▾</span>
+                                              </div>
+                                              <AnimatePresence initial={false}>
+                                                {subOpen && (
+                                                  <motion.div
+                                                    key="sub-body"
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.18 }}
+                                                    style={{ overflow: 'hidden' }}
+                                                  >
+                                                    <div style={styles.subBody}>
+                                                      <ul style={styles.pointList}>
+                                                        {sub.points.map((pt, pi) => (
+                                                          <li key={pi} style={styles.pointItem}>
+                                                            <span style={styles.pointBullet(chapter.color)}>
+                                                              ▸
+                                                            </span>
+                                                            <span>{pt}</span>
+                                                          </li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  </motion.div>
+                                                )}
+                                              </AnimatePresence>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                                {topic.heuristic && (
-                                  <div style={styles.heuristicBox}>
-                                    <div style={styles.heuristicLabel}>&#9889; Quick Study Heuristic</div>
-                                    {topic.heuristic}
-                                  </div>
-                                )}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                       );
                     })}

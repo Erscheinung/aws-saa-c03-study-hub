@@ -1,7 +1,44 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import servicesData from '../data/services.json'
+import cheatsheetData from '../data/cheatsheet.json'
 import AwsLogo from '../components/common/AwsLogo'
+
+// Build a lookup from service name (normalized) → array of cheatsheet facts.
+// cheatsheet.json and services.json use slightly different names
+// ("ECS / Fargate" vs "ECS", "Route 53" vs "Route 53"), so we index by a
+// normalized key and also split slash-separated names into aliases.
+function normalizeServiceKey(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '')
+}
+
+const CHEAT_FACTS_BY_SERVICE = (() => {
+  const out = {}
+  for (const section of cheatsheetData.sections || []) {
+    for (const item of section.items || []) {
+      // Split on "/" or "&" so "WAF & Shield" and "ECS / Fargate" each
+      // contribute to both underlying services.
+      const aliases = String(item.service).split(/\s*[/&]\s*/)
+      for (const alias of aliases) {
+        const k = normalizeServiceKey(alias)
+        if (!k) continue
+        if (!out[k]) out[k] = []
+        for (const fact of item.facts) {
+          if (!out[k].includes(fact)) out[k].push(fact)
+        }
+      }
+    }
+  }
+  return out
+})()
+
+function getCheatFactsForService(svc) {
+  const k = normalizeServiceKey(svc.name)
+  return CHEAT_FACTS_BY_SERVICE[k] || []
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Kurzgesagt-style orbital MindMap.
@@ -16,29 +53,21 @@ import AwsLogo from '../components/common/AwsLogo'
 // resize. Verified to layout cleanly at 1280px and 768px viewports.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const HUB_RADIUS = 52
-const NODE_SIZE = 56
+const HUB_RADIUS = 48
+const NODE_SIZE = 52
 const SELECTED_SCALE = 1.35
 
-// Radial inset (percent of half-min-dimension) for the innermost orbit, and
-// the spacing between successive orbits. Tuned so the outermost ring sits
-// comfortably inside the stage on a standard 1280x720 viewport.
-const FIRST_ORBIT_PCT = 0.18
-const ORBIT_SPACING_PCT = 0.07
-const STAGE_EDGE_PADDING = 64
-
-function useViewport() {
-  const [vp, setVp] = useState(() => ({
-    w: typeof window !== 'undefined' ? window.innerWidth : 1280,
-    h: typeof window !== 'undefined' ? window.innerHeight : 800,
-  }))
-  useEffect(() => {
-    const onResize = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-  return vp
-}
+// Space reserved above the planetary system:
+//   - the filter pill sits ~16px from the top and is ~36px tall
+//   - we add breathing room so the outermost orbit never slides under it
+const TOP_RESERVED = 84
+// Space reserved below for the helper caption + label overhang of the
+// outermost nodes (node radius + label + padding).
+const BOTTOM_RESERVED = 52
+// Horizontal gutter on each side so outermost nodes have room for labels.
+const SIDE_RESERVED = 72
+// Inner gap between the central AWS hub and the innermost orbit.
+const INNER_GAP = 36
 
 // ─── Starfield background canvas ────────────────────────────────────────────
 function Starfield() {
@@ -115,38 +144,73 @@ function Starfield() {
   )
 }
 
+// Per-category orbit "personality" — dash pattern, stroke weight, spin
+// duration and direction are each matched to how the family *feels*:
+//   compute     → rapid even ticks  (fast clock cycles)
+//   storage     → sparse dots       (dense, barely-moving bulk data)
+//   database    → dash-dot-dot      (stacked rows, steady)
+//   networking  → pulse-gap         (packets streaming fast)
+//   security    → reverse spin      (guardians watching the opposite way)
+//   integration → long flowing dashes (messages in flight)
+//   management  → minimal tick marks (quiet oversight)
+// Unknown categories fall back to DEFAULT_ORBIT_STYLE.
+const ORBIT_STYLES = {
+  compute:     { dash: '8 4',        width: 1.6, seconds: 32,  direction: 1,  opacity: 0.6 },
+  storage:     { dash: '1 5',        width: 1.8, seconds: 130, direction: 1,  opacity: 0.55 },
+  database:    { dash: '10 3 2 3',   width: 1.6, seconds: 95,  direction: 1,  opacity: 0.6 },
+  networking:  { dash: '3 3 1 3',    width: 1.4, seconds: 38,  direction: 1,  opacity: 0.65 },
+  security:    { dash: '6 3 1 3',    width: 1.8, seconds: 70,  direction: -1, opacity: 0.6 },
+  integration: { dash: '14 4 2 4',   width: 1.5, seconds: 55,  direction: 1,  opacity: 0.6 },
+  management:  { dash: '2 10',       width: 1.2, seconds: 150, direction: -1, opacity: 0.5 },
+}
+const DEFAULT_ORBIT_STYLE = { dash: '2 6', width: 1.2, seconds: 60, direction: 1, opacity: 0.55 }
+
 // ─── Compute orbits & node positions ────────────────────────────────────────
-// Returns one ring per category and absolute pixel coords for each service.
-function buildSystem(categories, viewportW, viewportH, stageW, stageH) {
+// Strategy: compute a safe outer-radius envelope from the stage dimensions
+// (after reserving space for the filter pill on top and labels on the sides),
+// then distribute orbits evenly between the innermost ring (just outside the
+// AWS hub) and that outer cap. This guarantees every ring — including the
+// outermost nodes and their labels — stays fully inside the stage regardless
+// of viewport size or number of categories.
+function buildSystem(categories, stageW, stageH) {
+  // Horizontal center stays mid-stage. Vertical center shifts down slightly
+  // so the top filter pill never overlaps the outermost ring.
+  const usableTop = TOP_RESERVED
+  const usableBottom = stageH - BOTTOM_RESERVED
   const cx = stageW / 2
-  const cy = stageH / 2
+  const cy = (usableTop + usableBottom) / 2
 
-  // Base radius derived from the smaller of the stage dimensions, with a
-  // floor for tiny viewports so the layout never collapses on top of the hub.
-  const minDim = Math.min(stageW, stageH)
-  const base = Math.max(140, minDim * FIRST_ORBIT_PCT)
-  const step = Math.max(52, minDim * ORBIT_SPACING_PCT)
+  // Available half-dimensions from the center, after reserving margins.
+  const halfW = Math.max(80, stageW / 2 - SIDE_RESERVED - NODE_SIZE / 2)
+  const halfH = Math.max(80, (usableBottom - usableTop) / 2 - NODE_SIZE / 2)
 
-  // Slight ellipse squash for a 3D solar-system feel. Wider on landscape.
-  const aspectSquash = stageW > stageH ? 1.18 : 0.88
+  // Portrait stages squash vertically; landscape stages squash horizontally.
+  // We derive the outer rx/ry so *both* axes fit their respective halves.
+  const aspectSquash = stageW > stageH ? 1.18 : 0.9
+  // Outer rx is limited by both halfW (directly) and halfH*aspectSquash
+  // (because ry = rx / aspectSquash must still fit halfH).
+  const outerRx = Math.max(120, Math.min(halfW, halfH * aspectSquash))
+  const outerRy = outerRx / aspectSquash
 
   const catKeys = Object.keys(categories)
+  const ringCount = catKeys.length
+
+  // Innermost orbit sits just outside the central hub with a gap.
+  const innerRx = HUB_RADIUS + INNER_GAP + NODE_SIZE / 2
+  const innerRy = innerRx / aspectSquash
+  const stepRx = ringCount > 1 ? (outerRx - innerRx) / (ringCount - 1) : 0
+  const stepRy = ringCount > 1 ? (outerRy - innerRy) / (ringCount - 1) : 0
+
   const orbits = []
   const services = []
 
-  // Cap the outermost orbit so the last ring + its nodes + labels stay fully
-  // inside the stage regardless of category count.
-  const maxRxAllowed = Math.max(140, stageW / 2 - STAGE_EDGE_PADDING - NODE_SIZE / 2)
-  const maxRyAllowed = Math.max(120, stageH / 2 - STAGE_EDGE_PADDING - NODE_SIZE)
-
   catKeys.forEach((key, i) => {
     const cat = categories[key]
-    let rx = base + step * i
-    let ry = rx / aspectSquash
-    if (rx > maxRxAllowed) rx = maxRxAllowed
-    if (ry > maxRyAllowed) ry = maxRyAllowed
+    const rx = innerRx + stepRx * i
+    const ry = innerRy + stepRy * i
     // Each category gets a phase offset so adjacent rings don't line up.
-    const phaseOffset = (i * Math.PI * 2) / catKeys.length
+    const phaseOffset = (i * Math.PI * 2) / ringCount
+    const style = ORBIT_STYLES[key] || DEFAULT_ORBIT_STYLE
 
     orbits.push({
       key,
@@ -155,9 +219,11 @@ function buildSystem(categories, viewportW, viewportH, stageW, stageH) {
       ry,
       cx,
       cy,
-      // Slow CSS rotation animation period — slower for outer orbits so they
-      // don't visually whip around.
-      spinSeconds: 40 + i * 14,
+      spinSeconds: style.seconds,
+      direction: style.direction,
+      dash: style.dash,
+      strokeWidth: style.width,
+      baseOpacity: style.opacity,
       phaseOffset,
     })
 
@@ -308,6 +374,13 @@ function DetailPanel({ node, onClose }) {
   if (!node) return null
   const color = node.cat.color
   const svc = node.service
+  const cheatFacts = getCheatFactsForService(svc)
+  // Dedupe: drop cheat facts that are substrings of an existing service
+  // detail (or vice-versa) so the panel doesn't show the same thing twice.
+  const details = svc.details || []
+  const extraFacts = cheatFacts.filter(
+    (f) => !details.some((d) => d.toLowerCase().includes(f.toLowerCase().slice(0, 18))),
+  )
   return (
     <motion.aside
       key={node.id}
@@ -384,19 +457,89 @@ function DetailPanel({ node, onClose }) {
         </p>
       )}
 
-      {svc.details && svc.details.length > 0 && (
+      {details.length > 0 && (
         <>
           <h3 style={panelHeading}>Key Details</h3>
-          <ul style={{ margin: 0, paddingLeft: 16, color: '#e2e8f0', fontSize: 13, lineHeight: 1.6 }}>
-            {svc.details.map((d, i) => (
-              <li key={i} style={{ marginBottom: 4 }}>{d}</li>
+          <ul style={panelList}>
+            {details.map((d, i) => (
+              <li key={i} style={panelListItem}>
+                <span style={panelBullet(color)}>▸</span>
+                <span>{d}</span>
+              </li>
             ))}
           </ul>
         </>
       )}
+
+      {extraFacts.length > 0 && (
+        <>
+          <h3 style={panelHeading}>Exam Cheat-Sheet Facts</h3>
+          <ul style={panelList}>
+            {extraFacts.map((f, i) => (
+              <li key={i} style={panelListItem}>
+                <span style={panelBullet(color)}>▸</span>
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <div
+        style={{
+          marginTop: 22,
+          padding: '10px 12px',
+          background: `${color}0f`,
+          border: `1px dashed ${color}55`,
+          borderRadius: 10,
+          color: '#cbd5e1',
+          fontSize: 12,
+          lineHeight: 1.5,
+        }}
+      >
+        <div
+          style={{
+            textTransform: 'uppercase',
+            letterSpacing: 0.6,
+            fontSize: 10,
+            fontWeight: 700,
+            color,
+            marginBottom: 4,
+          }}
+        >
+          Exam Lens
+        </div>
+        Map this service to its <strong style={{ color: '#f1f5f9' }}>"when to pick it"</strong> heuristic:
+        skim the key details above, match keywords you saw in the question stem,
+        and eliminate answer choices that don't share the same category
+        ({node.cat.name}).
+      </div>
     </motion.aside>
   )
 }
+
+const panelList = {
+  margin: 0,
+  padding: 0,
+  listStyle: 'none',
+  color: '#e2e8f0',
+  fontSize: 13,
+  lineHeight: 1.55,
+}
+
+const panelListItem = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 8,
+  padding: '4px 0',
+}
+
+const panelBullet = (color) => ({
+  color,
+  flexShrink: 0,
+  marginTop: 1,
+  fontWeight: 800,
+})
 
 const panelHeading = {
   marginTop: 18,
@@ -487,9 +630,8 @@ function chipStyle(color, active) {
 // ─── Main MindMap component ─────────────────────────────────────────────────
 export default function MindMap() {
   const categories = useMemo(() => servicesData?.categories || {}, [])
-  const vp = useViewport()
   const stageRef = useRef(null)
-  const [stageSize, setStageSize] = useState({ w: vp.w, h: Math.max(720, vp.h - 140) })
+  const [stageSize, setStageSize] = useState({ w: 1280, h: 720 })
 
   // Track actual rendered stage size so we can match it exactly.
   useEffect(() => {
@@ -506,8 +648,8 @@ export default function MindMap() {
   }, [])
 
   const { orbits, services, cx, cy } = useMemo(
-    () => buildSystem(categories, vp.w, vp.h, stageSize.w, stageSize.h),
-    [categories, vp.w, vp.h, stageSize.w, stageSize.h],
+    () => buildSystem(categories, stageSize.w, stageSize.h),
+    [categories, stageSize.w, stageSize.h],
   )
 
   const [hoverId, setHoverId] = useState(null)
@@ -584,6 +726,8 @@ export default function MindMap() {
           const dim = someSelected && selected.categoryKey !== o.key
           return (
             <g key={o.key} style={{ opacity: active ? (dim ? 0.12 : 1) : 0.05, transition: 'opacity 0.4s' }}>
+              {/* Soft inner halo — same ellipse, fatter + more transparent — gives each
+                  ring a distinct "thickness" so rings read as separate bands. */}
               <ellipse
                 cx={cx}
                 cy={cy}
@@ -591,9 +735,20 @@ export default function MindMap() {
                 ry={o.ry}
                 fill="none"
                 stroke={o.cat.color}
-                strokeWidth={1.2}
-                strokeOpacity={0.45}
-                strokeDasharray="2 6"
+                strokeWidth={o.strokeWidth + 4}
+                strokeOpacity={0.08}
+              />
+              <ellipse
+                cx={cx}
+                cy={cy}
+                rx={o.rx}
+                ry={o.ry}
+                fill="none"
+                stroke={o.cat.color}
+                strokeWidth={o.strokeWidth}
+                strokeOpacity={o.baseOpacity}
+                strokeDasharray={o.dash}
+                strokeLinecap="round"
                 style={{
                   filter: `drop-shadow(0 0 6px ${o.cat.color}88)`,
                   transformOrigin: `${cx}px ${cy}px`,
@@ -605,8 +760,9 @@ export default function MindMap() {
         })}
       </svg>
 
-      {/* Generate per-orbit spin keyframes — separated so each orbit can spin independently */}
-      <style>{orbits.map((o) => `@keyframes mm-spin-${o.key} { to { transform: rotate(360deg); transform-origin: ${cx}px ${cy}px; } }`).join('\n')}</style>
+      {/* Generate per-orbit spin keyframes — each orbit gets its own direction so
+          security/management visibly counter-rotate against the rest. */}
+      <style>{orbits.map((o) => `@keyframes mm-spin-${o.key} { to { transform: rotate(${o.direction * 360}deg); transform-origin: ${cx}px ${cy}px; } }`).join('\n')}</style>
 
       {/* Central AWS hub */}
       <div
