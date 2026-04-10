@@ -38,7 +38,7 @@ export default function Layout() {
     <div style={styles.wrapper} data-theme={theme}>
       <Navbar />
       <main style={styles.main}>
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence initial={false}>
           <PageTransition key={location.pathname}>
             <Suspense fallback={<LoadingFallback />}>
               <Outlet />
