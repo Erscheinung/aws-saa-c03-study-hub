@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 
 const TILE = 32;
 const COLS = 20;
@@ -346,6 +347,26 @@ export default function CloudWalker() {
     <div style={st.page}>
       <h1 style={st.title}>Cloud Walker</h1>
       <p style={st.subtitle}>Explore the AWS Cloud Village and discover services!</p>
+
+      <div style={{ textAlign: 'center', marginBottom: 14 }}>
+        <Link
+          to="/games/cloud-walker-3d"
+          style={{
+            display: 'inline-block',
+            padding: '10px 20px',
+            borderRadius: 10,
+            background: 'linear-gradient(135deg, #a855f7, #6366f1)',
+            color: '#fff',
+            textDecoration: 'none',
+            fontWeight: 700,
+            fontSize: 14,
+            fontFamily: 'var(--sans, system-ui)',
+            boxShadow: '0 6px 24px rgba(168,85,247,0.35)',
+          }}
+        >
+          🌐 Try the 3D Memory Palace (beta)
+        </Link>
+      </div>
 
       <div style={st.controls}>
         <span style={st.badge}>

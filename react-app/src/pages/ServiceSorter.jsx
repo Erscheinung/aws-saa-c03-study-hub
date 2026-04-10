@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AwsLogo from '../components/common/AwsLogo';
 
 const AWS_SERVICES = [
   // Compute
@@ -234,9 +235,9 @@ const s = {
     borderRadius: 10,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     fontWeight: 700,
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'var(--mono)',
     color: '#fff',
     cursor: 'pointer',
@@ -251,9 +252,9 @@ const s = {
       : flash === 'wrong'
         ? '#ef4444'
         : 'linear-gradient(135deg, var(--accent) 0%, var(--accent-border) 100%)',
-    textAlign: 'center',
-    padding: '4px 8px',
-    lineHeight: 1.2,
+    padding: '6px 8px',
+    lineHeight: 1.15,
+    gap: 4,
   }),
   binsRow: {
     display: 'flex',
@@ -845,7 +846,15 @@ export default function ServiceSorter() {
               }}
               onClick={() => handleCardClick(card.id)}
             >
-              {card.service.name}
+              {/* Phase 5: official AWS logo with text fallback (shared serviceLogos.js) */}
+              <AwsLogo
+                service={card.service.name}
+                size={34}
+                style={{ marginRight: 6 }}
+              />
+              <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {card.service.name}
+              </span>
             </div>
           ))}
         </div>

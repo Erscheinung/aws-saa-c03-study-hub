@@ -1,34 +1,60 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-
-const BASE = '/aws-saa-c03-study-hub'
+import { motion, AnimatePresence } from 'framer-motion'
+import { getLogoUrl, getAbbreviation } from '../data/serviceLogos'
+import AwsLogo from '../components/common/AwsLogo'
 
 /* ─── Service Catcher Game ─── */
 
 const GAME_W = 600
 const GAME_H = 300
-const BUCKET_W = 70
-const BUCKET_H = 20
+const BUCKET_W = 80
+const BUCKET_H = 22
+const ITEM_SIZE = 38
 const MAX_MISSES = 3
 
+// Service catalog used by both the catcher and the logo quiz.
+// Adding a new service is one line — just append to this list.
 const SERVICES = [
-  { emoji: '\uD83D\uDDA5\uFE0F', name: 'EC2' },
-  { emoji: '\uD83E\uDE63', name: 'S3' },
-  { emoji: '\uD83D\uDD12', name: 'IAM' },
-  { emoji: '\u26A1', name: 'Lambda' },
-  { emoji: '\uD83D\uDDC3\uFE0F', name: 'DynamoDB' },
-  { emoji: '\uD83C\uDF10', name: 'CloudFront' },
-  { emoji: '\uD83D\uDCE8', name: 'SQS' },
-  { emoji: '\uD83D\uDD14', name: 'SNS' },
-  { emoji: '\uD83D\uDEE1\uFE0F', name: 'WAF' },
-  { emoji: '\uD83D\uDCC8', name: 'CloudWatch' },
-  { emoji: '\uD83D\uDDFA\uFE0F', name: 'Route 53' },
-  { emoji: '\uD83D\uDD11', name: 'KMS' },
-  { emoji: '\uD83E\uDDF1', name: 'ECS' },
-  { emoji: '\uD83C\uDFAF', name: 'ELB' },
-  { emoji: '\uD83D\uDCBE', name: 'EBS' },
+  { id: 'ec2', name: 'EC2' },
+  { id: 's3', name: 'S3' },
+  { id: 'iam', name: 'IAM' },
+  { id: 'lambda', name: 'Lambda' },
+  { id: 'dynamodb', name: 'DynamoDB' },
+  { id: 'cloudfront', name: 'CloudFront' },
+  { id: 'sqs', name: 'SQS' },
+  { id: 'sns', name: 'SNS' },
+  { id: 'waf', name: 'WAF' },
+  { id: 'cloudwatch', name: 'CloudWatch' },
+  { id: 'route53', name: 'Route 53' },
+  { id: 'kms', name: 'KMS' },
+  { id: 'ecs', name: 'ECS' },
+  { id: 'elb', name: 'ELB' },
+  { id: 'ebs', name: 'EBS' },
+  { id: 'rds', name: 'RDS' },
+  { id: 'aurora', name: 'Aurora' },
+  { id: 'vpc', name: 'VPC' },
+  { id: 'cloudformation', name: 'CloudFormation' },
+  { id: 'sns', name: 'SNS' },
 ]
+
+// Image cache so the canvas catcher can draw real SVG logos.
+// Falls back to a styled abbreviation chip if the network image fails.
+const logoImageCache = new Map()
+function getLogoImage(svc) {
+  const url = getLogoUrl(svc.id) || getLogoUrl(svc.name)
+  if (!url) return null
+  let entry = logoImageCache.get(svc.id)
+  if (entry) return entry
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  entry = { img, loaded: false, failed: false }
+  img.onload = () => { entry.loaded = true }
+  img.onerror = () => { entry.failed = true }
+  img.src = url
+  logoImageCache.set(svc.id, entry)
+  return entry
+}
 
 function ServiceCatcherGame() {
   const canvasRef = useRef(null)
@@ -110,13 +136,15 @@ function ServiceCatcherGame() {
       if (s.spawnTimer >= s.spawnInterval) {
         s.spawnTimer = 0
         const svc = SERVICES[Math.floor(Math.random() * SERVICES.length)]
+        // Kick off the image load (cached after the first time).
+        getLogoImage(svc)
         s.items.push({
-          x: Math.random() * (GAME_W - 30),
-          y: -30,
+          x: Math.random() * (GAME_W - ITEM_SIZE),
+          y: -ITEM_SIZE,
           speed: (1.2 + Math.random() * 1.5) * s.speedMult,
-          emoji: svc.emoji,
+          id: svc.id,
           name: svc.name,
-          size: 24,
+          size: ITEM_SIZE,
         })
       }
 
@@ -194,12 +222,35 @@ function ServiceCatcherGame() {
         ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(GAME_W, gy); ctx.stroke()
       }
 
-      // items
-      ctx.font = '24px sans-serif'
-      ctx.textBaseline = 'top'
+      // items — draw official logos with abbreviation fallback
+      ctx.textBaseline = 'middle'
+      ctx.textAlign = 'center'
       for (const item of s.items) {
-        ctx.fillText(item.emoji, item.x, item.y)
+        const entry = getLogoImage({ id: item.id, name: item.name })
+        if (entry && entry.loaded) {
+          // White rounded chip behind the logo so it pops on the dark canvas.
+          ctx.fillStyle = '#fff'
+          ctx.beginPath()
+          ctx.roundRect(item.x, item.y, item.size, item.size, 8)
+          ctx.fill()
+          const pad = 4
+          ctx.drawImage(entry.img, item.x + pad, item.y + pad, item.size - pad * 2, item.size - pad * 2)
+        } else {
+          // Fallback chip with abbreviation
+          const grad = ctx.createLinearGradient(item.x, item.y, item.x + item.size, item.y + item.size)
+          grad.addColorStop(0, '#a855f7')
+          grad.addColorStop(1, '#6366f1')
+          ctx.fillStyle = grad
+          ctx.beginPath()
+          ctx.roundRect(item.x, item.y, item.size, item.size, 8)
+          ctx.fill()
+          ctx.fillStyle = '#fff'
+          ctx.font = 'bold 13px var(--mono, monospace)'
+          ctx.fillText(getAbbreviation(item.name), item.x + item.size / 2, item.y + item.size / 2)
+        }
       }
+      ctx.textAlign = 'start'
+      ctx.textBaseline = 'top'
 
       // particles
       for (const p of s.particles) {
@@ -405,6 +456,176 @@ const gameStyles = {
   },
 }
 
+/* ─── Logo Quiz Mini Game ─── */
+// Pop-quiz: render an AWS logo, ask the user to pick the matching service.
+// Uses the same shared SERVICES list (and serviceLogos.js) as the catcher.
+
+function pickRandom(arr, n, exclude) {
+  const pool = arr.filter((x) => !exclude || x.id !== exclude.id)
+  const result = []
+  while (result.length < n && pool.length > 0) {
+    const idx = Math.floor(Math.random() * pool.length)
+    result.push(pool.splice(idx, 1)[0])
+  }
+  return result
+}
+
+function makeQuestion() {
+  const target = SERVICES[Math.floor(Math.random() * SERVICES.length)]
+  const distractors = pickRandom(SERVICES, 3, target)
+  const options = [...distractors, target].sort(() => Math.random() - 0.5)
+  return { target, options }
+}
+
+function LogoQuizGame() {
+  const [question, setQuestion] = useState(makeQuestion)
+  const [picked, setPicked] = useState(null)
+  const [score, setScore] = useState(0)
+  const [streak, setStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(() => {
+    try { return parseInt(localStorage.getItem('logoQuizBestStreak') || '0', 10) } catch { return 0 }
+  })
+
+  const onPick = (opt) => {
+    if (picked) return
+    setPicked(opt)
+    if (opt.id === question.target.id) {
+      setScore((v) => v + 1)
+      setStreak((v) => {
+        const next = v + 1
+        if (next > bestStreak) {
+          setBestStreak(next)
+          try { localStorage.setItem('logoQuizBestStreak', String(next)) } catch { /* noop */ }
+        }
+        return next
+      })
+    } else {
+      setStreak(0)
+    }
+    setTimeout(() => {
+      setPicked(null)
+      setQuestion(makeQuestion())
+    }, 900)
+  }
+
+  return (
+    <div style={quizStyles.wrapper}>
+      <div style={quizStyles.scoreRow}>
+        <span style={quizStyles.scoreText}>Score: {score}</span>
+        <span style={quizStyles.streakText}>Streak: {streak}</span>
+        <span style={quizStyles.bestText}>Best: {bestStreak}</span>
+      </div>
+
+      <div style={quizStyles.logoStage}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={question.target.id + '-' + score}
+            initial={{ opacity: 0, scale: 0.7, rotate: -8 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.6 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+            style={quizStyles.logoCard}
+          >
+            <AwsLogo service={question.target.id} size={120} />
+          </motion.div>
+        </AnimatePresence>
+        <p style={quizStyles.prompt}>Which AWS service is this?</p>
+      </div>
+
+      <div style={quizStyles.optionsGrid}>
+        {question.options.map((opt) => {
+          const isCorrect = picked && opt.id === question.target.id
+          const isWrongPick = picked && picked.id === opt.id && opt.id !== question.target.id
+          let bg = 'var(--code-bg, #1e293b)'
+          let border = 'var(--border, #334155)'
+          let color = 'var(--text-h, #f1f5f9)'
+          if (isCorrect) { bg = 'rgba(34,197,94,0.18)'; border = '#22c55e'; color = '#22c55e' }
+          else if (isWrongPick) { bg = 'rgba(239,68,68,0.18)'; border = '#ef4444'; color = '#ef4444' }
+          return (
+            <motion.button
+              key={opt.id + opt.name}
+              onClick={() => onPick(opt)}
+              disabled={!!picked}
+              whileHover={!picked ? { scale: 1.04 } : undefined}
+              whileTap={!picked ? { scale: 0.97 } : undefined}
+              style={{
+                ...quizStyles.option,
+                background: bg,
+                borderColor: border,
+                color,
+                cursor: picked ? 'default' : 'pointer',
+              }}
+            >
+              {opt.name}
+            </motion.button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+const quizStyles = {
+  wrapper: {
+    width: '100%',
+    maxWidth: '620px',
+    margin: '0 auto',
+    padding: '20px',
+    borderRadius: '16px',
+    border: '1px solid var(--border, #334155)',
+    background: 'var(--code-bg, #0d0d1a)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  scoreRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    fontFamily: 'var(--mono, monospace)',
+    fontSize: '14px',
+  },
+  scoreText: { color: 'var(--accent, #a855f7)', fontWeight: 700 },
+  streakText: { color: '#22c55e', fontWeight: 700 },
+  bestText: { color: 'var(--text, #94a3b8)' },
+  logoStage: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px 0',
+  },
+  logoCard: {
+    padding: '14px',
+    borderRadius: '20px',
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid var(--border, #334155)',
+    boxShadow: '0 8px 32px rgba(168,85,247,0.18)',
+  },
+  prompt: {
+    margin: 0,
+    color: 'var(--text-h, #e2e8f0)',
+    fontWeight: 600,
+    fontSize: '15px',
+    fontFamily: 'var(--sans)',
+  },
+  optionsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '10px',
+  },
+  option: {
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: '1px solid',
+    fontWeight: 600,
+    fontSize: '14px',
+    fontFamily: 'var(--sans)',
+    transition: 'background 0.2s, border-color 0.2s, color 0.2s',
+  },
+}
+
 /* ─── Section animation wrapper ─── */
 
 function Section({ children, style, delay = 0 }) {
@@ -605,6 +826,13 @@ export default function Home() {
         <h2 style={s.sectionTitle}>{'\uD83C\uDFAE'} Service Catcher</h2>
         <p style={s.sectionSub}>Can you catch all the AWS services? Move your mouse to steer the bucket!</p>
         <ServiceCatcherGame />
+      </Section>
+
+      {/* Logo Quiz */}
+      <Section style={s.section} delay={0.05}>
+        <h2 style={s.sectionTitle}>{'\uD83C\uDFAF'} Logo Quiz</h2>
+        <p style={s.sectionSub}>Identify the AWS service from its official logo &mdash; great for cementing recognition.</p>
+        <LogoQuizGame />
       </Section>
 
       {/* Study Modules */}
