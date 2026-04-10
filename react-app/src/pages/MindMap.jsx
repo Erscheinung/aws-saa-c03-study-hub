@@ -16,14 +16,16 @@ import AwsLogo from '../components/common/AwsLogo'
 // resize. Verified to layout cleanly at 1280px and 768px viewports.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const HUB_RADIUS = 56
-const NODE_SIZE = 60
+const HUB_RADIUS = 52
+const NODE_SIZE = 56
 const SELECTED_SCALE = 1.35
 
 // Radial inset (percent of half-min-dimension) for the innermost orbit, and
-// the spacing between successive orbits.
-const FIRST_ORBIT_PCT = 0.22
-const ORBIT_SPACING_PCT = 0.085
+// the spacing between successive orbits. Tuned so the outermost ring sits
+// comfortably inside the stage on a standard 1280x720 viewport.
+const FIRST_ORBIT_PCT = 0.18
+const ORBIT_SPACING_PCT = 0.07
+const STAGE_EDGE_PADDING = 64
 
 function useViewport() {
   const [vp, setVp] = useState(() => ({
@@ -122,8 +124,8 @@ function buildSystem(categories, viewportW, viewportH, stageW, stageH) {
   // Base radius derived from the smaller of the stage dimensions, with a
   // floor for tiny viewports so the layout never collapses on top of the hub.
   const minDim = Math.min(stageW, stageH)
-  const base = Math.max(160, minDim * FIRST_ORBIT_PCT)
-  const step = Math.max(64, minDim * ORBIT_SPACING_PCT)
+  const base = Math.max(140, minDim * FIRST_ORBIT_PCT)
+  const step = Math.max(52, minDim * ORBIT_SPACING_PCT)
 
   // Slight ellipse squash for a 3D solar-system feel. Wider on landscape.
   const aspectSquash = stageW > stageH ? 1.18 : 0.88
@@ -132,10 +134,17 @@ function buildSystem(categories, viewportW, viewportH, stageW, stageH) {
   const orbits = []
   const services = []
 
+  // Cap the outermost orbit so the last ring + its nodes + labels stay fully
+  // inside the stage regardless of category count.
+  const maxRxAllowed = Math.max(140, stageW / 2 - STAGE_EDGE_PADDING - NODE_SIZE / 2)
+  const maxRyAllowed = Math.max(120, stageH / 2 - STAGE_EDGE_PADDING - NODE_SIZE)
+
   catKeys.forEach((key, i) => {
     const cat = categories[key]
-    const rx = base + step * i
-    const ry = rx / aspectSquash
+    let rx = base + step * i
+    let ry = rx / aspectSquash
+    if (rx > maxRxAllowed) rx = maxRxAllowed
+    if (ry > maxRyAllowed) ry = maxRyAllowed
     // Each category gets a phase offset so adjacent rings don't line up.
     const phaseOffset = (i * Math.PI * 2) / catKeys.length
 
@@ -409,17 +418,20 @@ function CategoryLegend({ categories, activeCategories, onToggle, onAll }) {
         left: '50%',
         transform: 'translateX(-50%)',
         display: 'flex',
-        gap: 8,
-        flexWrap: 'wrap',
+        gap: 6,
+        flexWrap: 'nowrap',
         justifyContent: 'center',
-        padding: '8px 14px',
-        background: 'rgba(2,6,23,0.7)',
+        alignItems: 'center',
+        padding: '6px 10px',
+        background: 'rgba(2,6,23,0.78)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: '1px solid rgba(148,163,184,0.18)',
         borderRadius: 999,
         zIndex: 70,
         maxWidth: 'calc(100% - 32px)',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
       }}
     >
       <button
@@ -457,16 +469,18 @@ function CategoryLegend({ categories, activeCategories, onToggle, onAll }) {
 
 function chipStyle(color, active) {
   return {
-    padding: '6px 12px',
+    padding: '5px 10px',
     borderRadius: 999,
     border: `1px solid ${active ? color : '#475569'}`,
     background: active ? `${color}1f` : 'transparent',
     color: active ? color : '#94a3b8',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 700,
     cursor: 'pointer',
     fontFamily: 'var(--sans, system-ui)',
     transition: 'all 0.2s',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   }
 }
 
@@ -652,23 +666,21 @@ export default function MindMap() {
         {selected && <DetailPanel node={selected} onClose={() => setSelected(null)} />}
       </AnimatePresence>
 
-      {/* Helper text */}
+      {/* Helper caption — minimal corner text, no pill, so it can't be
+          mistaken for a second filter bar. */}
       <div
         style={{
           position: 'absolute',
-          bottom: 16,
-          left: 16,
-          padding: '8px 14px',
-          borderRadius: 999,
-          background: 'rgba(2,6,23,0.7)',
-          border: '1px solid rgba(148,163,184,0.18)',
-          color: '#94a3b8',
-          fontSize: 12,
+          bottom: 10,
+          left: 14,
+          color: 'rgba(148,163,184,0.55)',
+          fontSize: 11,
           fontFamily: 'var(--mono, monospace)',
+          letterSpacing: 0.3,
           pointerEvents: 'none',
         }}
       >
-        Hover a planet • click to focus • Esc to close
+        hover · click · esc
       </div>
     </div>
   )

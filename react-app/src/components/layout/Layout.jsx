@@ -1,6 +1,5 @@
 import { Suspense } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
 import { useThemeStore } from '../../hooks/useTheme'
 import Navbar from './Navbar'
 import Footer from './Footer'
@@ -19,17 +18,12 @@ const styles = {
   },
 }
 
-// PHASE 2 FIX:
-// The previous structure had Suspense at App.jsx wrapping the whole router,
-// which caused a race: when a lazy chunk resolved, the entire Layout
-// remounted *and* AnimatePresence(mode="wait") was still waiting for the
-// previous PageTransition to finish exiting. The new page would never enter
-// until the user refreshed.
-//
-// Fix: move Suspense INSIDE the keyed PageTransition. Now each route mount
-// owns its own Suspense fallback — Layout never unmounts, exit/enter stay
-// in sync, and `initial={false}` skips the first-mount animation that was
-// hiding content on cold loads.
+// Suspense sits INSIDE a keyed PageTransition so each route owns its own
+// fallback (see the earlier lazy-chunk race explanation). AnimatePresence was
+// removed because PageTransition no longer defines an `exit` variant — without
+// one, AnimatePresence was keeping the previous page mounted alongside the new
+// one during navigation, producing a "pages repeat" flicker. A plain keyed
+// remount gives a clean fade-in with no overlap.
 export default function Layout() {
   const { theme } = useThemeStore()
   const location = useLocation()
@@ -38,13 +32,11 @@ export default function Layout() {
     <div style={styles.wrapper} data-theme={theme}>
       <Navbar />
       <main style={styles.main}>
-        <AnimatePresence initial={false}>
-          <PageTransition key={location.pathname}>
-            <Suspense fallback={<LoadingFallback />}>
-              <Outlet />
-            </Suspense>
-          </PageTransition>
-        </AnimatePresence>
+        <PageTransition key={location.pathname}>
+          <Suspense fallback={<LoadingFallback />}>
+            <Outlet />
+          </Suspense>
+        </PageTransition>
       </main>
       <Footer />
     </div>
