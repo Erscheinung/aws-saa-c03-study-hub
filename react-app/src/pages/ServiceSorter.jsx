@@ -414,6 +414,11 @@ export default function ServiceSorter() {
   const [highScore, setHigh] = useState(getHighScore);
   const [isNewHigh, setIsNewHigh] = useState(false);
   const [finalStats, setFinalStats] = useState({});
+  // Increments every animation frame to force a re-render so the belt moves
+  // smoothly. Previously we called setScore(scoreRef.current), which React
+  // bails out of when the value is unchanged — leaving cards frozen until
+  // the next sort event.
+  const [, setTick] = useState(0);
 
   const cardsRef = useRef([]); // { id, service, x }
   const animRef = useRef(null);
@@ -452,10 +457,16 @@ export default function ServiceSorter() {
   }, []);
 
   const spawnCard = useCallback(() => {
-    const svc = nextService();
     const w = getAreaWidth();
+    // Don't spawn on top of the last card — keeps the belt from overlapping.
+    const cards = cardsRef.current;
+    if (cards.length > 0) {
+      const rightmost = cards.reduce((m, c) => (c.x > m ? c.x : m), -Infinity);
+      if (rightmost > w - CARD_WIDTH - 20) return;
+    }
+    const svc = nextService();
     idCounter += 1;
-    cardsRef.current.push({
+    cards.push({
       id: idCounter,
       service: svc,
       x: w + 20,
@@ -520,8 +531,7 @@ export default function ServiceSorter() {
       }
     }
 
-    // Force re-render by updating a trivial state (we use score as proxy, but also need positional updates)
-    setScore(scoreRef.current);
+    setTick((t) => (t + 1) % 1e9);
     animRef.current = requestAnimationFrame(gameLoop);
   }, [getSpeed, endGame]);
 

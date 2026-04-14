@@ -65,6 +65,7 @@ export default function CloudWalker3D() {
   const visitedRef = useRef(visited)
   useEffect(() => { visitedRef.current = visited }, [visited])
   const compassRef = useRef({ angle: 0, name: '' })
+  const controlsRef = useRef(null)
 
   useEffect(() => {
     const mount = mountRef.current
@@ -171,6 +172,7 @@ export default function CloudWalker3D() {
 
     // ── Controls ──
     const controls = new PointerLockControls(camera, renderer.domElement)
+    controlsRef.current = controls
     scene.add(controls.object)
     controls.addEventListener('lock', () => setLocked(true))
     controls.addEventListener('unlock', () => setLocked(false))
@@ -361,6 +363,7 @@ export default function CloudWalker3D() {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
       renderer.domElement.removeEventListener('click', onClick)
+      controlsRef.current = null
       controls.dispose()
       renderTarget.dispose()
       renderer.dispose()
@@ -387,6 +390,10 @@ export default function CloudWalker3D() {
   const dismissTutorial = () => {
     localStorage.setItem('cloudWalker3DSeenTutorial', '1')
     setShowTutorial(false)
+  }
+
+  const requestLock = () => {
+    try { controlsRef.current?.lock() } catch { /* user gesture required — ignore */ }
   }
 
   const totalStructures = SCENE_OBJECTS.filter((s) => s.kind !== 'auroraSky').length
@@ -433,7 +440,10 @@ export default function CloudWalker3D() {
         <div style={pageStyles.fps}>{fps} FPS</div>
 
         {!locked && !showTutorial && (
-          <div style={pageStyles.lockOverlay}>
+          <div
+            style={{ ...pageStyles.lockOverlay, cursor: 'pointer' }}
+            onClick={requestLock}
+          >
             <div style={pageStyles.lockCard}>
               <h2 style={{ margin: '0 0 8px', fontSize: 22 }}>Click to enter</h2>
               <p style={pageStyles.lockBody}>
@@ -461,7 +471,7 @@ export default function CloudWalker3D() {
               <p style={{ ...pageStyles.lockBody, marginTop: 10 }}>
                 Desktop-only — pointer lock needs a mouse.
               </p>
-              <button onClick={dismissTutorial} style={pageStyles.primaryBtn}>
+              <button onClick={() => { dismissTutorial(); requestLock() }} style={pageStyles.primaryBtn}>
                 Let me in
               </button>
             </div>

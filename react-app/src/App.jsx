@@ -9,6 +9,7 @@ const MindMap = lazy(() => import('./pages/MindMap'))
 const FillBlanks = lazy(() => import('./pages/FillBlanks'))
 const ConnectionGame = lazy(() => import('./pages/ConnectionGame'))
 const Deduction = lazy(() => import('./pages/Deduction'))
+const PracticeQuestions = lazy(() => import('./pages/PracticeQuestions'))
 const CloudWalker = lazy(() => import('./pages/CloudWalker'))
 const CloudWalker3D = lazy(() => import('./pages/CloudWalker3D'))
 const Cheatsheet = lazy(() => import('./pages/Cheatsheet'))
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="fill-blanks" element={<FillBlanks />} />
             <Route path="connection-game" element={<ConnectionGame />} />
             <Route path="deduction" element={<Deduction />} />
+            <Route path="practice-questions" element={<PracticeQuestions />} />
           </Route>
           <Route path="games">
             <Route path="cloud-walker" element={<CloudWalker />} />

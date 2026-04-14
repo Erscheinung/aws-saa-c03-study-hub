@@ -14,6 +14,7 @@ const navItems = [
       { label: 'Fill Blanks', to: '/exercises/fill-blanks' },
       { label: 'Connection Game', to: '/exercises/connection-game' },
       { label: 'Deduction', to: '/exercises/deduction' },
+      { label: 'Practice Questions', to: '/exercises/practice-questions' },
     ],
   },
   {
