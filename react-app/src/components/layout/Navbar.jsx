@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useThemeStore } from '../../hooks/useTheme'
@@ -415,9 +416,11 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — rendered via portal to escape the nav's backdrop-filter
+          containing block (which was clipping position:fixed to the 56px nav). */}
+      {isMobile && createPortal(
       <AnimatePresence>
-        {isMobile && mobileOpen && (
+        {mobileOpen && (
           <motion.div
             style={styles.mobileMenu}
             className="navbar-mobile-menu"
@@ -480,7 +483,9 @@ export default function Navbar() {
             )}
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body,
+      )}
 
     </nav>
   )

@@ -53,21 +53,22 @@ function getCheatFactsForService(svc) {
 // resize. Verified to layout cleanly at 1280px and 768px viewports.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const HUB_RADIUS = 48
-const NODE_SIZE = 52
 const SELECTED_SCALE = 1.35
 
-// Space reserved above the planetary system:
-//   - the filter pill sits ~16px from the top and is ~36px tall
-//   - we add breathing room so the outermost orbit never slides under it
-const TOP_RESERVED = 84
-// Space reserved below for the helper caption + label overhang of the
-// outermost nodes (node radius + label + padding).
-const BOTTOM_RESERVED = 52
-// Horizontal gutter on each side so outermost nodes have room for labels.
-const SIDE_RESERVED = 72
-// Inner gap between the central AWS hub and the innermost orbit.
-const INNER_GAP = 36
+// Layout constants scale down on narrow viewports so orbits don't collapse
+// onto each other when the stage is phone-width.
+function getLayoutMetrics(stageW) {
+  const narrow = stageW < 640
+  const tiny = stageW < 420
+  return {
+    HUB_RADIUS: tiny ? 30 : narrow ? 38 : 48,
+    nodeSize: tiny ? 34 : narrow ? 42 : 52,
+    TOP_RESERVED: narrow ? 64 : 84,
+    BOTTOM_RESERVED: narrow ? 36 : 52,
+    SIDE_RESERVED: tiny ? 18 : narrow ? 34 : 72,
+    INNER_GAP: tiny ? 16 : narrow ? 22 : 36,
+  }
+}
 
 // ─── Starfield background canvas ────────────────────────────────────────────
 function Starfield() {
@@ -173,6 +174,9 @@ const DEFAULT_ORBIT_STYLE = { dash: '2 6', width: 1.2, seconds: 60, direction: 1
 // outermost nodes and their labels — stays fully inside the stage regardless
 // of viewport size or number of categories.
 function buildSystem(categories, stageW, stageH) {
+  const { HUB_RADIUS, nodeSize, TOP_RESERVED, BOTTOM_RESERVED, SIDE_RESERVED, INNER_GAP } =
+    getLayoutMetrics(stageW)
+
   // Horizontal center stays mid-stage. Vertical center shifts down slightly
   // so the top filter pill never overlaps the outermost ring.
   const usableTop = TOP_RESERVED
@@ -181,22 +185,23 @@ function buildSystem(categories, stageW, stageH) {
   const cy = (usableTop + usableBottom) / 2
 
   // Available half-dimensions from the center, after reserving margins.
-  const halfW = Math.max(80, stageW / 2 - SIDE_RESERVED - NODE_SIZE / 2)
-  const halfH = Math.max(80, (usableBottom - usableTop) / 2 - NODE_SIZE / 2)
+  const halfW = Math.max(60, stageW / 2 - SIDE_RESERVED - nodeSize / 2)
+  const halfH = Math.max(60, (usableBottom - usableTop) / 2 - nodeSize / 2)
 
   // Portrait stages squash vertically; landscape stages squash horizontally.
-  // We derive the outer rx/ry so *both* axes fit their respective halves.
   const aspectSquash = stageW > stageH ? 1.18 : 0.9
-  // Outer rx is limited by both halfW (directly) and halfH*aspectSquash
-  // (because ry = rx / aspectSquash must still fit halfH).
-  const outerRx = Math.max(120, Math.min(halfW, halfH * aspectSquash))
+  const outerRx = Math.max(halfW * 0.5, Math.min(halfW, halfH * aspectSquash))
   const outerRy = outerRx / aspectSquash
 
   const catKeys = Object.keys(categories)
   const ringCount = catKeys.length
 
-  // Innermost orbit sits just outside the central hub with a gap.
-  const innerRx = HUB_RADIUS + INNER_GAP + NODE_SIZE / 2
+  // Innermost orbit sits just outside the central hub with a gap, but never
+  // past the outer envelope (on tiny screens we compress the hub gap too).
+  let innerRx = HUB_RADIUS + INNER_GAP + nodeSize / 2
+  if (ringCount > 1 && innerRx > outerRx * 0.55) {
+    innerRx = outerRx * 0.35
+  }
   const innerRy = innerRx / aspectSquash
   const stepRx = ringCount > 1 ? (outerRx - innerRx) / (ringCount - 1) : 0
   const stepRy = ringCount > 1 ? (outerRy - innerRy) / (ringCount - 1) : 0
@@ -240,18 +245,20 @@ function buildSystem(categories, stageW, stageH) {
         ry,
         cx,
         cy,
+        nodeSize: nodeSize,
         x: cx + rx * Math.cos(angle),
         y: cy + ry * Math.sin(angle),
       })
     })
   })
 
-  return { orbits, services, cx, cy }
+  return { orbits, services, cx, cy, HUB_RADIUS, nodeSize }
 }
 
 // ─── Service node (one planet) ──────────────────────────────────────────────
 function ServiceNode({ node, dimmed, selected, onSelect, onHover, hovered }) {
   const color = node.cat.color
+  const nodeSize = node.nodeSize
   const glow = selected
     ? `0 0 38px ${color}, 0 0 80px ${color}aa`
     : hovered
@@ -273,10 +280,10 @@ function ServiceNode({ node, dimmed, selected, onSelect, onHover, hovered }) {
       transition={{ type: 'spring', stiffness: 320, damping: 22 }}
       style={{
         position: 'absolute',
-        left: node.x - NODE_SIZE / 2,
-        top: node.y - NODE_SIZE / 2,
-        width: NODE_SIZE,
-        height: NODE_SIZE,
+        left: node.x - nodeSize / 2,
+        top: node.y - nodeSize / 2,
+        width: nodeSize,
+        height: nodeSize,
         border: 'none',
         padding: 0,
         background: 'radial-gradient(circle at 35% 30%, #1e293b 0%, #020617 100%)',
@@ -310,7 +317,7 @@ function ServiceNode({ node, dimmed, selected, onSelect, onHover, hovered }) {
       >
         <AwsLogo
           service={node.service.id}
-          size={Math.round(NODE_SIZE * 0.62)}
+          size={Math.round(nodeSize * 0.62)}
           bg={`linear-gradient(135deg, ${color}, ${color}99)`}
         />
       </span>
@@ -647,7 +654,7 @@ export default function MindMap() {
     return () => ro.disconnect()
   }, [])
 
-  const { orbits, services, cx, cy } = useMemo(
+  const { orbits, services, cx, cy, HUB_RADIUS } = useMemo(
     () => buildSystem(categories, stageSize.w, stageSize.h),
     [categories, stageSize.w, stageSize.h],
   )
