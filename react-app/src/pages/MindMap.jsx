@@ -688,7 +688,7 @@ export default function MindMap() {
         position: 'relative',
         width: '100%',
         height: 'calc(100vh - 140px)',
-        minHeight: 600,
+        minHeight: 'min(600px, calc(100vh - 140px))',
         overflow: 'hidden',
         borderRadius: 16,
         background: 'radial-gradient(ellipse at center, #0b1228 0%, #020617 70%)',

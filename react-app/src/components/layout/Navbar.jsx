@@ -5,6 +5,25 @@ import { useThemeStore } from '../../hooks/useTheme'
 
 const BASE = '/aws-saa-c03-study-hub'
 
+// JS-driven breakpoint: inline `display` rules reliably beat CSS !important
+// in some mobile browsers when conditionally rendered, so detect once and
+// render the correct tree instead of relying on media-query overrides.
+function useIsMobile(breakpoint = 860) {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`)
+    const handler = (e) => setIsMobile(e.matches)
+    setIsMobile(mq.matches)
+    mq.addEventListener?.('change', handler) || mq.addListener(handler)
+    return () => {
+      mq.removeEventListener?.('change', handler) || mq.removeListener(handler)
+    }
+  }, [breakpoint])
+  return isMobile
+}
+
 const navItems = [
   { label: 'Home', to: '/' },
   { label: 'Mind Map', to: '/mindmap' },
@@ -134,7 +153,7 @@ const styles = {
     flexShrink: 0,
   },
   hamburger: {
-    display: 'none',
+    display: 'flex',
     flexDirection: 'column',
     gap: '5px',
     cursor: 'pointer',
@@ -157,8 +176,15 @@ const styles = {
     bottom: 0,
     background: 'var(--bg)',
     zIndex: 999,
-    padding: '20px',
+    padding: '16px',
     overflowY: 'auto',
+    overflowX: 'hidden',
+    WebkitOverflowScrolling: 'touch',
+    overscrollBehavior: 'contain',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    paddingBottom: 'calc(24px + env(safe-area-inset-bottom))',
   },
   mobileLink: {
     display: 'block',
@@ -171,7 +197,8 @@ const styles = {
     transition: 'color 0.2s, background 0.2s',
   },
   mobileSub: {
-    paddingLeft: '20px',
+    paddingLeft: '16px',
+    overflow: 'hidden',
   },
   mobileSubLabel: {
     display: 'block',
@@ -274,11 +301,27 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileDropdowns, setMobileDropdowns] = useState({})
   const location = useLocation()
+  const isMobile = useIsMobile(860)
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false)
   }, [location.pathname])
+
+  // Lock body scroll when mobile menu open
+  useEffect(() => {
+    if (!isMobile) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = mobileOpen ? 'hidden' : prev || ''
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [mobileOpen, isMobile])
+
+  // Close menu if viewport grows past breakpoint
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false)
+  }, [isMobile])
 
   const toggleMobileDropdown = (label) => {
     setMobileDropdowns((prev) => ({ ...prev, [label]: !prev[label] }))
@@ -294,6 +337,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop links */}
+        {!isMobile && (
         <ul style={styles.links} className="navbar-desktop-links">
           {navItems.map((item) =>
             item.children ? (
@@ -323,6 +367,7 @@ export default function Navbar() {
             ),
           )}
         </ul>
+        )}
 
         {/* Right controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -338,6 +383,7 @@ export default function Navbar() {
           </motion.button>
 
           {/* Hamburger (mobile) */}
+          {isMobile && (
           <button
             style={styles.hamburger}
             className="navbar-hamburger"
@@ -365,12 +411,13 @@ export default function Navbar() {
               }
             />
           </button>
+          )}
         </div>
       </div>
 
       {/* Mobile menu */}
       <AnimatePresence>
-        {mobileOpen && (
+        {isMobile && mobileOpen && (
           <motion.div
             style={styles.mobileMenu}
             className="navbar-mobile-menu"
@@ -435,15 +482,6 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Responsive CSS injected once */}
-      <style>{`
-        .navbar-desktop-links { display: flex !important; }
-        .navbar-hamburger { display: none !important; }
-        @media (max-width: 768px) {
-          .navbar-desktop-links { display: none !important; }
-          .navbar-hamburger { display: flex !important; }
-        }
-      `}</style>
     </nav>
   )
 }

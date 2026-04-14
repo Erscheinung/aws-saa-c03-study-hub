@@ -38,7 +38,7 @@ export default function Footer() {
         <span>AWS SAA-C03 Study Hub</span>
         <span style={styles.separator}>|</span>
         <a
-          href="https://github.com/aws-saa-c03-study-hub"
+          href="https://github.com/erscheinung/aws-saa-c03-study-hub"
           target="_blank"
           rel="noopener noreferrer"
           style={styles.link}
